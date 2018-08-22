@@ -1,0 +1,133 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "count": {
+      "defaultValue": 5,
+      "type": "int"
+    },
+    "harmony_benchmark_nsg": {
+      "defaultValue": "harmony-benchmark-nsg-eastus",
+      "type": "String"
+    },
+    "harmony_benchmark_vnet": {
+      "defaultValue": "harmony-benchmark-vnet-eastus",
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "comments": "public ip",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
+      },
+      "name": "[concat('ip',resourceGroup().location,copyIndex())]",
+      "apiVersion": "2018-02-01",
+      "location": "[resourceGroup().location]",
+      "scale": null,
+      "properties": {
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4,
+        "ipTags": []
+      },
+      "dependsOn": [],
+      "copy": {
+        "name": "instancecount",
+        "count": "[parameters('count')]"
+      }
+    },
+    {
+      "comments": "network interface",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('nic',resourceGroup().location,copyIndex())]",
+      "apiVersion": "2018-02-01",
+      "location": "[resourceGroup().location]",
+      "scale": null,
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('ip',resourceGroup().location,copyIndex()))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('harmony_benchmark_vnet')), '/subnets/default')]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4"
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [],
+          "appliedDnsServers": [],
+          "internalDomainNameSuffix": "kkcvwc4nrztu1i5tntvzaqs1fd.bx.internal.cloudapp.net"
+        },
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('harmony_benchmark_nsg'))]"
+        },
+        "primary": true
+      },
+      "copy": {
+        "name": "instancecount",
+        "count": "[parameters('count')]"
+      }
+    },
+    {
+      "comments": "vm template",
+      "apiVersion": "2017-12-01",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "name": "[concat('node',resourceGroup().location,copyIndex())]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_B1s"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04-LTS",
+            "version": "latest"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic',resourceGroup().location,copyIndex()))]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "[concat('node',resourceGroup().location,copyIndex())]",
+          "adminUsername": "haochen",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "/home/haochen/.ssh/authorized_keys",
+                  "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCndlRTWhencyL3UB4GLn3hpkhr8+zS1T4j3mEbU0Qy2MBQOcNrKvwCno+8IffPlc5072n3vt5YA8d/BDrv7bEXOmds+VBNROQ++K29+tjZ+ouzGHvri1pPKLWIxmCaVq6hduZ+7wNmNKruXiWdmYfMBeAXXS1OQb/SRQn5c2ngr7FBr+nwhX+f4ewiq69iGCBBH+QCvVRbXUhqzQe5TIvEIsg3qWJxa8SsjaFmlzQsfsBYrYusCf1zvnW/W5f+w6ZwTmB9kS42KA2RfhEVsAc4b0C/xDssf0zWABIK7GSsVkPvoTlpnftS9yrLhYgmsTd1W8ie+pxggtHKYmlOQP4P"
+                }
+              ]
+            }
+          },
+          "secrets": []
+        }
+      },
+      "copy": {
+        "name": "instancecount",
+        "count": "[parameters('count')]"
+      }
+    }
+  ],
+  "outputs": {}
+}
