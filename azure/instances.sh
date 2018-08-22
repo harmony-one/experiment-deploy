@@ -36,6 +36,7 @@ EOF
 function do_launch_instance
 {
    local config=configs/azure-$PROFILE.json
+   mkdir -p logs
 
    for region in "${REGIONS[@]}"; do
       if [ -n "$REGION" ]; then
@@ -73,6 +74,8 @@ function do_launch_instance
 
 function do_list_instance
 {
+   mkdir -p logs
+
    for region in "${REGIONS[@]}"; do
       if [ -n "$REGION" ]; then
          # run on specificed region
@@ -85,9 +88,9 @@ function do_list_instance
       echo > $LOG
 
       if [ -n "$DRYRUN" ]; then
-         echo az vm list --resource-group $RG --subscription $SUBSCRIPTION --query '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv
+         echo az vm list --resource-group $RG --subscription $SUBSCRIPTION --show-details --query '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv
       else
-         az vm list --resource-group $RG --subscription $SUBSCRIPTION --query  '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv | tee -a $LOG
+         az vm list --resource-group $RG --subscription $SUBSCRIPTION --show-details --query  '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv | tee -a $LOG
       fi
 
    done
@@ -95,6 +98,8 @@ function do_list_instance
 
 function do_terminate_instance
 {
+   mkdir -p logs
+
    for region in "${REGIONS[@]}"; do
       if [ -n "$REGION" ]; then
          # run on specificed region
