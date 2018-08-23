@@ -3,13 +3,16 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "count": {
-      "value": 6
+      "value": 100
+    },
+    "region": {
+      "value": "eastus"
     },
     "harmony_benchmark_nsg": {
-      "value": "harmony-benchmark-nsg-eastus"
+      "value": "hb-nsg-eastus"
     },
     "harmony_benchmark_vnet": {
-      "value": "harmony-benchmark-vnet-eastus"
+      "value": "hb-vnet-eastus"
     }
   }
 }

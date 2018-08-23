@@ -6,12 +6,16 @@
       "defaultValue": 5,
       "type": "int"
     },
+    "region": {
+      "defaultValue": "",
+      "type": "String"
+    },
     "harmony_benchmark_nsg": {
-      "defaultValue": "harmony-benchmark-nsg-eastus",
+      "defaultValue": "",
       "type": "String"
     },
     "harmony_benchmark_vnet": {
-      "defaultValue": "harmony-benchmark-vnet-eastus",
+      "defaultValue": "",
       "type": "String"
     }
   },
@@ -23,9 +27,9 @@
         "name": "Basic",
         "tier": "Regional"
       },
-      "name": "[concat('ip',resourceGroup().location,copyIndex())]",
+      "name": "[concat('ip',parameters('region'),copyIndex())]",
       "apiVersion": "2018-02-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('region')]",
       "scale": null,
       "properties": {
         "publicIPAddressVersion": "IPv4",
@@ -42,9 +46,9 @@
     {
       "comments": "network interface",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat('nic',resourceGroup().location,copyIndex())]",
+      "name": "[concat('nic',parameters('region'),copyIndex())]",
       "apiVersion": "2018-02-01",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('region')]",
       "scale": null,
       "properties": {
         "ipConfigurations": [
@@ -54,7 +58,7 @@
               "provisioningState": "Succeeded",
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('ip',resourceGroup().location,copyIndex()))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('ip',parameters('region'),copyIndex()))]"
               },
               "subnet": {
                 "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('harmony_benchmark_vnet')), '/subnets/default')]"
@@ -76,6 +80,48 @@
         },
         "primary": true
       },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', concat('ip',parameters('region'),copyIndex()))]"
+      ],
+      "copy": {
+        "name": "instancecount",
+        "count": "[parameters('count')]"
+      }
+    },
+    {
+      "comments": "vm storage",
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "name": "[concat('disk',parameters('region'),copyIndex())]",
+      "apiVersion": "2018-03-01-preview",
+      "location": "[parameters('region')]",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [],
+          "ipRules": [],
+          "defaultAction": "Allow"
+        },
+        "supportsHttpsTrafficOnly": false,
+        "encryption": {
+          "services": {
+            "file": {
+              "enabled": true
+            },
+            "blob": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      },
+      "dependsOn": [],
       "copy": {
         "name": "instancecount",
         "count": "[parameters('count')]"
@@ -85,8 +131,8 @@
       "comments": "vm template",
       "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[resourceGroup().location]",
-      "name": "[concat('node',resourceGroup().location,copyIndex())]",
+      "location": "[parameters('region')]",
+      "name": "[concat('node',parameters('region'),copyIndex())]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "Standard_B1s"
@@ -102,12 +148,12 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic',resourceGroup().location,copyIndex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic',parameters('region'),copyIndex()))]"
             }
           ]
         },
         "osProfile": {
-          "computerName": "[concat('node',resourceGroup().location,copyIndex())]",
+          "computerName": "[concat('node',parameters('region'),copyIndex())]",
           "adminUsername": "haochen",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
@@ -123,6 +169,10 @@
           "secrets": []
         }
       },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', concat('nic',parameters('region'),copyIndex()))]",
+        "[resourceId('Microsoft.Storage/storageAccounts',  concat('disk',parameters('region'),copyIndex()))]"
+      ],
       "copy": {
         "name": "instancecount",
         "count": "[parameters('count')]"
