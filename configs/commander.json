@@ -1,0 +1,11 @@
+{
+   "region": "us-east-1",
+   "type": "t3.small",
+   "ami": "ami-0ff8a91507f77f867",
+   "vpc": "vpc-88c9c2f3",
+   "sg": "sg-0ced7a600c4ac11f8",
+   "pubkey": "haochen-harmony",
+   "subnet": "subnet-7e5c8950",
+   "userdata": "file://configs/userdata-commander.txt",
+   "tag": "commander"
+}
