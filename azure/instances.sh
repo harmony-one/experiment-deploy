@@ -24,10 +24,11 @@ Action:
    list        list the vm launched
    launch      launch instances
    terminate   terminate instances
+   initregion  init one region (rg, nsg, vnet)
    createrg    create resource group
    creatensg   create network security group
    createvnet  create vnet/subnet
-   clear       clear all vm/disk/nic/ip
+   clear       clear all vm/disk/nic/ip in one region
 
 Examples:
    $ME -r eastus list
@@ -113,11 +114,11 @@ function do_terminate_instance
 
       ID=( $(az vm list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
       if [ -n "$DRYRUN" ]; then
-         echo az vm delete --yes --no-wait --resource-group $RG --subscription $SUBSCRIPTION --ids "${ID[@]}"
+         echo az vm delete --yes --resource-group $RG --subscription $SUBSCRIPTION --ids "${ID[@]}"
       else
          LOG=logs/$region.delete.$TS.log
          echo $(date) > $LOG
-         az vm delete --yes --no-wait --resource-group $RG --subscription $SUBSCRIPTION --ids "${ID[@]}" | tee -a $LOG
+         az vm delete --yes --resource-group $RG --subscription $SUBSCRIPTION --ids "${ID[@]}" | tee -a $LOG
          echo $(date) >> $LOG
       fi
 
@@ -223,6 +224,13 @@ function do_clear_all_resources
    set -u
 }
 
+function do_init_region
+{
+   do_create_resourcegroup
+   do_create_vnet
+   do_create_nsg
+}
+
 ######################################################
 
 DRYRUN=echo
@@ -266,6 +274,8 @@ case $ACTION in
       do_terminate_instance ;;
    clear)
       do_clear_all_resources ;;
+   initregion)
+      do_init_region ;;
    *)
       usage ;;
 esac
