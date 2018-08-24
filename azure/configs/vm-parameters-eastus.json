@@ -5,6 +5,9 @@
     "count": {
       "value": 100
     },
+    "adminuser": {
+      "value": "haochen"
+    },
     "region": {
       "value": "eastus"
     },
