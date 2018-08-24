@@ -1,26 +1,14 @@
 {
   "westeurope": {
-    "resourcegroup": "hb-rg-westeurope",
     "instancetype": "Standard_B1s",
-    "instancecount": 1,
-    "vnet": "hb-vnet-westeurope",
-    "nsg": "hb-nsg-westeurope",
-    "pubkey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCndlRTWhencyL3UB4GLn3hpkhr8+zS1T4j3mEbU0Qy2MBQOcNrKvwCno+8IffPlc5072n3vt5YA8d/BDrv7bEXOmds+VBNROQ++K29+tjZ+ouzGHvri1pPKLWIxmCaVq6hduZ+7wNmNKruXiWdmYfMBeAXXS1OQb/SRQn5c2ngr7FBr+nwhX+f4ewiq69iGCBBH+QCvVRbXUhqzQe5TIvEIsg3qWJxa8SsjaFmlzQsfsBYrYusCf1zvnW/W5f+w6ZwTmB9kS42KA2RfhEVsAc4b0C/xDssf0zWABIK7GSsVkPvoTlpnftS9yrLhYgmsTd1W8ie+pxggtHKYmlOQP4P haochen-harmony"
+    "instancecount": 1
   },
   "eastus": {
-    "resourcegroup": "hb-rg-eastus",
     "instancetype": "Standard_B1s",
-    "instancecount": 10,
-    "vnet": "hb-vnet-eastus",
-    "nsg": "hb-nsg-eastus",
-    "pubkey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCndlRTWhencyL3UB4GLn3hpkhr8+zS1T4j3mEbU0Qy2MBQOcNrKvwCno+8IffPlc5072n3vt5YA8d/BDrv7bEXOmds+VBNROQ++K29+tjZ+ouzGHvri1pPKLWIxmCaVq6hduZ+7wNmNKruXiWdmYfMBeAXXS1OQb/SRQn5c2ngr7FBr+nwhX+f4ewiq69iGCBBH+QCvVRbXUhqzQe5TIvEIsg3qWJxa8SsjaFmlzQsfsBYrYusCf1zvnW/W5f+w6ZwTmB9kS42KA2RfhEVsAc4b0C/xDssf0zWABIK7GSsVkPvoTlpnftS9yrLhYgmsTd1W8ie+pxggtHKYmlOQP4P haochen-harmony"
+    "instancecount": 10
   },
   "southeastasia": {
-    "resourcegroup": "hb-rg-eastus",
     "instancetype": "Standard_B1s",
-    "instancecount": 1,
-    "vnet": "hb-vnet-southeastasia",
-    "nsg": "hb-nsg-southeastasia",
-    "pubkey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCndlRTWhencyL3UB4GLn3hpkhr8+zS1T4j3mEbU0Qy2MBQOcNrKvwCno+8IffPlc5072n3vt5YA8d/BDrv7bEXOmds+VBNROQ++K29+tjZ+ouzGHvri1pPKLWIxmCaVq6hduZ+7wNmNKruXiWdmYfMBeAXXS1OQb/SRQn5c2ngr7FBr+nwhX+f4ewiq69iGCBBH+QCvVRbXUhqzQe5TIvEIsg3qWJxa8SsjaFmlzQsfsBYrYusCf1zvnW/W5f+w6ZwTmB9kS42KA2RfhEVsAc4b0C/xDssf0zWABIK7GSsVkPvoTlpnftS9yrLhYgmsTd1W8ie+pxggtHKYmlOQP4P haochen-harmony"
+    "instancecount": 1
   }
 }

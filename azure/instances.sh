@@ -57,33 +57,23 @@ function do_launch_instance
       local template=configs/vm-template.json
       local parameters=configs/vm-parameters-$region.json
 
-      NUM=$($JQ " .$region | .instancecount " $config)
-      TYPE=$($JQ " .$region | .instancetype" $config)
-      NSG=$($JQ " .$region | .nsg " $config)
-      VNET=$($JQ " .$region | .vnet " $config)
-      KEY=$($JQ " .$region | .pubkey " $config)
-      RG=$($JQ " .$region | .resourcegroup " $config | tr -d \")
-      echo launching vms in $region/$NUM/$TYPE/$NSG/$VNET
+      NUM=$($JQ ' .parameters.count.value ' $parameters)
+      NSG=$($JQ ' .parameters.harmony_benchmark_nsg.value ' $parameters)
+      VNET=$($JQ ' .parameters.harmony_benchmark_vnet.value ' $parameters)
+      RG=$($JQ ' .parameters.harmony_benchmark_rg.value ' $parameters | tr -d \")
+      echo launching vms in $region/$NUM/$NSG/$VNET
       echo
 
       $DRYRUN az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$template" --parameters "@${parameters}" 2>>$ERRLOG | tee -a $LOG
 
       echo $(date) >> $LOG
       echo $(date) >> $ERRLOG
-
-# create vm one by one, this can be used as a fallback mechanism
-#   for i in $(seq 1 $NUM); do
-#      node="node${region}${i}"
-#      az vm create --subscription "$SUBSCRIPTION"  --resource-group "$RG" --name $node --nsg $NSG --subnet default --vnet-name $VNET --ssh-key-value $KEY --public-ip-address ${node}_ip --size $TYPE --image UbuntuLTS | tee -a $LOG
-#   done
-
       echo
    done
 }
 
 function do_list_instance
 {
-   local config=configs/azure-$PROFILE.json
    for region in "${REGIONS[@]}"; do
       if [ -n "$REGION" ]; then
          # run on specificed region
@@ -92,7 +82,8 @@ function do_list_instance
          fi
       fi
 
-      RG=$($JQ " .$region | .resourcegroup " $config | tr -d \")
+      local parameters=configs/vm-parameters-$region.json
+      RG=$($JQ ' .parameters.harmony_benchmark_rg.value ' $parameters | tr -d \")
 
       if [ -n "$DRYRUN" ]; then
          echo az vm list --resource-group $RG --subscription $SUBSCRIPTION --show-details --query '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv
@@ -109,8 +100,6 @@ function do_list_instance
 function do_terminate_instance
 {
 # TODO: confirm before terminate
-
-   local config=configs/azure-$PROFILE.json
    for region in "${REGIONS[@]}"; do
       if [ -n "$REGION" ]; then
          # run on specificed region
@@ -118,7 +107,9 @@ function do_terminate_instance
             continue
          fi
       fi
-      RG=$($JQ " .$region | .resourcegroup " $config | tr -d \")
+
+      local parameters=configs/vm-parameters-$region.json
+      RG=$($JQ ' .parameters.harmony_benchmark_rg.value ' $parameters | tr -d \")
 
       ID=( $(az vm list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
       if [ -n "$DRYRUN" ]; then
@@ -193,7 +184,6 @@ function do_clear_all_resources
 {
 #TODO: confirm before clear
 
-   local config=configs/azure-$PROFILE.json
    set +u
    for region in "${REGIONS[@]}"; do
       if [ -n "$REGION" ]; then
@@ -204,11 +194,13 @@ function do_clear_all_resources
       fi
       LOG=logs/$region.clear.$TS.log
       echo $(date) > $LOG
-      RG=$($JQ " .$region | .resourcegroup " $config | tr -d \")
+
+      local parameters=configs/vm-parameters-$region.json
+      RG=$($JQ ' .parameters.harmony_benchmark_rg.value ' $parameters | tr -d \")
 
       declare -a nicID=( $(az network nic list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
       if [ "${nicID}x" != "x" ]; then
-         $DRYRUN az network nic delete --resource-group $RG --subscription $SUBSCRIPTION --ids "${nicID[@]}" | tee -a $LOG
+         $DRYRUN az network nic delete --no-wait --resource-group $RG --subscription $SUBSCRIPTION --ids "${nicID[@]}" | tee -a $LOG
       fi
 
       declare -a ipID=( $(az network public-ip list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
@@ -218,7 +210,7 @@ function do_clear_all_resources
 
       declare -a accID=( $(az storage account list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
       if [ "${accID}x" != "x" ]; then
-         $DRYRUN az storage account delete --yes --no-wait --resource-group $RG --subscription $SUBSCRIPTION --ids "${accID[@]}" | tee -a $LOG
+         $DRYRUN az storage account delete --yes --resource-group $RG --subscription $SUBSCRIPTION --ids "${accID[@]}" | tee -a $LOG
       fi
 
       declare -a diskID=( $(az disk list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )

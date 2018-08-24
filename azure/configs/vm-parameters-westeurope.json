@@ -8,11 +8,17 @@
     "region": {
       "value": "westeurope"
     },
+    "harmony_benchmark_rg": {
+      "value": "hb-rg-westeurope"
+    },
     "harmony_benchmark_nsg": {
       "value": "hb-nsg-westeurope"
     },
     "harmony_benchmark_vnet": {
       "value": "hb-vnet-westeurope"
+    },
+    "pubkey": {
+      "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCndlRTWhencyL3UB4GLn3hpkhr8+zS1T4j3mEbU0Qy2MBQOcNrKvwCno+8IffPlc5072n3vt5YA8d/BDrv7bEXOmds+VBNROQ++K29+tjZ+ouzGHvri1pPKLWIxmCaVq6hduZ+7wNmNKruXiWdmYfMBeAXXS1OQb/SRQn5c2ngr7FBr+nwhX+f4ewiq69iGCBBH+QCvVRbXUhqzQe5TIvEIsg3qWJxa8SsjaFmlzQsfsBYrYusCf1zvnW/W5f+w6ZwTmB9kS42KA2RfhEVsAc4b0C/xDssf0zWABIK7GSsVkPvoTlpnftS9yrLhYgmsTd1W8ie+pxggtHKYmlOQP4P"
     }
   }
 }
