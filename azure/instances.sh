@@ -19,6 +19,7 @@ Options:
    -G          do the real work
    -r region   run in region (supported regions: ${REGIONS[@]})
    -p profile  use profile config file
+   -t template the resource template file
 
 Action:
    list        list the vm launched
@@ -32,6 +33,7 @@ Action:
 
 Examples:
    $ME -r eastus list
+   $ME -r eastus -t configs/vm-template-1.json launch
 
 EOF
 
@@ -55,7 +57,6 @@ function do_launch_instance
       echo $(date) > $LOG
       echo $(date) > $ERRLOG
 
-      local template=configs/vm-template.json
       local parameters=configs/vm-parameters-$region.json
 
       NUM=$($JQ ' .parameters.count.value ' $parameters)
@@ -65,7 +66,7 @@ function do_launch_instance
       echo launching vms in $region/$NUM/$NSG/$VNET
       echo
 
-      $DRYRUN az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$template" --parameters "@${parameters}" 2>>$ERRLOG | tee -a $LOG
+      $DRYRUN az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters "@${parameters}" 2>>$ERRLOG | tee -a $LOG
 
       echo $(date) >> $LOG
       echo $(date) >> $ERRLOG
@@ -114,11 +115,11 @@ function do_terminate_instance
 
       ID=( $(az vm list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
       if [ -n "$DRYRUN" ]; then
-         echo az vm delete --yes --resource-group $RG --subscription $SUBSCRIPTION --ids "${ID[@]}"
+         echo az vm delete --yes --no-wait --resource-group $RG --subscription $SUBSCRIPTION --ids "${ID[@]}"
       else
          LOG=logs/$region.delete.$TS.log
          echo $(date) > $LOG
-         az vm delete --yes --resource-group $RG --subscription $SUBSCRIPTION --ids "${ID[@]}" | tee -a $LOG
+         az vm delete --yes --no-wait --resource-group $RG --subscription $SUBSCRIPTION --ids "${ID[@]}" | tee -a $LOG
          echo $(date) >> $LOG
       fi
 
@@ -237,12 +238,14 @@ DRYRUN=echo
 TS=$(date +%Y%m%d.%H%M%S)
 REGION=
 PROFILE=small
+TEMPLATE=configs/vm-template.json
 
-while getopts "hnGr:p:" option; do
+while getopts "hnGr:p:t:" option; do
    case $option in
       r) REGION=$OPTARG ;;
       G) DRYRUN= ;;
       p) PROFILE=$OPTARG ;;
+      t) TEMPLATE=$OPTARG ;;
       h|?|*) usage;;
    esac
 done
