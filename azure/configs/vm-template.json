@@ -111,45 +111,6 @@
       }
     },
     {
-      "comments": "vm storage",
-      "type": "Microsoft.Storage/storageAccounts",
-      "sku": {
-        "name": "Standard_LRS",
-        "tier": "Standard"
-      },
-      "kind": "Storage",
-      "name": "[concat('st',parameters('region'),copyIndex())]",
-      "apiVersion": "2018-03-01-preview",
-      "location": "[parameters('region')]",
-      "tags": {},
-      "scale": null,
-      "properties": {
-        "networkAcls": {
-          "bypass": "AzureServices",
-          "virtualNetworkRules": [],
-          "ipRules": [],
-          "defaultAction": "Allow"
-        },
-        "supportsHttpsTrafficOnly": false,
-        "encryption": {
-          "services": {
-            "file": {
-              "enabled": true
-            },
-            "blob": {
-              "enabled": true
-            }
-          },
-          "keySource": "Microsoft.Storage"
-        }
-      },
-      "dependsOn": [],
-      "copy": {
-        "name": "instancecount",
-        "count": "[parameters('count')]"
-      }
-    },
-    {
       "comments": "vm template",
       "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/virtualMachines",
@@ -204,8 +165,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-',parameters('region'),copyIndex()))]",
-        "[resourceId('Microsoft.Storage/storageAccounts',  concat('st',parameters('region'),copyIndex()))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-',parameters('region'),copyIndex()))]"
       ],
       "copy": {
         "name": "instancecount",
