@@ -22,7 +22,7 @@ Options:
    -t template    the resource template file
    -v parameter   the parameter file 
    -c count       count per deployment (max: 200, default: $COUNT)
-   -g group       number of deployment
+   -g group       number of deployment (default: $GROUP)
    -s start       starting point of the group number (default: $START)
 
 
@@ -39,6 +39,7 @@ Action:
 Examples:
    $ME -r eastus list
    $ME -r eastus -t configs/vm-template-1.json launch
+   $ME -r eastus launch -s 10 -c 100 -g 1
 
 EOF
 
@@ -77,7 +78,7 @@ function do_launch_instance
       for s in $(seq $START $END); do
          echo az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${parameters} count=$COUNT start=$s
          date
-         $DRYRUN az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${parameters} count=$COUNT start=$s 2>>$ERRLOG >> $LOG
+         $DRYRUN az group deployment create --subscription $SUBSCRIPTION --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${parameters} count=$COUNT start=$s 2>>$ERRLOG >> $LOG
       done
 
       echo $(date) >> $LOG
