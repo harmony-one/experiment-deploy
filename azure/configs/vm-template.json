@@ -2,6 +2,10 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "start": {
+      "defaultValue": 1,
+      "type": "int"
+    },
     "count": {
       "defaultValue": 5,
       "type": "int"
@@ -15,10 +19,6 @@
       "type": "String"
     },
     "pubkey": {
-      "defaultValue": "",
-      "type": "String"
-    },
-    "harmony_benchmark_rg": {
       "defaultValue": "",
       "type": "String"
     },
@@ -49,7 +49,7 @@
         "name": "Basic",
         "tier": "Regional"
       },
-      "name": "[concat('ip-',parameters('region'),copyIndex())]",
+      "name": "[concat('ip-',parameters('region'),parameters('start'),copyIndex())]",
       "apiVersion": "2018-02-01",
       "location": "[parameters('region')]",
       "scale": null,
@@ -68,7 +68,7 @@
     {
       "comments": "network interface",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat('nic-',parameters('region'),copyIndex())]",
+      "name": "[concat('nic-',parameters('region'),parameters('start'),copyIndex())]",
       "apiVersion": "2018-02-01",
       "location": "[parameters('region')]",
       "scale": null,
@@ -80,7 +80,7 @@
               "provisioningState": "Succeeded",
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('ip-',parameters('region'),copyIndex()))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('ip-',parameters('region'),parameters('start'),copyIndex()))]"
               },
               "subnet": {
                 "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('harmony_benchmark_vnet')), '/subnets/default')]"
@@ -103,7 +103,7 @@
         "primary": true
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', concat('ip-',parameters('region'),copyIndex()))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', concat('ip-',parameters('region'),parameters('start'),copyIndex()))]"
       ],
       "copy": {
         "name": "instancecount",
@@ -115,7 +115,7 @@
       "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('region')]",
-      "name": "[concat('node-',parameters('region'),copyIndex())]",
+      "name": "[concat('node-',parameters('region'),parameters('start'),copyIndex())]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
@@ -129,7 +129,7 @@
           },
           "osDisk": {
             "osType": "Linux",
-            "name": "[concat('disk-',parameters('region'),copyIndex())]",
+            "name": "[concat('disk-',parameters('region'),parameters('start'),copyIndex())]",
             "createOption": "FromImage",
             "caching": "ReadWrite",
             "managedDisk": {
@@ -142,12 +142,12 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-',parameters('region'),copyIndex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-',parameters('region'),parameters('start'),copyIndex()))]"
             }
           ]
         },
         "osProfile": {
-          "computerName": "[concat('node-',parameters('region'),copyIndex())]",
+          "computerName": "[concat('node-',parameters('region'),parameters('start'),copyIndex())]",
           "adminUsername": "[parameters('adminuser')]",
           "customData": "[base64(parameters('customData'))]",
           "linuxConfiguration": {
@@ -165,7 +165,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-',parameters('region'),copyIndex()))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', concat('nic-',parameters('region'),parameters('start'),copyIndex()))]"
       ],
       "copy": {
         "name": "instancecount",

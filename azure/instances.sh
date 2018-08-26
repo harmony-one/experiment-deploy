@@ -14,22 +14,27 @@ Usage: $ME [Options] ACTION
 This script is used to manage instances in Azure
 
 Options:
-   -h          print this help message
-   -n          dryrun mode (default)
-   -G          do the real work
-   -r region   run in region (supported regions: ${REGIONS[@]})
-   -p profile  use profile config file
-   -t template the resource template file
+   -h             print this help message
+   -n             dryrun mode (default)
+   -G             do the real work
+   -r region      run in region (supported regions: ${REGIONS[@]})
+   -p profile     use profile config file (default: $PROFILE)
+   -t template    the resource template file
+   -v parameter   the parameter file 
+   -c count       count per deployment (max: 200, default: $COUNT)
+   -g group       number of deployment
+   -s start       starting point of the group number (default: $START)
+
 
 Action:
-   list        list the vm launched
-   launch      launch instances
-   terminate   terminate instances
-   initregion  init one region (rg, nsg, vnet)
-   createrg    create resource group
-   creatensg   create network security group
-   createvnet  create vnet/subnet
-   clear       clear all vm/disk/nic/ip in one region
+   list           list the vm launched
+   launch         do deployment to launch instances
+   terminate      terminate instances
+   initregion     init one region (rg, nsg, vnet)
+   createrg       create resource group
+   creatensg      create network security group
+   createvnet     create vnet/subnet
+   clear          clear all vm/disk/nic/ip in one region
 
 Examples:
    $ME -r eastus list
@@ -42,8 +47,6 @@ EOF
 
 function do_launch_instance
 {
-   local config=configs/azure-$PROFILE.json
-
    for region in "${REGIONS[@]}"; do
       if [ -n "$REGION" ]; then
          # run on specificed region
@@ -57,16 +60,25 @@ function do_launch_instance
       echo $(date) > $LOG
       echo $(date) > $ERRLOG
 
-      local parameters=configs/vm-parameters-$region.json
+      if [ "$PARAMETER" == "" ]; then
+         parameters=configs/vm-parameters-$region.json
+      else
+         parameters=$PARAMETER-$region.json
+      fi
 
       NUM=$($JQ ' .parameters.count.value ' $parameters)
       NSG=$($JQ ' .parameters.harmony_benchmark_nsg.value ' $parameters)
       VNET=$($JQ ' .parameters.harmony_benchmark_vnet.value ' $parameters)
-      RG=$($JQ ' .parameters.harmony_benchmark_rg.value ' $parameters | tr -d \")
+      RG=$($JQ " .$region | .rg " $CONFIG | tr -d \")
       echo launching vms in $region/$NUM/$NSG/$VNET
       echo
 
-      $DRYRUN az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters "@${parameters}" 2>>$ERRLOG | tee -a $LOG
+      END=$(( $START + $GROUP ))
+      for s in $(seq $START $END); do
+         echo az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${parameters} count=$COUNT start=$s
+         date
+         $DRYRUN az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${parameters} count=$COUNT start=$s 2>>$ERRLOG >> $LOG
+      done
 
       echo $(date) >> $LOG
       echo $(date) >> $ERRLOG
@@ -85,7 +97,7 @@ function do_list_instance
       fi
 
       local parameters=configs/vm-parameters-$region.json
-      RG=$($JQ ' .parameters.harmony_benchmark_rg.value ' $parameters | tr -d \")
+      RG=$($JQ " .$region | .rg " $CONFIG | tr -d \")
 
       if [ -n "$DRYRUN" ]; then
          echo az vm list --resource-group $RG --subscription $SUBSCRIPTION --show-details --query '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv
@@ -111,7 +123,7 @@ function do_terminate_instance
       fi
 
       local parameters=configs/vm-parameters-$region.json
-      RG=$($JQ ' .parameters.harmony_benchmark_rg.value ' $parameters | tr -d \")
+      RG=$($JQ " .$region | .rg " $CONFIG | tr -d \")
 
       ID=( $(az vm list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
       if [ -n "$DRYRUN" ]; then
@@ -141,7 +153,7 @@ function do_create_resourcegroup
 
       LOG=logs/$region.rg.$TS.log
       echo $(date) > $LOG
-      $DRYRUN az group create --location $region --name hb-rg-$region --subscription $SUBSCRIPTION | tee -a $LOG
+      $DRYRUN az group create --location $region --name hb-rg-$region-$TODAY --subscription $SUBSCRIPTION | tee -a $LOG
       echo $(date) >> $LOG
    done
 
@@ -158,8 +170,8 @@ function do_create_nsg
       fi
       LOG=logs/$region.nsg.$TS.log
       echo $(date) > $LOG
-      $DRYRUN az network nsg create --resource-group hb-rg-$region --subscription $SUBSCRIPTION --location $region --name hb-nsg-$region | tee -a $LOG
-      $DRYRUN az network nsg rule create --resource-group hb-rg-$region --subscription $SUBSCRIPTION --nsg-name hb-nsg-$region --name SSH --priority 300 --source-address-prefixes Internet --destination-port-ranges 22 --access Allow --protocol Tcp --description "Allow SSH" | tee -a $LOG
+      $DRYRUN az network nsg create --resource-group hb-rg-$region-$TODAY --subscription $SUBSCRIPTION --location $region --name hb-nsg-$region | tee -a $LOG
+      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TODAY --subscription $SUBSCRIPTION --nsg-name hb-nsg-$region --name SSH --priority 300 --source-address-prefixes Internet --destination-port-ranges 22 --access Allow --protocol Tcp --description "Allow SSH" | tee -a $LOG
       echo $(date) >> $LOG
 
    done
@@ -176,7 +188,7 @@ function do_create_vnet
       fi
       LOG=logs/$region.vnet.$TS.log
       echo $(date) > $LOG
-      $DRYRUN az network vnet create --resource-group hb-rg-$region --subscription $SUBSCRIPTION --location $region --name hb-vnet-$region --address-prefixes 10.10.0.0/16 --subnet-name default --subnet-prefix 10.10.0.0/16 | tee -a $LOG
+      $DRYRUN az network vnet create --resource-group hb-rg-$region-$TODAY --subscription $SUBSCRIPTION --location $region --name hb-vnet-$region --address-prefixes 10.10.0.0/16 --subnet-name default --subnet-prefix 10.10.0.0/16 | tee -a $LOG
       echo $(date) >> $LOG
    done
 
@@ -198,7 +210,7 @@ function do_clear_all_resources
       echo $(date) > $LOG
 
       local parameters=configs/vm-parameters-$region.json
-      RG=$($JQ ' .parameters.harmony_benchmark_rg.value ' $parameters | tr -d \")
+      RG=$($JQ " .$region | .rg " $CONFIG | tr -d \")
 
       declare -a nicID=( $(az network nic list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
       if [ "${nicID}x" != "x" ]; then
@@ -230,25 +242,42 @@ function do_init_region
    do_create_resourcegroup
    do_create_vnet
    do_create_nsg
+
+   if [ "$DRYRUN" == "" ]; then
+      sed -i.bak  "s/hb-rg-$REGION-*/hb-rg-$REGION-$TODAY/" $CONFIG
+   else
+      echo sed -i.bak "s/hb-rg-$REGION-*/hb-rg-$REGION-$TODAY/" $CONFIG
+   fi
 }
 
 ######################################################
 
 DRYRUN=echo
 TS=$(date +%Y%m%d.%H%M%S)
+TODAY=$(date +%m%d)
 REGION=
 PROFILE=small
 TEMPLATE=configs/vm-template.json
+PARAMETER=
+COUNT=1
+GROUP=1
+START=1
 
-while getopts "hnGr:p:t:" option; do
+while getopts "hnGr:p:t:v:c:g:s:" option; do
    case $option in
       r) REGION=$OPTARG ;;
       G) DRYRUN= ;;
       p) PROFILE=$OPTARG ;;
       t) TEMPLATE=$OPTARG ;;
+      v) PARAMETER=$OPTARG ;;
+      c) COUNT=$OPTARG ;;
+      g) GROUP=$OPTARG ;;
+      s) START=$OPTARG ;;
       h|?|*) usage;;
    esac
 done
+
+CONFIG=configs/azure-$PROFILE.json
 
 shift $(($OPTIND-1))
 

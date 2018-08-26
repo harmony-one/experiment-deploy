@@ -2,6 +2,9 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "start": {
+      "value": 1
+    },
     "count": {
       "value": 100
     },
@@ -10,9 +13,6 @@
     },
     "region": {
       "value": "eastus"
-    },
-    "harmony_benchmark_rg": {
-      "value": "hb-rg-eastus"
     },
     "harmony_benchmark_nsg": {
       "value": "hb-nsg-eastus"

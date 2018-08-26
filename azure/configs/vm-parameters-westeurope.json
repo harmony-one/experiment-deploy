@@ -3,16 +3,13 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "count": {
-      "value": 5
+      "value": 200
     },
     "adminuser": {
       "value": "haochen"
     },
     "region": {
       "value": "westeurope"
-    },
-    "harmony_benchmark_rg": {
-      "value": "hb-rg-westeurope"
     },
     "harmony_benchmark_nsg": {
       "value": "hb-nsg-westeurope"

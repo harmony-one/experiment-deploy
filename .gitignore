@@ -1,3 +1,4 @@
 azure/logs/*.log
 configs/*.ip
+azure/archive
 *.swp

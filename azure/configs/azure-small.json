@@ -1,14 +1,17 @@
 {
   "westeurope": {
     "instancetype": "Standard_B1s",
-    "instancecount": 1
+    "instancecount": 1,
+    "rg": "hb-rg-westeurope-0825"
   },
   "eastus": {
     "instancetype": "Standard_B1s",
-    "instancecount": 10
+    "instancecount": 10,
+    "rg": "hb-rg-eastus-0825"
   },
   "southeastasia": {
     "instancetype": "Standard_B1s",
-    "instancecount": 1
+    "instancecount": 1,
+    "rg": "hb-rg-southeastasia-0825"
   }
 }
