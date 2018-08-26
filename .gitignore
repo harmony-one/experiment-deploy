@@ -1,4 +1,5 @@
 azure/logs/*.log
 configs/*.ip
 azure/archive
+azure/configs/*.bak
 *.swp

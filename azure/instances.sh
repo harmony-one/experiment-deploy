@@ -24,6 +24,7 @@ Options:
    -c count       count per deployment (max: 200, default: $COUNT)
    -g group       number of deployment (default: $GROUP)
    -s start       starting point of the group number (default: $START)
+   -a tag         tag of the resource group (default: $TAG)
 
 
 Action:
@@ -39,7 +40,8 @@ Action:
 Examples:
    $ME -r eastus list
    $ME -r eastus -t configs/vm-template-1.json launch
-   $ME -r eastus launch -s 10 -c 100 -g 1
+   $ME -r eastus -s 10 -c 100 -g 1 launch
+   $ME -r eastus -a 201808-01 -G initregion
 
 EOF
 
@@ -154,7 +156,7 @@ function do_create_resourcegroup
 
       LOG=logs/$region.rg.$TS.log
       echo $(date) > $LOG
-      $DRYRUN az group create --location $region --name hb-rg-$region-$TODAY --subscription $SUBSCRIPTION | tee -a $LOG
+      $DRYRUN az group create --location $region --name hb-rg-$region-$TAG --subscription $SUBSCRIPTION | tee -a $LOG
       echo $(date) >> $LOG
    done
 
@@ -171,8 +173,10 @@ function do_create_nsg
       fi
       LOG=logs/$region.nsg.$TS.log
       echo $(date) > $LOG
-      $DRYRUN az network nsg create --resource-group hb-rg-$region-$TODAY --subscription $SUBSCRIPTION --location $region --name hb-nsg-$region | tee -a $LOG
-      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TODAY --subscription $SUBSCRIPTION --nsg-name hb-nsg-$region --name SSH --priority 300 --source-address-prefixes Internet --destination-port-ranges 22 --access Allow --protocol Tcp --description "Allow SSH" | tee -a $LOG
+      $DRYRUN az network nsg create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --location $region --name hb-nsg-$region | tee -a $LOG
+      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --nsg-name hb-nsg-$region --name AllowSSH --priority 300 --source-address-prefixes Any --destination-port-ranges 22 --access Allow --protocol Tcp --description "Allow SSH" | tee -a $LOG
+      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --nsg-name hb-nsg-$region --name AllowNode --priority 400 --source-address-prefixes Any --destination-port-ranges 9000 --access Allow --protocol Tcp --description "Allow Node Port" | tee -a $LOG
+      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --nsg-name hb-nsg-$region --name AllowSoldier --priority 500 --source-address-prefixes Any --destination-port-ranges 19000 --access Allow --protocol Tcp --description "Allow Soldier Port" | tee -a $LOG
       echo $(date) >> $LOG
 
    done
@@ -189,7 +193,7 @@ function do_create_vnet
       fi
       LOG=logs/$region.vnet.$TS.log
       echo $(date) > $LOG
-      $DRYRUN az network vnet create --resource-group hb-rg-$region-$TODAY --subscription $SUBSCRIPTION --location $region --name hb-vnet-$region --address-prefixes 10.10.0.0/16 --subnet-name default --subnet-prefix 10.10.0.0/16 | tee -a $LOG
+      $DRYRUN az network vnet create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --location $region --name hb-vnet-$region --address-prefixes 10.10.0.0/16 --subnet-name default --subnet-prefix 10.10.0.0/16 | tee -a $LOG
       echo $(date) >> $LOG
    done
 
@@ -245,9 +249,9 @@ function do_init_region
    do_create_nsg
 
    if [ "$DRYRUN" == "" ]; then
-      sed -i.bak  "s/hb-rg-$REGION-*/hb-rg-$REGION-$TODAY/" $CONFIG
+      sed -i.bak "s/hb-rg-$REGION-*/hb-rg-$REGION-$TAG/" $CONFIG
    else
-      echo sed -i.bak "s/hb-rg-$REGION-*/hb-rg-$REGION-$TODAY/" $CONFIG
+      echo sed -i.bak "s/hb-rg-$REGION-*/hb-rg-$REGION-$TAG/" $CONFIG
    fi
 }
 
@@ -255,7 +259,7 @@ function do_init_region
 
 DRYRUN=echo
 TS=$(date +%Y%m%d.%H%M%S)
-TODAY=$(date +%m%d)
+TAG=$(date +%m%d)
 REGION=
 PROFILE=small
 TEMPLATE=configs/vm-template.json
@@ -264,7 +268,7 @@ COUNT=1
 GROUP=1
 START=1
 
-while getopts "hnGr:p:t:v:c:g:s:" option; do
+while getopts "hnGr:p:t:v:c:g:s:a:" option; do
    case $option in
       r) REGION=$OPTARG ;;
       G) DRYRUN= ;;
@@ -274,6 +278,7 @@ while getopts "hnGr:p:t:v:c:g:s:" option; do
       c) COUNT=$OPTARG ;;
       g) GROUP=$OPTARG ;;
       s) START=$OPTARG ;;
+      a) TAG=$OPTARG ;;
       h|?|*) usage;;
    esac
 done
