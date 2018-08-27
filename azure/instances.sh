@@ -32,11 +32,6 @@ Action:
    list           list the vm launched
    launch         do deployment to launch instances
    terminate      terminate instances
-   initregion     init one region (rg, nsg, vnet)
-   createrg       create resource group
-   creatensg      create network security group
-   createvnet     create vnet/subnet
-   clear          clear all vm/disk/nic/ip in one region
 
 Examples:
    $ME -r eastus list
@@ -143,119 +138,6 @@ function do_terminate_instance
    done
 }
 
-function do_create_resourcegroup
-{
-
-# TODO: delete existing one if it exists, confirmation is needed
-   for region in "${REGIONS[@]}"; do
-      if [ -n "$REGION" ]; then
-         # run on specificed region
-         if [ "$region" != "$REGION" ]; then
-            continue
-         fi
-      fi
-
-      LOG=logs/$region.rg.$TS.log
-      echo $(date) > $LOG
-      $DRYRUN az group create --location $region --name hb-rg-$region-$TAG | tee -a $LOG
-      echo $(date) >> $LOG
-   done
-
-}
-
-function do_create_nsg
-{
-   for region in "${REGIONS[@]}"; do
-      if [ -n "$REGION" ]; then
-         # run on specificed region
-         if [ "$region" != "$REGION" ]; then
-            continue
-         fi
-      fi
-      LOG=logs/$region.nsg.$TS.log
-      echo $(date) > $LOG
-      $DRYRUN az network nsg create --resource-group hb-rg-$region-$TAG --location $region --name hb-nsg-$region | tee -a $LOG
-      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --nsg-name hb-nsg-$region --name AllowSSH --priority 300 --source-address-prefixes Any --destination-port-ranges 22 --access Allow --protocol Tcp --description "Allow SSH" | tee -a $LOG
-      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --nsg-name hb-nsg-$region --name AllowNode --priority 400 --source-address-prefixes Any --destination-port-ranges 9000 --access Allow --protocol Tcp --description "Allow Node Port" | tee -a $LOG
-      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --nsg-name hb-nsg-$region --name AllowSoldier --priority 500 --source-address-prefixes Any --destination-port-ranges 19000 --access Allow --protocol Tcp --description "Allow Soldier Port" | tee -a $LOG
-      echo $(date) >> $LOG
-
-   done
-}
-
-function do_create_vnet
-{
-   for region in "${REGIONS[@]}"; do
-      if [ -n "$REGION" ]; then
-         # run on specificed region
-         if [ "$region" != "$REGION" ]; then
-            continue
-         fi
-      fi
-      LOG=logs/$region.vnet.$TS.log
-      echo $(date) > $LOG
-      $DRYRUN az network vnet create --resource-group hb-rg-$region-$TAG --location $region --name hb-vnet-$region --address-prefixes $PREFIX --subnet-name default --subnet-prefix $PREFIX | tee -a $LOG
-      echo $(date) >> $LOG
-   done
-
-}
-
-function do_clear_all_resources
-{
-#TODO: confirm before clear
-
-   set +u
-   for region in "${REGIONS[@]}"; do
-      if [ -n "$REGION" ]; then
-         # run on specificed region
-         if [ "$region" != "$REGION" ]; then
-            continue
-         fi
-      fi
-      LOG=logs/$region.clear.$TS.log
-      echo $(date) > $LOG
-
-      local parameters=configs/vm-parameters-$region.json
-      RG=$($JQ " .$region | .rg " $CONFIG)
-
-      declare -a nicID=( $(az network nic list --resource-group $RG --query '[].id' -o tsv) )
-      if [ "${nicID}x" != "x" ]; then
-         $DRYRUN az network nic delete --no-wait --resource-group $RG --ids "${nicID[@]}" | tee -a $LOG
-      fi
-
-      declare -a ipID=( $(az network public-ip list --resource-group $RG --query '[].id' -o tsv) )
-      if [ "${ipID}x" != "x" ]; then
-         $DRYRUN az network public-ip delete --resource-group $RG --ids "${ipID[@]}" | tee -a $LOG
-      fi
-
-      declare -a accID=( $(az storage account list --resource-group $RG --query '[].id' -o tsv) )
-      if [ "${accID}x" != "x" ]; then
-         $DRYRUN az storage account delete --yes --resource-group $RG --ids "${accID[@]}" | tee -a $LOG
-      fi
-
-      declare -a diskID=( $(az disk list --resource-group $RG --query '[].id' -o tsv) )
-      if [ "${diskID}x" != "x" ]; then
-         $DRYRUN az disk delete --yes --no-wait --resource-group $RG --ids "${diskID[@]}" | tee -a $LOG
-      fi
-
-      echo $(date) >> $LOG
-   done
-   set -u
-}
-
-function do_init_region
-{
-   do_create_resourcegroup
-   do_create_vnet
-   do_create_nsg
-
-   if [ "$DRYRUN" == "" ]; then
-      sed -i.bak "s/hb-rg-$REGION-*/hb-rg-$REGION-$TAG/" $CONFIG
-   else
-      echo sed -i.bak "s/hb-rg-$REGION-*/hb-rg-$REGION-$TAG/" $CONFIG
-   fi
-}
-
 ######################################################
 
 DRYRUN=echo
@@ -301,22 +183,12 @@ fi
 mkdir -p logs
 
 case $ACTION in
-   createrg)
-      do_create_resourcegroup ;;
-   createvnet)
-      do_create_vnet ;;
-   creatensg)
-      do_create_nsg ;;
    list)
       do_list_instance ;;
    launch)
       do_launch_instance ;;
    terminate)
       do_terminate_instance ;;
-   clear)
-      do_clear_all_resources ;;
-   initregion)
-      do_init_region ;;
    *)
       usage ;;
 esac
