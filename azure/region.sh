@@ -40,12 +40,12 @@ Options:
 Action:
    list           list the resources
    init           do deployment to init a region
-   terminate      terminate all resources in one region
+   delete         delete all resources in one region
 
 Examples:
    $ME -r eastus list
-   $ME -r eastus deploy
-   $ME -r eastus terminate
+   $ME -r eastus -s test -g 2 init
+   $ME -r eastus delete
 
 # the resource group will be named as: hb-rg-{REGION}-{TAG}-{START}{NUM}
 Ex:
@@ -81,18 +81,36 @@ function valid_arguments
 function do_init_region
 {
    for i in $(seq 1 $GROUP); do
+   (
       $DRYRUN ./deploy.sh -i $SUBSCRIPTION -g hb-rg-$REGION-$TAG-${START}$i -n bh-rg-$REGION-deployment -l $REGION -t $TEMPLATE -v $PARAMETER -p start=$START$i
+   )
    done
+   if [ -n "$DRYRUN" ]; then
+      echo "NOTE: please use -G to do the real action"
+   fi
 }
 
 function do_terminate_region
 {
-   echo TODO: remove all the resource groups in the region: $REGION
+   rgs=$(az group list --subscription $SUBSCRIPTION --query "[?location=='$REGION']" | $JQ '.[].name' | tr -d \")
+   for i in ${rgs}; do
+      echo "Do you want to remove resource group: $i (yes/no)?"
+      read yesno
+      if [ "$yesno" = "yes" ]; then
+      (
+         set -x
+         az group delete --subscription $SUBSCRIPTION --no-wait --yes --name $i
+      )
+      fi
+   done
 }
 
 function do_list_resources
 {
-   echo TODO: list all resource groups in the region: $REGION
+   (
+      set -x
+      az group list --subscription $SUBSCRIPTION --query "[?location=='$REGION']" | $JQ '.[].name'
+   )
 }
 
 ######################################################
@@ -118,32 +136,24 @@ while getopts "hnGr:g:t:v:a:x:p:s:" option; do
       a) TAG=$OPTARG ;;
       x) PREFIX=$OPTARG ;;
       s) START=$OPTARG ;;
-      h|?|*) usage "Help Message" ;;
+      h|?|*) usage ;;
    esac
 done
 
-
 shift $(($OPTIND-1))
 
-ACTION=$@
-
-if ! valid_arguments ; then
+if ! valid_arguments; then
    usage "Invalid command line arguments"
 fi
 
-if [[ ! -z $ACTION && ! -z $DRYRUN ]]; then
-   echo '***********************************'
-   echo "Please use -G to do the real work"
-   echo '***********************************'
-fi
-
+ACTION=$@
 mkdir -p logs
 
 case $ACTION in
    list)
       do_list_resources ;;
-   terminate)
-      do_terminate_region ;;
+   delete)
+      do_delete_region ;;
    init)
       do_init_region ;;
    *)
