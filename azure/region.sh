@@ -67,7 +67,7 @@ function do_init_region
    fi
 }
 
-function do_terminate_region
+function do_delete_region
 {
    rgs=$(az group list --subscription $SUBSCRIPTION --query "[?location=='$REGION']" | $JQ '.[].name')
    for i in ${rgs}; do
