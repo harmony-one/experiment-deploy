@@ -7,11 +7,6 @@ function usage
    ME=$(basename $0)
    MSG=${1:-''}
 
-   if [ -n "$MSG" ]; then
-      echo NOTE: $MSG
-      echo
-   fi
-
    cat<<EOF
 
 Usage: $ME [Options] ACTION
@@ -53,29 +48,11 @@ Ex:
    hb-rg-eastus-$TAG-${START}2
    hb-rg-eastus-$TAG-${START}3
 
+----------------------------------
+NOTE: $MSG
 EOF
 
    exit 0
-}
-
-function valid_arguments
-{
-   local match=1
-   if [ -z "$REGION" ]; then
-      return $match
-   fi
-
-   for region in "${REGIONS[@]}"; do
-      # run on specificed region
-      if [ "$region" != "$REGION" ]; then
-         continue
-      else
-         match=0
-         break
-      fi
-   done
- 
-   return $match
 }
 
 function do_init_region
@@ -146,13 +123,16 @@ done
 
 shift $(($OPTIND-1))
 
-if ! valid_arguments; then
-   usage "Invalid command line arguments"
+ACTION=$@
+if [ -z $ACTION ]; then
+   usage
 fi
 
-ACTION=$@
-mkdir -p logs
+if ! is_valid_region $REGION ; then
+   usage "Unsupported region '$REGION'"
+fi
 
+mkdir -p logs
 case $ACTION in
    list)
       do_list_resources ;;
@@ -163,6 +143,6 @@ case $ACTION in
    output)
       do_save_output ;;
    *)
-      usage "Invalid/missing Action: '$ACTION'" ;;
+      usage "Invalid/missing Action '$ACTION'" ;;
 esac
 

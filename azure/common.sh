@@ -15,9 +15,30 @@ CONFIG=configs/azure-env.json
 JQ="jq -M -r"
 
 SUBSCRIPTION=$($JQ .subscriptionId $CONFIG)
-# RG=$($JQ .resourceGroup $CONFIG | tr -d \")
-REGIONS=( $($JQ ' .regions | .[] ' $CONFIG | tr "\n" " ") )
+REGIONS=( $($JQ ' .regions | .[] ' $CONFIG) )
 
 #set the default subscription id
 az account set --subscription $SUBSCRIPTION
 
+#check the region is valid or not
+function is_valid_region
+{
+   local match=1
+   local r=$1
+
+   if [ -z "$r" ]; then
+      return $match
+   fi
+
+   for region in "${REGIONS[@]}"; do
+      # run on specificed region
+      if [ "$region" != "$r" ]; then
+         continue
+      else
+         match=0
+         break
+      fi
+   done
+
+   return $match
+}

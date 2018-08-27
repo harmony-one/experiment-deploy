@@ -7,6 +7,8 @@ source ./common.sh
 function usage
 {
    ME=$(basename $0)
+   MSG=${1:-''}
+
    cat<<EOF
 
 Usage: $ME [Options] ACTION
@@ -39,6 +41,8 @@ Examples:
    $ME -r eastus -s 10 -c 100 -g 1 launch
    $ME -r eastus -a 201808-01 -G initregion
 
+----------------------------------
+NOTE: $MSG
 EOF
 
    exit 0
@@ -173,6 +177,13 @@ CONFIG=configs/azure-$PROFILE.json
 shift $(($OPTIND-1))
 
 ACTION=$@
+if [ -z $ACTION ]; then
+   usage
+fi
+
+if ! is_valid_region $REGION ; then
+   usage "Unsupported region '$REGION'"
+fi
 
 if [[ ! -z $ACTION && ! -z $DRYRUN ]]; then
    echo '***********************************'
@@ -190,5 +201,5 @@ case $ACTION in
    terminate)
       do_terminate_instance ;;
    *)
-      usage ;;
+      usage "Invalid/missing Action '$ACTION'" ;;
 esac
