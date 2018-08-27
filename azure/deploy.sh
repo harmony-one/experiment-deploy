@@ -122,7 +122,7 @@ fi
 echo "Starting deployment..."
 (
 	set -x
-	az group deployment create --name "$deploymentName" --resource-group "$resourceGroupName" --template-file "$templateFilePath" --parameters @${parametersFilePath} ${parameterString}
+	az group deployment create --name "$deploymentName" --resource-group "$resourceGroupName" --template-file "$templateFilePath" --parameters @${parametersFilePath} ${parameterString} region=$resourceGroupLocation
 )
 
 if [ $?  == 0 ];

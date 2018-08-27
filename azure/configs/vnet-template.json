@@ -215,7 +215,7 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('vnetaddress')]"
+            "[concat('10.',copyIndex(),'.0.0/16')]"
           ]
         },
         "dhcpOptions": {
@@ -225,7 +225,7 @@
           {
             "name": "default",
             "properties": {
-              "addressPrefix": "[concat('10.', copyIndex(), '.0.0/20')]"
+              "addressPrefix": "[concat('10.',copyIndex(),'.0.0/16')]"
             }
           }
         ],
