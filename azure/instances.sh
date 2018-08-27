@@ -25,6 +25,7 @@ Options:
    -g group       number of deployment (default: $GROUP)
    -s start       starting point of the group number (default: $START)
    -a tag         tag of the resource group (default: $TAG)
+   -x prefix      prefix of the subnet (default: $PREFIX)
 
 
 Action:
@@ -193,7 +194,7 @@ function do_create_vnet
       fi
       LOG=logs/$region.vnet.$TS.log
       echo $(date) > $LOG
-      $DRYRUN az network vnet create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --location $region --name hb-vnet-$region --address-prefixes 10.10.0.0/16 --subnet-name default --subnet-prefix 10.10.0.0/16 | tee -a $LOG
+      $DRYRUN az network vnet create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --location $region --name hb-vnet-$region --address-prefixes $PREFIX --subnet-name default --subnet-prefix $PREFIX | tee -a $LOG
       echo $(date) >> $LOG
    done
 
@@ -267,8 +268,9 @@ PARAMETER=
 COUNT=1
 GROUP=1
 START=1
+PREFIX=10.10.0.0/20
 
-while getopts "hnGr:p:t:v:c:g:s:a:" option; do
+while getopts "hnGr:p:t:v:c:g:s:a:x:" option; do
    case $option in
       r) REGION=$OPTARG ;;
       G) DRYRUN= ;;
@@ -279,6 +281,7 @@ while getopts "hnGr:p:t:v:c:g:s:a:" option; do
       g) GROUP=$OPTARG ;;
       s) START=$OPTARG ;;
       a) TAG=$OPTARG ;;
+      x) PREFIX=$OPTARG ;;
       h|?|*) usage;;
    esac
 done
