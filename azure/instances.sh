@@ -63,24 +63,18 @@ function do_launch_instance
       echo $(date) > $LOG
       echo $(date) > $ERRLOG
 
-      if [ "$PARAMETER" == "" ]; then
-         parameters=configs/vm-parameters-$region.json
-      else
-         parameters=$PARAMETER-$region.json
-      fi
-
-      NUM=$($JQ ' .parameters.count.value ' $parameters)
-      NSG=$($JQ ' .parameters.harmony_benchmark_nsg.value ' $parameters)
-      VNET=$($JQ ' .parameters.harmony_benchmark_vnet.value ' $parameters)
+      NUM=$($JQ ' .parameters.count.value ' $PARAMETERS)
+      NSG=$($JQ ' .parameters.harmony_benchmark_nsg.value ' $PARAMETERS)
+      VNET=$($JQ ' .parameters.harmony_benchmark_vnet.value ' $PARAMETERS)
       RG=$($JQ " .$region | .rg " $CONFIG)
       echo launching vms in $region/$NUM/$NSG/$VNET
       echo
 
       END=$(( $START + $GROUP ))
       for s in $(seq $START $END); do
-         echo az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${parameters} count=$COUNT start=$s
+         echo az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${PARAMETERS} count=$COUNT start=$s
          date
-         $DRYRUN az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${parameters} count=$COUNT start=$s 2>>$ERRLOG >> $LOG
+         $DRYRUN az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${PARAMETERS} count=$COUNT start=$s 2>>$ERRLOG >> $LOG
       done
 
       echo $(date) >> $LOG
@@ -91,27 +85,16 @@ function do_launch_instance
 
 function do_list_instance
 {
-   for region in "${REGIONS[@]}"; do
-      if [ -n "$REGION" ]; then
-         # run on specificed region
-         if [ "$region" != "$REGION" ]; then
-            continue
-         fi
-      fi
+   RG=$($JQ " .$region | .rg " $CONFIG)
 
-      local parameters=configs/vm-parameters-$region.json
-      RG=$($JQ " .$region | .rg " $CONFIG)
-
-      if [ -n "$DRYRUN" ]; then
-         echo az vm list --resource-group $RG --show-details --query '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv
-      else
-         LOG=logs/$region.list.$TS.log
-         echo $(date) > $LOG
-         az vm list --resource-group $RG --show-details --query  '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv | tee -a $LOG
-         echo $(date) >> $LOG
-      fi
-
-   done
+   if [ -n "$DRYRUN" ]; then
+      echo az vm list --resource-group $RG --show-details --query '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv
+   else
+      LOG=logs/$region.list.$TS.log
+      echo $(date) > $LOG
+      az vm list --resource-group $RG --show-details --query  '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv | tee -a $LOG
+      echo $(date) >> $LOG
+   fi
 }
 
 function do_terminate_instance
@@ -125,7 +108,6 @@ function do_terminate_instance
          fi
       fi
 
-      local parameters=configs/vm-parameters-$region.json
       RG=$($JQ " .$region | .rg " $CONFIG)
 
       ID=( $(az vm list --resource-group $RG --query '[].id' -o tsv) )
@@ -142,6 +124,27 @@ function do_terminate_instance
    done
 }
 
+function _check_configuration_files
+{
+   RGCONFIG=configs/$PROFILE.rg.$REGION.json
+   if [ ! -f $RGCONFIG ]; then
+      echo Could not find the resource group configuration file: $RGCONFIG
+      exit 1
+   else
+      RGS=( $($JQ ' .[].name ' $RGCONFIG) )
+   fi
+
+   if [ ! -f $TEMPLATE ]; then
+      echo Could not find the template file: $TEMPLATE
+      exit 1
+   fi
+
+   PARAMETERS=configs/vm-parameters-$region.json
+   if [ ! -f $PARAMETERS ]; then
+      echo Could not find the parameters file: $PARAMETERS
+      exit 1
+   fi
+}
 ######################################################
 
 DRYRUN=echo
@@ -184,6 +187,8 @@ fi
 if ! is_valid_region $REGION ; then
    usage "Unsupported region '$REGION'"
 fi
+
+_check_configuration_files
 
 if [[ ! -z $ACTION && ! -z $DRYRUN ]]; then
    echo '***********************************'
