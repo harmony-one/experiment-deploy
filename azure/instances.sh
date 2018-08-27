@@ -50,78 +50,61 @@ EOF
 
 function do_launch_instance
 {
-   for region in "${REGIONS[@]}"; do
-      if [ -n "$REGION" ]; then
-         # run on specificed region
-         if [ "$region" != "$REGION" ]; then
-            continue
-         fi
-      fi
+   LOG=logs/$region.launch.$TS.log
+   ERRLOG=logs/$region.launch.error.$TS.log
+   echo $(date) > $LOG
+   echo $(date) > $ERRLOG
 
-      LOG=logs/$region.launch.$TS.log
-      ERRLOG=logs/$region.launch.error.$TS.log
-      echo $(date) > $LOG
-      echo $(date) > $ERRLOG
-
+   for rg in ${RGS[@]}; do
       NUM=$($JQ ' .parameters.count.value ' $PARAMETERS)
-      NSG=$($JQ ' .parameters.harmony_benchmark_nsg.value ' $PARAMETERS)
-      VNET=$($JQ ' .parameters.harmony_benchmark_vnet.value ' $PARAMETERS)
-      RG=$($JQ " .$region | .rg " $CONFIG)
-      echo launching vms in $region/$NUM/$NSG/$VNET
-      echo
+      NSG=$(az network nsg list --resource-group $rg | $JQ .[].name)
+      VNET=$(az network vnet list --resource-group $rg | $JQ .[].name)
 
-      END=$(( $START + $GROUP ))
+      END=$(( $START + $GROUP - 1 ))
       for s in $(seq $START $END); do
-         echo az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${PARAMETERS} count=$COUNT start=$s
+      (
          date
-         $DRYRUN az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${PARAMETERS} count=$COUNT start=$s 2>>$ERRLOG >> $LOG
+         set -x
+         $DRYRUN az group deployment create --name $region.deploy.$TS --resource-group $rg --template-file $TEMPLATE --parameters @${PARAMETERS} count=$COUNT start=$s harmony_benchmark_nsg=$NSG harmony_benchmark_vnet=$VNET 2>>$ERRLOG >> $LOG
+      )
       done
-
-      echo $(date) >> $LOG
-      echo $(date) >> $ERRLOG
-      echo
    done
+
+   echo $(date) >> $LOG
+   echo $(date) >> $ERRLOG
+   echo
 }
 
 function do_list_instance
 {
-   RG=$($JQ " .$region | .rg " $CONFIG)
-
-   if [ -n "$DRYRUN" ]; then
-      echo az vm list --resource-group $RG --show-details --query '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv
-   else
-      LOG=logs/$region.list.$TS.log
-      echo $(date) > $LOG
-      az vm list --resource-group $RG --show-details --query  '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv | tee -a $LOG
-      echo $(date) >> $LOG
-   fi
+   LOG=logs/$region.list.$TS.log
+   for rg in ${RGS[@]}; do
+      if [ -n "$DRYRUN" ]; then
+         echo az vm list --resource-group $rg --show-details --query '[].{ip:publicIps}' -o tsv
+      else
+         az vm list --resource-group $rg --show-details --query '[].{ip:publicIps}' -o tsv | tee -a $LOG
+      fi
+   done
 }
 
 function do_terminate_instance
 {
-# TODO: confirm before terminate
-   for region in "${REGIONS[@]}"; do
-      if [ -n "$REGION" ]; then
-         # run on specificed region
-         if [ "$region" != "$REGION" ]; then
-            continue
+   LOG=logs/$region.delete.$TS.log
+   echo $(date) > $LOG
+   for rg in ${RGS[@]}; do
+      ID=( $(az vm list --resource-group $rg --query '[].id' -o tsv) )
+      if [ -n "$DRYRUN" ]; then
+         echo az vm delete --yes --no-wait --resource-group $rg --ids ${ID[@]+"${ID[@]}"}
+      else
+         if [ ${#ID[@]} -gt 0 ]; then
+         (
+            set -x
+            az vm delete --yes --no-wait --resource-group $rg --ids ${ID[@]+"${ID[@]}"} | tee -a $LOG
+         )
          fi
       fi
-
-      RG=$($JQ " .$region | .rg " $CONFIG)
-
-      ID=( $(az vm list --resource-group $RG --query '[].id' -o tsv) )
-      if [ -n "$DRYRUN" ]; then
-         echo az vm delete --yes --no-wait --resource-group $RG --ids "${ID[@]}"
-      else
-         LOG=logs/$region.delete.$TS.log
-         echo $(date) > $LOG
-         az vm delete --yes --no-wait --resource-group $RG --ids "${ID[@]}" | tee -a $LOG
-         echo $(date) >> $LOG
-      fi
-
-
    done
+   echo $(date) >> $LOG
 }
 
 function _check_configuration_files
