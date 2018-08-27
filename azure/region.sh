@@ -69,14 +69,14 @@ function do_init_region
 
 function do_delete_region
 {
-   rgs=$(az group list --subscription $SUBSCRIPTION --query "[?location=='$REGION']" | $JQ '.[].name')
+   rgs=$(az group list --query "[?starts_with(name,'hb-rg-$REGION')]" | $JQ '.[].name')
    for i in ${rgs}; do
       echo "Do you want to remove resource group: $i (yes/no)?"
       read yesno
       if [ "$yesno" = "yes" ]; then
       (
          set -x
-         az group delete --subscription $SUBSCRIPTION --no-wait --yes --name $i
+         az group delete --no-wait --yes --name $i
       )
       fi
    done
@@ -84,16 +84,13 @@ function do_delete_region
 
 function do_list_resources
 {
-   (
-      set -x
-      az group list --subscription $SUBSCRIPTION --query "[?location=='$REGION']" | $JQ '.[].name'
-   )
+   az group list --query "[?starts_with(name,'hb-rg-$REGION')]" | $JQ '.[].name'
 }
 
 function do_save_output
 {
    set -x
-   az group list --subscription $SUBSCRIPTION --query "[?location=='$REGION']" > configs/$PROFILE.rg.$REGION.json
+   az group list --query "[?starts_with(name,'hb-rg-$REGION')]" > configs/$PROFILE.rg.$REGION.json
 }
 
 ######################################################
