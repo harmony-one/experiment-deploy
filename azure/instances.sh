@@ -151,7 +151,7 @@ DRYRUN=echo
 TS=$(date +%Y%m%d.%H%M%S)
 TAG=$(date +%m%d)
 REGION=
-PROFILE=small
+PROFILE=benchmark
 TEMPLATE=configs/vm-template.json
 PARAMETER=
 COUNT=1
@@ -174,8 +174,6 @@ while getopts "hnGr:p:t:v:c:g:s:a:x:" option; do
       h|?|*) usage;;
    esac
 done
-
-CONFIG=configs/azure-$PROFILE.json
 
 shift $(($OPTIND-1))
 
