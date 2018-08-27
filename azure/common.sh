@@ -11,8 +11,13 @@ then
 fi
 
 CONFIG=configs/azure-env.json
-JQ="jq -M"
+# set mono, raw output
+JQ="jq -M -r"
 
-SUBSCRIPTION=$($JQ .subscriptionId $CONFIG | tr -d \")
+SUBSCRIPTION=$($JQ .subscriptionId $CONFIG)
 # RG=$($JQ .resourceGroup $CONFIG | tr -d \")
-REGIONS=( $($JQ ' .regions | .[] ' $CONFIG | tr "\n" " " | tr -d \") )
+REGIONS=( $($JQ ' .regions | .[] ' $CONFIG | tr "\n" " ") )
+
+#set the default subscription id
+az account set --subscription $SUBSCRIPTION
+

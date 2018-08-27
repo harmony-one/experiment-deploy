@@ -73,7 +73,7 @@ function do_launch_instance
       NUM=$($JQ ' .parameters.count.value ' $parameters)
       NSG=$($JQ ' .parameters.harmony_benchmark_nsg.value ' $parameters)
       VNET=$($JQ ' .parameters.harmony_benchmark_vnet.value ' $parameters)
-      RG=$($JQ " .$region | .rg " $CONFIG | tr -d \")
+      RG=$($JQ " .$region | .rg " $CONFIG)
       echo launching vms in $region/$NUM/$NSG/$VNET
       echo
 
@@ -81,7 +81,7 @@ function do_launch_instance
       for s in $(seq $START $END); do
          echo az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${parameters} count=$COUNT start=$s
          date
-         $DRYRUN az group deployment create --subscription $SUBSCRIPTION --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${parameters} count=$COUNT start=$s 2>>$ERRLOG >> $LOG
+         $DRYRUN az group deployment create --name "$region.deploy.$TS" --resource-group $RG --template-file "$TEMPLATE" --parameters @${parameters} count=$COUNT start=$s 2>>$ERRLOG >> $LOG
       done
 
       echo $(date) >> $LOG
@@ -101,14 +101,14 @@ function do_list_instance
       fi
 
       local parameters=configs/vm-parameters-$region.json
-      RG=$($JQ " .$region | .rg " $CONFIG | tr -d \")
+      RG=$($JQ " .$region | .rg " $CONFIG)
 
       if [ -n "$DRYRUN" ]; then
-         echo az vm list --resource-group $RG --subscription $SUBSCRIPTION --show-details --query '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv
+         echo az vm list --resource-group $RG --show-details --query '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv
       else
          LOG=logs/$region.list.$TS.log
          echo $(date) > $LOG
-         az vm list --resource-group $RG --subscription $SUBSCRIPTION --show-details --query  '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv | tee -a $LOG
+         az vm list --resource-group $RG --show-details --query  '[].{name:name, ip:publicIps, size:hardwareProfile.vmSize}' -o tsv | tee -a $LOG
          echo $(date) >> $LOG
       fi
 
@@ -127,15 +127,15 @@ function do_terminate_instance
       fi
 
       local parameters=configs/vm-parameters-$region.json
-      RG=$($JQ " .$region | .rg " $CONFIG | tr -d \")
+      RG=$($JQ " .$region | .rg " $CONFIG)
 
-      ID=( $(az vm list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
+      ID=( $(az vm list --resource-group $RG --query '[].id' -o tsv) )
       if [ -n "$DRYRUN" ]; then
-         echo az vm delete --yes --no-wait --resource-group $RG --subscription $SUBSCRIPTION --ids "${ID[@]}"
+         echo az vm delete --yes --no-wait --resource-group $RG --ids "${ID[@]}"
       else
          LOG=logs/$region.delete.$TS.log
          echo $(date) > $LOG
-         az vm delete --yes --no-wait --resource-group $RG --subscription $SUBSCRIPTION --ids "${ID[@]}" | tee -a $LOG
+         az vm delete --yes --no-wait --resource-group $RG --ids "${ID[@]}" | tee -a $LOG
          echo $(date) >> $LOG
       fi
 
@@ -157,7 +157,7 @@ function do_create_resourcegroup
 
       LOG=logs/$region.rg.$TS.log
       echo $(date) > $LOG
-      $DRYRUN az group create --location $region --name hb-rg-$region-$TAG --subscription $SUBSCRIPTION | tee -a $LOG
+      $DRYRUN az group create --location $region --name hb-rg-$region-$TAG | tee -a $LOG
       echo $(date) >> $LOG
    done
 
@@ -174,10 +174,10 @@ function do_create_nsg
       fi
       LOG=logs/$region.nsg.$TS.log
       echo $(date) > $LOG
-      $DRYRUN az network nsg create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --location $region --name hb-nsg-$region | tee -a $LOG
-      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --nsg-name hb-nsg-$region --name AllowSSH --priority 300 --source-address-prefixes Any --destination-port-ranges 22 --access Allow --protocol Tcp --description "Allow SSH" | tee -a $LOG
-      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --nsg-name hb-nsg-$region --name AllowNode --priority 400 --source-address-prefixes Any --destination-port-ranges 9000 --access Allow --protocol Tcp --description "Allow Node Port" | tee -a $LOG
-      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --nsg-name hb-nsg-$region --name AllowSoldier --priority 500 --source-address-prefixes Any --destination-port-ranges 19000 --access Allow --protocol Tcp --description "Allow Soldier Port" | tee -a $LOG
+      $DRYRUN az network nsg create --resource-group hb-rg-$region-$TAG --location $region --name hb-nsg-$region | tee -a $LOG
+      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --nsg-name hb-nsg-$region --name AllowSSH --priority 300 --source-address-prefixes Any --destination-port-ranges 22 --access Allow --protocol Tcp --description "Allow SSH" | tee -a $LOG
+      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --nsg-name hb-nsg-$region --name AllowNode --priority 400 --source-address-prefixes Any --destination-port-ranges 9000 --access Allow --protocol Tcp --description "Allow Node Port" | tee -a $LOG
+      $DRYRUN az network nsg rule create --resource-group hb-rg-$region-$TAG --nsg-name hb-nsg-$region --name AllowSoldier --priority 500 --source-address-prefixes Any --destination-port-ranges 19000 --access Allow --protocol Tcp --description "Allow Soldier Port" | tee -a $LOG
       echo $(date) >> $LOG
 
    done
@@ -194,7 +194,7 @@ function do_create_vnet
       fi
       LOG=logs/$region.vnet.$TS.log
       echo $(date) > $LOG
-      $DRYRUN az network vnet create --resource-group hb-rg-$region-$TAG --subscription $SUBSCRIPTION --location $region --name hb-vnet-$region --address-prefixes $PREFIX --subnet-name default --subnet-prefix $PREFIX | tee -a $LOG
+      $DRYRUN az network vnet create --resource-group hb-rg-$region-$TAG --location $region --name hb-vnet-$region --address-prefixes $PREFIX --subnet-name default --subnet-prefix $PREFIX | tee -a $LOG
       echo $(date) >> $LOG
    done
 
@@ -216,26 +216,26 @@ function do_clear_all_resources
       echo $(date) > $LOG
 
       local parameters=configs/vm-parameters-$region.json
-      RG=$($JQ " .$region | .rg " $CONFIG | tr -d \")
+      RG=$($JQ " .$region | .rg " $CONFIG)
 
-      declare -a nicID=( $(az network nic list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
+      declare -a nicID=( $(az network nic list --resource-group $RG --query '[].id' -o tsv) )
       if [ "${nicID}x" != "x" ]; then
-         $DRYRUN az network nic delete --no-wait --resource-group $RG --subscription $SUBSCRIPTION --ids "${nicID[@]}" | tee -a $LOG
+         $DRYRUN az network nic delete --no-wait --resource-group $RG --ids "${nicID[@]}" | tee -a $LOG
       fi
 
-      declare -a ipID=( $(az network public-ip list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
+      declare -a ipID=( $(az network public-ip list --resource-group $RG --query '[].id' -o tsv) )
       if [ "${ipID}x" != "x" ]; then
-         $DRYRUN az network public-ip delete --resource-group $RG --subscription $SUBSCRIPTION --ids "${ipID[@]}" | tee -a $LOG
+         $DRYRUN az network public-ip delete --resource-group $RG --ids "${ipID[@]}" | tee -a $LOG
       fi
 
-      declare -a accID=( $(az storage account list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
+      declare -a accID=( $(az storage account list --resource-group $RG --query '[].id' -o tsv) )
       if [ "${accID}x" != "x" ]; then
-         $DRYRUN az storage account delete --yes --resource-group $RG --subscription $SUBSCRIPTION --ids "${accID[@]}" | tee -a $LOG
+         $DRYRUN az storage account delete --yes --resource-group $RG --ids "${accID[@]}" | tee -a $LOG
       fi
 
-      declare -a diskID=( $(az disk list --resource-group $RG --subscription $SUBSCRIPTION --query '[].id' -o tsv) )
+      declare -a diskID=( $(az disk list --resource-group $RG --query '[].id' -o tsv) )
       if [ "${diskID}x" != "x" ]; then
-         $DRYRUN az disk delete --yes --no-wait --resource-group $RG --subscription $SUBSCRIPTION --ids "${diskID[@]}" | tee -a $LOG
+         $DRYRUN az disk delete --yes --no-wait --resource-group $RG --ids "${diskID[@]}" | tee -a $LOG
       fi
 
       echo $(date) >> $LOG

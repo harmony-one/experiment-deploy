@@ -34,13 +34,13 @@ Options:
    -v parameter   the parameter file  (default: $PARAMETER)
 
    -a tag         tag of the resource group (default: $TAG)
-   -x prefix      prefix of the subnet (default: $PREFIX)
 
 
 Action:
    list           list the resources
    init           do deployment to init a region
    delete         delete all resources in one region
+   output         update profile to save the resource group data
 
 Examples:
    $ME -r eastus list
@@ -92,7 +92,7 @@ function do_init_region
 
 function do_terminate_region
 {
-   rgs=$(az group list --subscription $SUBSCRIPTION --query "[?location=='$REGION']" | $JQ '.[].name' | tr -d \")
+   rgs=$(az group list --subscription $SUBSCRIPTION --query "[?location=='$REGION']" | $JQ '.[].name')
    for i in ${rgs}; do
       echo "Do you want to remove resource group: $i (yes/no)?"
       read yesno
@@ -113,6 +113,12 @@ function do_list_resources
    )
 }
 
+function do_save_output
+{
+   set -x
+   az group list --subscription $SUBSCRIPTION --query "[?location=='$REGION']" > configs/$PROFILE.rg.$REGION.json
+}
+
 ######################################################
 
 DRYRUN=echo
@@ -121,12 +127,11 @@ TAG=$(date +%m%d)
 REGION=
 TEMPLATE=configs/vnet-template.json
 PARAMETER=configs/vnet-parameters.json
-PREFIX=10.10.0.0/20
 PROFILE=benchmark
 GROUP=1
 START=100
 
-while getopts "hnGr:g:t:v:a:x:p:s:" option; do
+while getopts "hnGr:g:t:v:a:p:s:" option; do
    case $option in
       r) REGION=$OPTARG ;;
       G) DRYRUN= ;;
@@ -134,7 +139,6 @@ while getopts "hnGr:g:t:v:a:x:p:s:" option; do
       v) PARAMETER=$OPTARG ;;
       g) GROUP=$OPTARG ;;
       a) TAG=$OPTARG ;;
-      x) PREFIX=$OPTARG ;;
       s) START=$OPTARG ;;
       h|?|*) usage ;;
    esac
@@ -156,6 +160,8 @@ case $ACTION in
       do_delete_region ;;
    init)
       do_init_region ;;
+   output)
+      do_save_output ;;
    *)
       usage "Invalid/missing Action: '$ACTION'" ;;
 esac
