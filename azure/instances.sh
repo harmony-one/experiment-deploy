@@ -32,6 +32,7 @@ Options:
 
 Action:
    list           list the vm launched
+   listip         list all the public ip
    launch         do deployment to launch instances
    terminate      terminate instances
 
@@ -83,6 +84,21 @@ function do_list_instance
          echo az vm list --resource-group $rg --show-details --query '[].{ip:publicIps}' -o tsv
       else
          az vm list --resource-group $rg --show-details --query '[].{ip:publicIps}' -o tsv | tee -a $LOG
+      fi
+   done
+}
+
+function do_list_ip
+{
+   LOG=logs/$region.listip.$TS.log
+   for rg in ${RGS[@]}; do
+      if [ -n "$DRYRUN" ]; then
+         echo az network public-ip list --resource-group $rg --query "[?provisioningState=='Succeeded']"
+      else
+      (
+         set -x
+         az network public-ip list --resource-group $rg --query "[?provisioningState=='Succeeded']" | $JQ .[].ipAddress | tee -a $LOG
+      )
       fi
    done
 }
@@ -186,6 +202,8 @@ case $ACTION in
       do_launch_instance ;;
    terminate)
       do_terminate_instance ;;
+   listip)
+      do_list_ip ;;
    *)
       usage "Invalid/missing Action '$ACTION'" ;;
 esac
