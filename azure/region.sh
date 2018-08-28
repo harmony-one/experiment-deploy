@@ -29,6 +29,7 @@ Options:
    -v parameter   the parameter file  (default: $PARAMETER)
 
    -a tag         tag of the resource group (default: $TAG)
+   -y             no confirmation for the delete (default: $YESNO)
 
 
 Action:
@@ -60,8 +61,9 @@ function do_init_region
    for i in $(seq 1 $GROUP); do
    (
       $DRYRUN ./deploy.sh -i $SUBSCRIPTION -g hb-rg-$REGION-$TAG-${START}$i -n bh-rg-$REGION-deployment -l $REGION -t $TEMPLATE -v $PARAMETER -p start=$START$i
-   )
+   ) &
    done
+   wait
    if [ -n "$DRYRUN" ]; then
       echo "NOTE: please use -G to do the real action"
    fi
@@ -71,8 +73,11 @@ function do_delete_region
 {
    rgs=$(az group list --query "[?starts_with(name,'hb-rg-$REGION')]" | $JQ '.[].name')
    for i in ${rgs}; do
-      echo "Do you want to remove resource group: $i (yes/no)?"
-      read yesno
+      if [ "$YESNO" != "yes" ]; then
+         read -p "Do you want to remove resource group: $i (yes/no)?" yesno
+      else
+         yesno=yes
+      fi
       if [ "$yesno" = "yes" ]; then
       (
          set -x
@@ -104,8 +109,9 @@ PARAMETER=configs/vnet-parameters.json
 PROFILE=benchmark
 GROUP=1
 START=100
+YESNO=no
 
-while getopts "hnGr:g:t:v:a:p:s:" option; do
+while getopts "hnGr:g:t:v:a:p:s:y" option; do
    case $option in
       r) REGION=$OPTARG ;;
       G) DRYRUN= ;;
@@ -114,6 +120,7 @@ while getopts "hnGr:g:t:v:a:p:s:" option; do
       g) GROUP=$OPTARG ;;
       a) TAG=$OPTARG ;;
       s) START=$OPTARG ;;
+      y) YESNO=yes ;;
       h|?|*) usage ;;
    esac
 done

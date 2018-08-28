@@ -62,15 +62,17 @@ function do_launch_instance
       VNET=$(az network vnet list --resource-group $rg | $JQ .[].name)
 
       END=$(( $START + $GROUP - 1 ))
-      for s in $(seq $START $END); do
       (
+      for s in $(seq $START $END); do
          date
          set -x
          $DRYRUN az group deployment create --name $region.deploy.$TS --resource-group $rg --template-file $TEMPLATE --parameters @${PARAMETERS} count=$COUNT start=$s harmony_benchmark_nsg=$NSG harmony_benchmark_vnet=$VNET 2>>$ERRLOG >> $LOG
-      )
+         date
       done
+      ) &
    done
 
+   wait
    echo $(date) >> $LOG
    echo $(date) >> $ERRLOG
    echo
