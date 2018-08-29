@@ -17,6 +17,12 @@ JQ="jq -M -r"
 SUBSCRIPTION=$($JQ .subscriptionId $CONFIG)
 REGIONS=( $($JQ ' .regions | .[] ' $CONFIG) )
 
+# AZ allows <= 800 resource per deployment
+# one VM takes 4 resources, thus we can only launch <= 200 per deployment
+MAX_PER_DEPLOY=200
+MAX_NUM_RG=10
+MAX_VM_PER_REGION=$(( $MAX_PER_DEPLOY * 4 * $MAX_NUM_RG ))
+
 #set the default subscription id
 az account set --subscription $SUBSCRIPTION
 
