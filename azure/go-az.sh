@@ -18,6 +18,7 @@ ACTION:
    init        init Azure regions (${REGIONS[@]})
    launch      launch vms in Azure region
    deinit      deinit Azure regions
+   listip      list ip address of all instances
 
 $MAX_NUM_RG <= NUM_VMS <= $MAX_VM_PER_REGION
 
@@ -59,7 +60,7 @@ function launch_vms
    fi
 
 # -s 99 is to set a tag, which is adjustable
-# TODO: add a parameter
+# TODO: add a parameter to change the tag
    date
    for region in ${REGIONS[@]}; do
       ./instances.sh -r $region -s 99 -c $vm_per_group -g $group launch &
@@ -68,9 +69,13 @@ function launch_vms
 
 # wait for all instance launched
    wait
+}
+
+function list_ips
+{
    date
    for region in ${REGIONS[@]}; do
-      ./instances.sh -r $region listip > configs/$region.ips
+      ./instances.sh -r $region -G listip > configs/$region.ips
    done
    date
 }
@@ -106,6 +111,7 @@ case "$ACTION" in
    "init") init_region ;;
    "launch") launch_vms ;;
    "deinit") deinit_region ;;
+   "listip") list_ips ;;
    *) usage ;;
 esac
 
