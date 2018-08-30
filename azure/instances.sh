@@ -51,26 +51,26 @@ EOF
 
 function do_launch_instance
 {
-   LOG=logs/$region.launch.$TS.log
-   ERRLOG=logs/$region.launch.error.$TS.log
+   LOG=logs/$REGION.launch.$TS.log
+   ERRLOG=logs/$REGION.launch.error.$TS.log
    echo $(date) > $LOG
    echo $(date) > $ERRLOG
 
+   date
    for rg in ${RGS[@]}; do
-      NUM=$($JQ ' .parameters.count.value ' $PARAMETERS)
       NSG=$(az network nsg list --resource-group $rg | $JQ .[].name)
       VNET=$(az network vnet list --resource-group $rg | $JQ .[].name)
+      RGTAG=$(echo $rg | sed "s/hb-rg-$REGION-\(.*\)/\1/")
 
       END=$(( $START + $GROUP - 1 ))
       (
       for s in $(seq $START $END); do
-         date
          set -x
-         $DRYRUN az group deployment create --name $region.deploy.$TS --resource-group $rg --template-file $TEMPLATE --parameters @${PARAMETERS} count=$COUNT start=$s harmony_benchmark_nsg=$NSG harmony_benchmark_vnet=$VNET 2>>$ERRLOG >> $LOG
-         date
+         $DRYRUN az group deployment create --name $region.deploy.$TS --resource-group $rg --template-file $TEMPLATE --parameters @${PARAMETERS} count=$COUNT start=${RGTAG}-${s} harmony_benchmark_nsg=$NSG harmony_benchmark_vnet=$VNET 2>>$ERRLOG >> $LOG
       done
       ) &
    done
+   date
 
    wait
    echo $(date) >> $LOG
@@ -80,34 +80,31 @@ function do_launch_instance
 
 function do_list_instance
 {
-   LOG=logs/$region.list.$TS.log
+   LOG=logs/$REGION.list.$TS.log
    for rg in ${RGS[@]}; do
       if [ -n "$DRYRUN" ]; then
          echo az vm list --resource-group $rg --show-details --query '[].{ip:publicIps}' -o tsv
       else
-         az vm list --resource-group $rg --show-details --query '[].{ip:publicIps}' -o tsv | tee -a $LOG
+         az vm list --resource-group $rg --show-details --query '[].{ip:publicIps name:name}' -o tsv | tee -a $LOG
       fi
    done
 }
 
 function do_list_ip
 {
-   LOG=logs/$region.listip.$TS.log
+   LOG=logs/$REGION.listip.$TS.log
    for rg in ${RGS[@]}; do
       if [ -n "$DRYRUN" ]; then
          echo az network public-ip list --resource-group $rg --query "[?provisioningState=='Succeeded']"
       else
-      (
-         set -x
-         az network public-ip list --resource-group $rg --query "[?provisioningState=='Succeeded']" | $JQ .[].ipAddress | tee -a $LOG
-      )
+         az network public-ip list --resource-group $rg --query "[?provisioningState=='Succeeded']" | $JQ '.[] | .ipAddress + " " + .name' | sed 's/ip/node/' | tee -a $LOG
       fi
    done
 }
 
 function do_terminate_instance
 {
-   LOG=logs/$region.delete.$TS.log
+   LOG=logs/$REGION.delete.$TS.log
    echo $(date) > $LOG
    for rg in ${RGS[@]}; do
       ID=( $(az vm list --resource-group $rg --query '[].id' -o tsv) )
@@ -140,7 +137,7 @@ function _check_configuration_files
       exit 1
    fi
 
-   PARAMETERS=configs/vm-parameters-$region.json
+   PARAMETERS=configs/vm-parameters-$REGION.json
    if [ ! -f $PARAMETERS ]; then
       echo Could not find the parameters file: $PARAMETERS
       exit 1

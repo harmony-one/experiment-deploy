@@ -4,7 +4,7 @@
   "parameters": {
     "start": {
       "defaultValue": 1,
-      "type": "int"
+      "type": "String"
     },
     "count": {
       "defaultValue": 5,

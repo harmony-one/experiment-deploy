@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "start": {
-      "value": 1
+      "value": "1"
     },
     "count": {
       "value": 100
