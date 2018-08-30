@@ -91,6 +91,9 @@ function collect_ip
 
 function generate_distribution
 {
+   echo "Merge raw_ip.txt"
+   cat $ROOTDIR/azure/configs/raw_ip.txt >> raw_ip.txt
+
    echo "Generate distribution_config"
    python generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM
 }

@@ -76,6 +76,7 @@ function list_ips
    date
    for region in ${REGIONS[@]}; do
       ./instances.sh -r $region -G listip > configs/$region.ips
+      cat configs/$region.ips >> configs/raw_ip.txt
    done
    date
 }
