@@ -63,7 +63,7 @@ function launch_vms
 # TODO: add a parameter to change the tag
    date
    for region in ${REGIONS[@]}; do
-      ./instances.sh -r $region -s 99 -c $vm_per_group -g $group launch &
+      ./instances.sh -r $region -s 99 -c $vm_per_group -g $group -G launch &
    done
    date
 
@@ -74,6 +74,7 @@ function launch_vms
 function list_ips
 {
    date
+   rm -f configs/raw_ip.txt
    for region in ${REGIONS[@]}; do
       ./instances.sh -r $region -G listip > configs/$region.ips
       cat configs/$region.ips >> configs/raw_ip.txt
