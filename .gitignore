@@ -1,5 +1,17 @@
 azure/logs/*.log
+azure/configs/*.ips
+azure/configs/raw_ip.txt
 configs/*.ip
 azure/archive
 azure/configs/*.bak
+azure/configs/benchmark.rg.eastus.json
+azure/configs/benchmark.rg.southeastasia.json
+azure/configs/benchmark.rg.westeurope.json
+aws-experiment-launch/utils/*.pyc
+aws-experiment-launch/distribution_config.txt
+aws-experiment-launch/commander_logging.sh
+aws-experiment-launch/instance_ids_output.txt
+aws-experiment-launch/instance_output.txt
+aws-experiment-launch/raw_ip.txt
+aws-experiment-launch/logs/
 *.swp
