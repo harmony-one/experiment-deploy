@@ -1,3 +1,5 @@
+#!/bin/env python
+
 import argparse
 import base64
 import boto3
@@ -28,8 +30,8 @@ class InstanceResource(enum.Enum):
     def __str__(self):
         return self.value
 
-def run_one_region_on_demand_instances(config, region_number, number_of_instances, tag):
-    ec2_client = utils.create_client(config, region_number)
+def run_one_region_on_demand_instances(profile, config, region_number, number_of_instances, tag):
+    ec2_client = utils.create_client(profile, config, region_number)
     node_name_tag = create_instances(
         config, ec2_client, region_number, number_of_instances, tag)
     LOGGER.info("Created %s in region %s" % (node_name_tag, region_number))
@@ -107,13 +109,13 @@ def create_instances(config, ec2_client, region_number, number_of_instances, tag
 
 LOCK_FOR_RUN_ONE_REGION = threading.Lock()
 
-def run_for_one_region_on_demand(config, region_number, number_of_instances, fout, fout2):
+def run_for_one_region_on_demand(profile, config, region_number, number_of_instances, fout, fout2):
     tag = 0
     number_of_instances = int(number_of_instances)
     while number_of_instances > 0:
         number_of_creation = min(utils.MAX_INSTANCES_FOR_DEPLOYMENT, number_of_instances)
         node_name_tag, ec2_client = run_one_region_on_demand_instances(
-            config, region_number, number_of_creation, tag)
+            profile, config, region_number, number_of_creation, tag)
         if node_name_tag:
             LOGGER.info("Managed to create instances for region %s with name_name_tag %s" %
                         (region_number, node_name_tag))
@@ -165,6 +167,8 @@ if __name__ == "__main__":
                         default=InstanceResource.ON_DEMAND, choices=list(InstanceResource))
     parser.add_argument('--append', dest='append', type=bool, default=False,
                         help='append to the current instance_output')
+    parser.add_argument('--profile', type=str, dest='aws_profile', default='default',
+                        help='set the aws profile name')
     args = parser.parse_args()
     config = read_region_config(args.region_config)
     region_list = args.regions.split(',')
@@ -181,7 +185,7 @@ if __name__ == "__main__":
             number_of_instances = num_instance_list[i]
             if instance_resource == InstanceResource.ON_DEMAND:
                 t = threading.Thread(target=run_for_one_region_on_demand, args=(
-                    config, region_number, number_of_instances, fout, fout2))
+                    args.aws_profile, config, region_number, number_of_instances, fout, fout2))
             elif instance_resource == InstanceResource.SPOT_FLEET:
                 t = threading.Thread(target=spot_fleet.run_one_region, args=(
                     region_number, number_of_instances, fout, fout2))

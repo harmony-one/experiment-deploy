@@ -1,3 +1,5 @@
+#!/bin/env python
+
 import argparse
 import os
 import random
@@ -14,6 +16,8 @@ if __name__ == "__main__":
                         dest='region_config', default='configuration.txt')
     parser.add_argument('--file_output', type=str,
                         dest='file_output', default='raw_ip.txt')
+    parser.add_argument('--profile', type=str,
+                        dest='aws_profile', default='default', help="aws configuration profile")
     args = parser.parse_args()
 
     if not args.instance_output or not os.path.isfile(args.instance_output):
@@ -27,7 +31,7 @@ if __name__ == "__main__":
                 items = line.split(" ")
                 region_number = items[1].strip()
                 node_name_tag = items[0].strip()
-                ip_list = utils.collect_public_ips(region_number, node_name_tag, args.region_config)
+                ip_list = utils.collect_public_ips(args.aws_profile, region_number, node_name_tag, args.region_config)
                 total_ips.extend([(ip, node_name_tag) for ip in ip_list])
             random.shuffle(total_ips)
             for tuple in total_ips:

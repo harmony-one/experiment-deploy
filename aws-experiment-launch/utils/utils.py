@@ -34,10 +34,13 @@ with open("userdata-soldier.sh", "r") as userdata_file:
 # UserData must be base64 encoded for spot instances.
 USER_DATA_BASE64 = base64.b64encode(USER_DATA)
 
-def create_client(config, region_number):
+def create_client(profile, config, region_number):
     region_name = config[region_number][REGION_NAME]
     # Create session.
-    session = boto3.Session(region_name=region_name)
+    if profile == 'default':
+        session = boto3.Session(region_name=region_name)
+    else:
+        session = boto3.Session(profile_name=profile, region_name=region_name)
     # Create a client.
     return session.client('ec2')
 
@@ -64,10 +67,14 @@ def get_ip_list(response):
     else:
         return []
 
-def create_ec2_client(region_number, region_config):
+def create_ec2_client(profile, region_number, region_config):
     config = read_region_config(region_config)
     region_name = config[region_number][REGION_NAME]
-    session = boto3.Session(region_name=region_name)
+    # Create session.
+    if profile == 'default':
+        session = boto3.Session(region_name=region_name)
+    else:
+        session = boto3.Session(profile_name=profile, region_name=region_name)
     return session.client('ec2'), session
 
 def collect_public_ips_from_ec2_client(ec2_client, node_name_tag):
@@ -79,8 +86,8 @@ def collect_public_ips_from_ec2_client(ec2_client, node_name_tag):
             ip_list.extend(instance['PublicIpAddress'] for instance in reservation['Instances'] if instance.get('PublicIpAddress'))
     return ip_list
 
-def collect_public_ips(region_number, node_name_tag, region_config):
-    ec2_client, _ = create_ec2_client(region_number, region_config)
+def collect_public_ips(profile, region_number, node_name_tag, region_config):
+    ec2_client, _ = create_ec2_client(profile, region_number, region_config)
     ip_list = collect_public_ips_from_ec2_client(ec2_client, node_name_tag)
     return ip_list
 

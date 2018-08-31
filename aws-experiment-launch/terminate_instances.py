@@ -1,3 +1,5 @@
+#!/bin/env python
+
 import argparse
 import logging
 import os
@@ -6,7 +8,7 @@ import sys
 import threading
 import boto3
 
-
+from utils import utils, spot_fleet, logger
 
 logging.basicConfig(level=logging.INFO, format='%(threadName)s %(asctime)s - %(name)s - %(levelname)s - %(message)s')
 LOGGER = logging.getLogger(__file__)
@@ -47,14 +49,8 @@ def get_instance_ids2(ec2_client, node_name_tag):
     filters = [{'Name': 'tag:Name','Values': [node_name_tag]}]
     return get_instance_ids(ec2_client.describe_instances(Filters=filters))
 
-def create_ec2_client(region_number, region_config):
-    config = read_configuration_file(region_config)
-    region_name = config[region_number][REGION_NAME]
-    session = boto3.Session(region_name=region_name)
-    return session.client('ec2'), session
-
-def terminate_instances_by_region(region_number, region_config, node_name_tag):
-    ec2_client, _ = create_ec2_client(region_number, region_config)
+def terminate_instances_by_region(profile, region_number, region_config, node_name_tag):
+    ec2_client, _ = utils.create_ec2_client(profile, region_number, region_config)
     filters = [{'Name': 'tag:Name','Values': [node_name_tag]}]
     instance_ids = get_instance_ids(ec2_client.describe_instances(Filters=filters))
     if instance_ids:
@@ -75,6 +71,8 @@ if __name__ == "__main__":
     parser.add_argument('--node_name_tag', type=str, dest='node_name_tag')
     parser.add_argument('--region_config', type=str,
                         dest='region_config', default='configuration.txt')
+    parser.add_argument('--profile', type=str,
+                        dest='aws_profile', default='aws configuration profile')
     args = parser.parse_args()
 
     if args.node_name_tag:
@@ -84,7 +82,7 @@ if __name__ == "__main__":
         for i in range(len(region_number_items)):
             region_number = region_number_items[i]
             node_name_tag = node_name_tag_items[i]
-            t = threading.Thread(target=terminate_instances_by_region, args=(region_number, args.region_config, node_name_tag))
+            t = threading.Thread(target=terminate_instances_by_region, args=(args.aws_profile, region_number, args.region_config, node_name_tag))
             t.start()
             thread_pool.append(t)
         for t in thread_pool:
@@ -97,7 +95,7 @@ if __name__ == "__main__":
                 items = line.split(" ")
                 region_number = items[1].strip()
                 node_name_tag = items[0].strip()
-                t = threading.Thread(target=terminate_instances_by_region, args=(region_number, args.region_config, node_name_tag))
+                t = threading.Thread(target=terminate_instances_by_region, args=(args.aws_profile, region_number, args.region_config, node_name_tag))
                 t.start()
                 thread_pool.append(t)
             for t in thread_pool:

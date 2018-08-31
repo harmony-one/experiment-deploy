@@ -24,6 +24,9 @@ OPTIONS:
 ACTION:
    n/a
 
+EXAMPLES:
+   $ME -c 100 -C 100 -s 10 -t 1
+
 EOF
    exit 1
 }
@@ -33,7 +36,7 @@ AZ_VM=10
 SHARD_NUM=5
 CLIENT_NUM=1
 SLEEP_TIME=10
-PROFILE=default
+PROFILE=harmony
 ROOTDIR=$(dirname $0)/..
 
 while getopts "hnc:C:s:t:p:" option; do
@@ -65,7 +68,7 @@ function launch_vms
    ) &
 
    echo "Creating $AWS_VM instances at 8 AWS regions"
-   python create_solider_instances.py --regions 1,2,3,4,5,6,7,8 --instances $AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM
+   ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions 1,2,3,4,5,6,7,8 --instances $AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM
 
    # wait for the background task to finish
    wait
@@ -84,7 +87,7 @@ function collect_ip
    ) &
 
    echo "Collecting IP addresses from AWS"
-   python collect_public_ips.py --instance_output instance_output.txt
+   ./collect_public_ips.py --profile ${PROFILE} --instance_output instance_output.txt
 
    wait
 }
@@ -106,7 +109,7 @@ function prepare_commander
 
 function upload_to_s3
 {
-   aws --profile $PROFILE s3 cp distribution_config.txt s3://unique-bucket-bin/distribution_config.txt --acl public-read-write
+   aws --profile ${PROFILE}-s3 s3 cp distribution_config.txt s3://unique-bucket-bin/distribution_config.txt --acl public-read-write
 }
 
 ####### main #########
