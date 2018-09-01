@@ -5,7 +5,7 @@ Local Config Mode
 
 The Default Mode.
 
-Add `-mode local` or omit `-mode` to enter local config mode. In this mode, the `commander` will host the config file `config.txt` on the commander machine and `solider`s will download the config file from `http://{commander_ip}:{commander_port}/distribution_config.txt`.
+Add `-mode local` or omit `-mode` to enter local config mode. In this mode, the `commander` will host the config file `distribution_config.txt` on the commander machine and `solider`s will download the config file from `http://{commander_ip}:{commander_port}/distribution_config.txt`.
 
 Remote Config Mode
 
@@ -76,7 +76,7 @@ func handleCommand(command string) {
 			log.Println("Failed to read config file")
 		}
 	case "init":
-		session.id = time.Now().Format("150405-20060102")
+		session.id = time.Now().Format("20060102-150405")
 		// create upload folder
 		session.uploadFolder = fmt.Sprintf("upload/%s", session.id)
 		err := os.MkdirAll(session.uploadFolder, os.ModePerm)
@@ -202,6 +202,7 @@ func serve() {
 	if setting.mode == "local" {
 		// Only host config file if in local mode
 		http.Handle("/", http.FileServer(http.Dir("./")))
+		log.Printf("Start to host config file at http://%s:%s/%s\n", setting.ip, setting.port, DistributionFileName)
 	}
 	http.HandleFunc("/upload", handleUploadRequest)
 	err := http.ListenAndServe(":"+setting.port, nil)
