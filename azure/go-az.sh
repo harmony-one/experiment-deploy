@@ -117,4 +117,6 @@ case "$ACTION" in
    *) usage ;;
 esac
 
-
+# TODO: support one region, in case of failure
+# TODO: handle failed deployment
+# TODO: handle partial failure of the deployment
