@@ -5,11 +5,14 @@ curl http://unique-bucket-bin.s3.amazonaws.com/txgen -o txgen
 curl http://unique-bucket-bin.s3.amazonaws.com/soldier -o soldier
 curl http://unique-bucket-bin.s3.amazonaws.com/benchmark -o benchmark
 curl http://unique-bucket-bin.s3.amazonaws.com/commander -o commander
+curl http://unique-bucket-bin.s3.amazonaws.com/go-commander.sh -o go-commander.sh
 
 chmod +x ./soldier
 chmod +x ./txgen
 chmod +x ./commander
 chmod +x ./kill_node.sh
+chmod +x ./benchmark
+
 echo "* soft     nproc          65535" | sudo tee -a /etc/security/limits.conf
 echo "* hard     nproc          65535" | sudo tee -a /etc/security/limits.conf
 echo "* soft     nofile         65535" | sudo tee -a /etc/security/limits.conf
