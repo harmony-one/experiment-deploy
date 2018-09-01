@@ -4,6 +4,8 @@ cd /home/ec2-user/
 curl http://unique-bucket-bin.s3.amazonaws.com/txgen -o txgen
 curl http://unique-bucket-bin.s3.amazonaws.com/soldier -o soldier
 curl http://unique-bucket-bin.s3.amazonaws.com/benchmark -o benchmark
+curl http://unique-bucket-bin.s3.amazonaws.com/commander -o commander
+
 chmod +x ./soldier
 chmod +x ./txgen
 chmod +x ./commander
