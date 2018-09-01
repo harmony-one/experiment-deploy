@@ -12,6 +12,7 @@ chmod +x ./txgen
 chmod +x ./commander
 chmod +x ./kill_node.sh
 chmod +x ./benchmark
+chmod +x ./go-commander.sh
 
 echo "* soft     nproc          65535" | sudo tee -a /etc/security/limits.conf
 echo "* hard     nproc          65535" | sudo tee -a /etc/security/limits.conf

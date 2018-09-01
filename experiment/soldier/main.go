@@ -25,7 +25,6 @@ import (
 
 	"github.com/simple-rules/experiment-deploy/experiment/soldier/s3"
 	"github.com/simple-rules/experiment-deploy/experiment/utils"
-	client_config "github.com/simple-rules/harmony-benchmark/client/config"
 	globalUtils "github.com/simple-rules/harmony-benchmark/utils"
 )
 
@@ -40,8 +39,8 @@ type sessionInfo struct {
 	commanderPort       string
 	localConfigFileName string
 	logFolder           string
-	config              *client_config.Config
-	myConfig            client_config.ConfigEntry
+	config              *globalUtils.DistributionConfig
+	myConfig            globalUtils.ConfigEntry
 }
 
 const (
@@ -149,6 +148,8 @@ func handleInitCommand(args []string, w *bufio.Writer) {
 	sessionID := args[3]
 	globalSession.id = sessionID
 	globalSession.logFolder = fmt.Sprintf("%slog-%v", logFolderPrefix, sessionID)
+
+	globalSession.config = globalUtils.NewDistributionConfig()
 
 	// create local config file
 	globalSession.localConfigFileName = fmt.Sprintf("node_config_%v_%v.txt", setting.port, globalSession.id)

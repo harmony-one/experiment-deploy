@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/simple-rules/experiment-deploy/experiment/utils"
-	client_config "github.com/simple-rules/harmony-benchmark/client/config"
+	globalUtils "github.com/simple-rules/harmony-benchmark/utils"
 )
 
 type commanderSetting struct {
@@ -36,7 +36,7 @@ type commanderSetting struct {
 	// Options in s3 mode
 	configURL string
 
-	config *client_config.Config
+	config *globalUtils.DistributionConfig
 }
 
 type sessionInfo struct {
@@ -103,7 +103,7 @@ func config(ip string, port string, mode string, configURL string) {
 	} else {
 		setting.configURL = configURL
 	}
-	setting.config = client_config.NewConfig()
+	setting.config = globalUtils.NewDistributionConfig()
 }
 
 func dictateNodes(command string) {
