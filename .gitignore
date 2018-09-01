@@ -17,3 +17,4 @@ aws-experiment-launch/logs/
 aws-experiment-launch/keys/
 *.swp
 bin
+tmp_log
