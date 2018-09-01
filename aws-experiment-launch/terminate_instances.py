@@ -72,7 +72,7 @@ if __name__ == "__main__":
     parser.add_argument('--region_config', type=str,
                         dest='region_config', default='configuration.txt')
     parser.add_argument('--profile', type=str,
-                        dest='aws_profile', default='aws configuration profile')
+                        dest='aws_profile', default='default', help='aws configuration profile')
     args = parser.parse_args()
 
     if args.node_name_tag:

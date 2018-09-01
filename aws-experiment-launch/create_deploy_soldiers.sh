@@ -20,6 +20,7 @@ OPTIONS:
    -s shards      number of shards (default: $SHARD_NUM)
    -t clients     number of clients (default: $CLIENT_NUM)
    -p profile     aws profile (default: $PROFILE)
+   -f ip_file     file containing ip address of pre-launched VMs
 
 ACTION:
    n/a
@@ -27,19 +28,22 @@ ACTION:
 EXAMPLES:
    $ME -c 100 -C 100 -s 10 -t 1
 
+   $ME -c 100 -s 10 -t 1 -f azure/configs/raw_ip.txt
+
 EOF
    exit 1
 }
 
 AWS_VM=10
-AZ_VM=10
+AZ_VM=0
 SHARD_NUM=5
 CLIENT_NUM=1
 SLEEP_TIME=10
 PROFILE=harmony
+IP_FILE=
 ROOTDIR=$(dirname $0)/..
 
-while getopts "hnc:C:s:t:p:" option; do
+while getopts "hnc:C:s:t:p:f:" option; do
    case $option in
       n) DRYRUN=--dry-run ;;
       c) AWS_VM=$OPTARG ;;
@@ -47,6 +51,7 @@ while getopts "hnc:C:s:t:p:" option; do
       s) SHARD_NUM=$OPTARG ;;
       t) CLIENT_NUM=$OPTARG ;;
       p) PROFILE=$OPTARG ;;
+      f) IP_FILE=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done
@@ -57,6 +62,7 @@ ACTION=$@
 
 function launch_vms
 {
+   if [ $AZ_VM -gt 0 ]; then
    (
       echo "Creating $AZ_VM instances at 3 Azure regions"
       date
@@ -66,6 +72,7 @@ function launch_vms
       popd
       date
    ) &
+   fi
 
    echo "Creating $AWS_VM instances at 8 AWS regions"
    ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions 1,2,3,4,5,6,7,8 --instances $AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM
@@ -79,12 +86,14 @@ function launch_vms
 
 function collect_ip
 {
+   if [ $AZ_VM -gt 0 ]; then
    (
       echo "Collecting IP addresses from Azure"
       pushd $ROOTDIR/azure
       ./go-az.sh listip
       popd
    ) &
+   fi
 
    echo "Collecting IP addresses from AWS"
    ./collect_public_ips.py --profile ${PROFILE} --instance_output instance_output.txt
@@ -94,8 +103,15 @@ function collect_ip
 
 function generate_distribution
 {
-   echo "Merge raw_ip.txt"
-   cat $ROOTDIR/azure/configs/raw_ip.txt >> raw_ip.txt
+   if [ $AZ_VM -gt 0 ]; then
+      echo "Merge raw_ip.txt from Azure"
+      cat $ROOTDIR/azure/configs/raw_ip.txt >> raw_ip.txt
+   fi
+
+   if [  -f "$IP_FILE" ]; then
+      echo "Merge pre-launched IP address"
+      cat $IP_FILE >> raw_ip.txt
+   fi
 
    echo "Generate distribution_config"
    python generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM
