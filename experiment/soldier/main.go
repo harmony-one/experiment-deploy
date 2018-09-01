@@ -23,8 +23,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/simple-rules/harmony-benchmark/aws-experiment-launch/experiment/soldier/s3"
-	"github.com/simple-rules/harmony-benchmark/aws-experiment-launch/experiment/utils"
+	"github.com/simple-rules/experiment-deploy/experiment/soldier/s3"
+	"github.com/simple-rules/experiment-deploy/experiment/utils"
 	"github.com/simple-rules/harmony-benchmark/configr"
 	globalUtils "github.com/simple-rules/harmony-benchmark/utils"
 )
