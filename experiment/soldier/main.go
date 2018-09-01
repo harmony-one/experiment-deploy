@@ -25,7 +25,7 @@ import (
 
 	"github.com/simple-rules/experiment-deploy/experiment/soldier/s3"
 	"github.com/simple-rules/experiment-deploy/experiment/utils"
-	"github.com/simple-rules/harmony-benchmark/configr"
+	client_config "github.com/simple-rules/harmony-benchmark/client/config"
 	globalUtils "github.com/simple-rules/harmony-benchmark/utils"
 )
 
@@ -40,8 +40,8 @@ type sessionInfo struct {
 	commanderPort       string
 	localConfigFileName string
 	logFolder           string
-	configr             *configr.Configr
-	myConfig            configr.ConfigEntry
+	config              *client_config.Config
+	myConfig            client_config.ConfigEntry
 }
 
 const (
@@ -155,8 +155,8 @@ func handleInitCommand(args []string, w *bufio.Writer) {
 	utils.DownloadFile(globalSession.localConfigFileName, configURL)
 	log.Println("Successfully downloaded config")
 
-	globalSession.configr.ReadConfigFile(globalSession.localConfigFileName)
-	globalSession.myConfig = *globalSession.configr.GetMyConfigEntry(setting.ip, setting.port)
+	globalSession.config.ReadConfigFile(globalSession.localConfigFileName)
+	globalSession.myConfig = *globalSession.config.GetMyConfigEntry(setting.ip, setting.port)
 
 	if err := runInstance(); err == nil {
 		logAndReply(w, "Done init.")

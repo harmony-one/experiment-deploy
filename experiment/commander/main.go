@@ -26,7 +26,7 @@ import (
 	"time"
 
 	"github.com/simple-rules/experiment-deploy/experiment/utils"
-	"github.com/simple-rules/harmony-benchmark/configr"
+	client_config "github.com/simple-rules/harmony-benchmark/client/config"
 )
 
 type commanderSetting struct {
@@ -36,7 +36,7 @@ type commanderSetting struct {
 	// Options in s3 mode
 	configURL string
 
-	configr *configr.Configr
+	config *client_config.Config
 }
 
 type sessionInfo struct {
@@ -69,9 +69,9 @@ func handleCommand(command string) {
 			}
 		}
 
-		err := setting.configr.ReadConfigFile(DistributionFileName)
+		err := setting.config.ReadConfigFile(DistributionFileName)
 		if err == nil {
-			log.Printf("The loaded config has %v nodes\n", len(setting.configr.GetConfigEntries()))
+			log.Printf("The loaded config has %v nodes\n", len(setting.config.GetConfigEntries()))
 		} else {
 			log.Println("Failed to read config file")
 		}
@@ -103,12 +103,12 @@ func config(ip string, port string, mode string, configURL string) {
 	} else {
 		setting.configURL = configURL
 	}
-	setting.configr = configr.NewConfigr()
+	setting.config = client_config.NewConfig()
 }
 
 func dictateNodes(command string) {
 	resultChan := make(chan int)
-	configs := setting.configr.GetConfigEntries()
+	configs := setting.config.GetConfigEntries()
 	for _, entry := range configs {
 		port := "1" + entry.Port // the port number of solider is "1" + node port
 		addr := strings.Join([]string{entry.IP, port}, ":")
