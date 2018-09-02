@@ -1,10 +1,13 @@
 #!/bin/bash
+
 yum install ruby -y
 cd /home/ec2-user/
+
 curl http://unique-bucket-bin.s3.amazonaws.com/txgen -o txgen
 curl http://unique-bucket-bin.s3.amazonaws.com/soldier -o soldier
 curl http://unique-bucket-bin.s3.amazonaws.com/benchmark -o benchmark
 curl http://unique-bucket-bin.s3.amazonaws.com/commander -o commander
+curl http://unique-bucket-bin.s3.amazonaws.com/profiler -o profiler
 curl http://unique-bucket-bin.s3.amazonaws.com/go-commander.sh -o go-commander.sh
 
 chmod +x ./soldier
@@ -13,6 +16,7 @@ chmod +x ./commander
 chmod +x ./kill_node.sh
 chmod +x ./benchmark
 chmod +x ./go-commander.sh
+chmod +x ./profiler
 
 echo "* soft     nproc          65535" | sudo tee -a /etc/security/limits.conf
 echo "* hard     nproc          65535" | sudo tee -a /etc/security/limits.conf
@@ -25,10 +29,11 @@ echo "root hard     nofile         65535" | sudo tee -a /etc/security/limits.con
 echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
 
 # Get My IP
-ip=`curl http://169.254.169.254/latest/meta-data/public-ipv4`
+ip=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
 
 NODE_PORT=9000
 SOLDIER_PORT=1$NODE_PORT
+
 # Kill existing soldier/node
 fuser -k -n tcp $SOLDIER_PORT
 fuser -k -n tcp $NODE_PORT
