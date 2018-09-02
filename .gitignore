@@ -14,7 +14,7 @@ aws-experiment-launch/instance_ids_output.txt
 aws-experiment-launch/instance_output.txt
 aws-experiment-launch/raw_ip.txt
 aws-experiment-launch/logs/
-aws-experiment-launch/keys/
+keys
 *.swp
 bin
 tmp_log
