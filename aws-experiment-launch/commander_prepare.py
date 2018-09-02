@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import argparse
 import logging
 import os
@@ -27,6 +29,8 @@ if __name__ == "__main__":
                         dest='distribution_config', default='distribution_config.txt')
     parser.add_argument('--commander_logging', type=str,
                         dest='commander_logging', default='commander_logging.sh')
+    parser.add_argument('--log_download', type=str,
+                        dest='log_download', default='download_logs_from_commander.sh')
 
     args = parser.parse_args()
 
@@ -54,9 +58,16 @@ if __name__ == "__main__":
         sys.exit(1)
 
     with open(args.commander_logging, "w") as fout:
-        fout.write("ssh -i ./keys/%s ec2-user@%s\n" % (PEMS[commander_region - 1], commander_address))
+        fout.write("ssh -i ../keys/%s ec2-user@%s\n" % (PEMS[commander_region - 1], commander_address))
     st = os.stat(args.commander_logging)
     os.chmod(args.commander_logging, st.st_mode | stat.S_IEXEC)
     LOGGER.info("Generated %s" % args.commander_logging)
+
+    with open(args.log_download, "w") as fout:
+        fout.write("ssh -i ../keys/%s -r ec2-user@%s:upload tmp\n" % (PEMS[commander_region - 1], commander_address))
+    st = os.stat(args.log_download)
+    os.chmod(args.log_download, st.st_mode | stat.S_IEXEC)
+    LOGGER.info("Generated %s" % args.log_download)
+
     LOGGER.info("DONE.")
 

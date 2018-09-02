@@ -114,13 +114,13 @@ function generate_distribution
    fi
 
    echo "Generate distribution_config"
-   python generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM
+   ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM
 }
 
 function prepare_commander
 {
    echo "Run commander prepare"
-   python commander_prepare.py
+   ./commander_prepare.py
 }
 
 function upload_to_s3

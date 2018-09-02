@@ -14,6 +14,10 @@ aws-experiment-launch/instance_ids_output.txt
 aws-experiment-launch/instance_output.txt
 aws-experiment-launch/raw_ip.txt
 aws-experiment-launch/logs/
+aws-experiment-launch/download_logs_from_commander.sh
+experiment/soldier/soldier
+aws-experiment-launch/tmp/
+aws-experiment-launch/leader_addresses.txt
 keys
 *.swp
 bin
