@@ -4,7 +4,7 @@ set -euo pipefail
 
 source ./common.sh
 
-DRYRUN=
+SUFFIX=bh
 # use 10 resource group, can launch up to 800*10=8000 vms in one region
 
 function usage
@@ -12,7 +12,11 @@ function usage
    ME=$(basename $0)
    cat<<EOF
 
-Usage: $ME [ACTION] NUM_VMS
+Usage: $ME [OPTIONS] ACTION NUM_VMS
+
+OPTIONS:
+   -h          print this help message
+   -s suffix   set suffix of resource groups (default: $SUFFIX)
 
 ACTION:
    init        init Azure regions (${REGIONS[@]})
@@ -30,7 +34,7 @@ function init_region
 {
    date
    for region in ${REGIONS[@]}; do
-      ./region.sh -r $region -s bh -g $MAX_NUM_RG -G init &
+      ./region.sh -r $region -s $SUFFIX -g $MAX_NUM_RG -G init &
    done
    date
 
@@ -95,7 +99,15 @@ function deinit_region
    echo using ./regin.sh -r REGION list
 }
 
-#########################
+###############################
+while getopts "hs:" option; do
+   case $option in
+      h) usage ;;
+      s) SUFFIX=$OPTARG ;;
+   esac
+done
+
+shift $(($OPTIND-1))
 
 ACTION=${1:-help}
 NUM_VMS=${2:-$MAX_NUM_RG}
