@@ -11,7 +11,7 @@
       "type": "int"
     },
     "adminuser": {
-      "defaultValue": "haochen",
+      "defaultValue": "ec2-user",
       "type": "String"
     },
     "region": {

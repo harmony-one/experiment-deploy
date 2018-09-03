@@ -6,7 +6,7 @@
       "value": 200
     },
     "adminuser": {
-      "value": "haochen"
+      "value": "ec2-user"
     },
     "region": {
       "value": "southeastasia"

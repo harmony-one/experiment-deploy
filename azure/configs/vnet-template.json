@@ -51,6 +51,24 @@
             }
           },
           {
+            "name": "AllowUpload",
+            "properties": {
+              "description": "Allow Upload",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8080",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 350,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
             "name": "AllowNode",
             "properties": {
               "description": "Allow Node",

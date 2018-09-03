@@ -1,25 +1,43 @@
 #!/bin/bash
 
-source /tmp/aws.config
-
 PUB_IP=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-04-02&format=text")
-TS=$(date +%y%m%d.%H%M%S)
-NODEDIR=/tmp/nodes-$TS
-SERVER=52.36.234.52
 
-mkdir -p $NODEDIR
-aws s3 cp s3://unique-bucket-bin/soldier $NODEDIR/soldier
-aws s3 cp s3://unique-bucket-bin/benchmark $NODEDIR/benchmark
-aws s3 cp s3://unique-bucket-bin/txgen $NODEDIR/txgen
+# yum install ruby -y
+mkdir -p /home/ec2-user
+cd /home/ec2-user/
 
-chmod +x $NODEDIR/{soldier,benchmark,txgen}
+curl http://unique-bucket-bin.s3.amazonaws.com/txgen -o txgen
+curl http://unique-bucket-bin.s3.amazonaws.com/soldier -o soldier
+curl http://unique-bucket-bin.s3.amazonaws.com/benchmark -o benchmark
+curl http://unique-bucket-bin.s3.amazonaws.com/commander -o commander
+curl http://unique-bucket-bin.s3.amazonaws.com/profiler -o profiler
+curl http://unique-bucket-bin.s3.amazonaws.com/go-commander.sh -o go-commander.sh
+curl http://unique-bucket-bin.s3.amazonaws.com/kill_node.sh -o kill_node.sh
 
-cd $NODEDIR
+chmod +x ./soldier
+chmod +x ./txgen
+chmod +x ./commander
+chmod +x ./kill_node.sh
+chmod +x ./benchmark
+chmod +x ./go-commander.sh
+chmod +x ./profiler
 
-node_port=9000
-soldier_port=1$node_port
-# Kill existing soldier
-fuser -k -n tcp $soldier_port
+echo "* soft     nproc          65535" | sudo tee -a /etc/security/limits.conf
+echo "* hard     nproc          65535" | sudo tee -a /etc/security/limits.conf
+echo "* soft     nofile         65535" | sudo tee -a /etc/security/limits.conf
+echo "* hard     nofile         65535" | sudo tee -a /etc/security/limits.conf
+echo "root soft     nproc          65535" | sudo tee -a /etc/security/limits.conf
+echo "root hard     nproc          65535" | sudo tee -a /etc/security/limits.conf
+echo "root soft     nofile         65535" | sudo tee -a /etc/security/limits.conf
+echo "root hard     nofile         65535" | sudo tee -a /etc/security/limits.conf
+echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
+
+NODE_PORT=9000
+SOLDIER_PORT=1$NODE_PORT
+
+# Kill existing soldier/node
+fuser -k -n tcp $SOLDIER_PORT
+fuser -k -n tcp $NODE_PORT
 
 # Run soldier
-./soldier -ip $PUB_IP -port $node_port > soldier_log 2>&1 &
+./soldier -ip $PUB_IP -port $NODE_PORT > soldier_log 2>&1 &
