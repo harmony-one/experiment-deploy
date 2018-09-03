@@ -2,7 +2,6 @@
 ./aws/kill_node.sh
 
 go build -o bin/benchmark ../harmony-benchmark
-go build -o bin/profiler ../harmony-benchmark/profiler/main.go
 go build -o bin/txgen ../harmony-benchmark/client/txgen/main.go
 go build -o bin/commander experiment/commander/main.go
 go build -o bin/soldier experiment/soldier/main.go
