@@ -47,6 +47,7 @@ type sessionInfo struct {
 	commanderPort       string
 	localConfigFileName string
 	logFolder           string
+	duration            string
 	config              *globalUtils.DistributionConfig
 	myConfig            globalUtils.ConfigEntry
 }
@@ -163,6 +164,13 @@ func handleInitCommand(args []string, w *bufio.Writer) {
 	globalSession.commanderPort = port
 	configURL := args[2]
 	sessionID := args[3]
+
+	if len(args) > 4 {
+		globalSession.duration = args[4]
+	} else {
+		globalSession.duration = "60"
+	}
+
 	globalSession.id = sessionID
 	globalSession.logFolder = fmt.Sprintf("%slog-%v", logFolderPrefix, sessionID)
 
@@ -355,7 +363,7 @@ func runNode() error {
 
 func runClient() error {
 	log.Println("running client")
-	return globalUtils.RunCmd("./txgen", "-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder)
+	return globalUtils.RunCmd("./txgen", "-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder, "-duration", globalSession.duration)
 }
 
 func main() {

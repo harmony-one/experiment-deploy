@@ -98,14 +98,17 @@ func handleCommand(command string) {
 			return
 		}
 		log.Println("New session", session.id)
-
-		dictateNodes(fmt.Sprintf("init %v %v %v %v", setting.ip, setting.port, setting.configURL, session.id))
+		if len(args) > 1 {
+			dictateNodes(fmt.Sprintf("init %v %v %v %v %v", setting.ip, setting.port, setting.configURL, session.id, args[1]))
+		} else {
+			dictateNodes(fmt.Sprintf("init %v %v %v %v", setting.ip, setting.port, setting.configURL, session.id))
+		}
 	case "ping", "kill", "log", "log2", "update":
 		dictateNodes(command)
 	case "help":
 		log.Println("Supported Commands:")
 		log.Println("config\t\t\tDownload config file from s3 or local")
-		log.Println("init\t\t\tStart the benchmark session")
+		log.Println("init [sec]\t\tStart the benchmark session, run for [sec] seconds (default:60)")
 		log.Println("ping\t\t\tPing each soldier")
 		log.Println("kill\t\t\tKill each node on soldier")
 		log.Println("log\t\t\t\tUpload logs from soldiers to commander")
