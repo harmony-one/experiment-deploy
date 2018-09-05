@@ -91,7 +91,11 @@ function list_ips
 
 function delete_vms
 {
-   echo delet... TODO
+   date
+   for region in ${REGIONS[@]}; do
+      ./instances.sh -r $region -G terminate
+   done
+   date
 }
 
 function deinit_region
