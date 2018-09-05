@@ -96,7 +96,7 @@ function collect_ip
    fi
 
    echo "Collecting IP addresses from AWS"
-   ./collect_public_ips.py --profile ${PROFILE} --instance_output instance_output.txt
+   ./collect_public_ips.py --profile ${PROFILE}-ec2 --instance_output instance_output.txt
 
    wait
 }
