@@ -6,6 +6,7 @@ source ./common.sh
 
 SUFFIX=bh
 # use 10 resource group, can launch up to 800*10=8000 vms in one region
+GROUP=$MAX_NUM_RG
 
 function usage
 {
@@ -17,10 +18,12 @@ Usage: $ME [OPTIONS] ACTION NUM_VMS
 OPTIONS:
    -h          print this help message
    -s suffix   set suffix of resource groups (default: $SUFFIX)
+   -g group    set the number of resource groups (default: $GROUP)
 
 ACTION:
    init        init Azure regions (${REGIONS[@]})
    launch      launch vms in Azure region
+   delete      delete all vms
    deinit      deinit Azure regions
    listip      list ip address of all instances
 
@@ -34,7 +37,7 @@ function init_region
 {
    date
    for region in ${REGIONS[@]}; do
-      ./region.sh -r $region -s $SUFFIX -g $MAX_NUM_RG -G init &
+      ./region.sh -r $region -s $SUFFIX -g $GROUP -G init &
    done
    date
 
@@ -50,7 +53,7 @@ function init_region
 
 function launch_vms
 {
-   vm_per_rg=$(( $NUM_VMS / $MAX_NUM_RG ))
+   vm_per_rg=$(( $NUM_VMS / $GROUP ))
    if [ $vm_per_rg -gt $MAX_PER_DEPLOY ]; then
       group=$(( $vm_per_rg / $MAX_PER_DEPLOY ))
       reminder=$(( $vm_per_rg % $MAX_PER_DEPLOY ))
@@ -86,6 +89,11 @@ function list_ips
    date
 }
 
+function delete_vms
+{
+   echo delet... TODO
+}
+
 function deinit_region
 {
    date
@@ -100,10 +108,11 @@ function deinit_region
 }
 
 ###############################
-while getopts "hs:" option; do
+while getopts "hs:g:" option; do
    case $option in
       h) usage ;;
       s) SUFFIX=$OPTARG ;;
+      g) GROUP=$OPTARG ;;
    esac
 done
 
@@ -124,6 +133,7 @@ fi
 case "$ACTION" in
    "init") init_region ;;
    "launch") launch_vms ;;
+   "delete") delete_vms ;;
    "deinit") deinit_region ;;
    "listip") list_ips ;;
    *) usage ;;

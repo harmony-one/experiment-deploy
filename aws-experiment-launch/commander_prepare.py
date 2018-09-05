@@ -71,9 +71,9 @@ if __name__ == "__main__":
 
     with open(args.log_download, "w") as fout:
         if args.azure:
-            fout.write("ssh -r ec2-user@%s:upload tmp\n" % (commander_address))
+            fout.write("scp -r ec2-user@%s:upload tmp\n" % (commander_address))
         else:
-            fout.write("ssh -i ../keys/%s -r ec2-user@%s:upload tmp\n" % (PEMS[commander_region - 1], commander_address))
+            fout.write("scp -i ../keys/%s -r ec2-user@%s:upload tmp\n" % (PEMS[commander_region - 1], commander_address))
     st = os.stat(args.log_download)
     os.chmod(args.log_download, st.st_mode | stat.S_IEXEC)
     LOGGER.info("Generated %s" % args.log_download)
