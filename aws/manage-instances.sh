@@ -41,12 +41,15 @@ function get_region_aws_name
    local code=$1
 
    case "$code" in
+      "sfo") echo us-west-1 ;;
       "pdx") echo us-west-2 ;;
       "iad") echo us-east-1 ;;
-      "sfo") echo us-west-1 ;;
+      "cmh") echo us-east-2 ;;
       "fra") echo eu-central-1 ;;
       "dub") echo eu-west-1 ;;
       "syd") echo ap-southeast-2 ;;
+      "nrt") echo ap-northeast-1 ;;
+      "sin") echo ap-southeast-1 ;;
    esac
 }
 
