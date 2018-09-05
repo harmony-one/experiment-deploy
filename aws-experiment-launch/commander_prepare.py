@@ -76,7 +76,8 @@ if __name__ == "__main__":
             fout.write("scp -r ec2-user@%s:upload logs/%s\n" % (commander_address, args.timestamp))
             fout.write("aws s3 sync logs s3://harmony-benchmark/logs\n")
         else:
-            fout.write("scp -i ../keys/%s -r ec2-user@%s:upload logs/%s\n" % (PEMS[commander_region - 1], commander_address, args.timestamp))
+            fout.write("ssh -i ../keys/%s ec2-user@%s 'tar cfz - upload' | tar xfz -\n" % (PEMS[commander_region - 1], commander_address))
+            fout.write("mv -f upload logs/%s\n" % (args.timestamp))
             fout.write("aws s3 sync logs s3://harmony-benchmark/logs\n")
 
     st = os.stat(args.log_download)
