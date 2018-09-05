@@ -63,19 +63,29 @@ ACTION=$@
 
 function launch_vms
 {
+   MAX_VM_PER_DEPLOY=200
    if [ $AZ_VM -gt 0 ]; then
    (
-      echo "Creating $AZ_VM instances at 3 Azure regions"
-      date
+      if [ $AZ_VM -gt $MAX_VM_PER_DEPLOY ]; then
+         VG_GROUP=$(( $AZ_VM / $MAX_VM_PER_DEPLOY ))
+         reminder=$(( $AZ_VM % $MAX_VM_PER_DEPLOY ))
+         if [ $reminder -gt 1 ]; then
+            VG_GROUP=$(( $VG_GROUP + 1 ))
+         fi
+      else
+         VG_GROUP=1
+      fi
+      echo "$(date) Creating $VG_GROUP resource groups at 3 Azure regions"
       pushd $ROOTDIR/azure
-      echo "Please init Azure regions before running this script"
-      ./go-az.sh launch $AZ_VM
+      ./go-az.sh -g $VG_GROUP init
+
+      echo "$(date) Creating $AZ_VM instances at 3 Azure regions"
+      ./go-az.sh -g $VG_GROUP launch $AZ_VM
       popd
-      date
    ) &
    fi
 
-   echo "Creating $AWS_VM instances at 8 AWS regions"
+   echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
    ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions 1,2,3,4,5,6,7,8 --instances $AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM
 
    # wait for the background task to finish
@@ -105,7 +115,7 @@ function collect_ip
 
 function generate_distribution
 {
-   if [ $AZ_VM -gt 0 ]; then
+   if [[ $AZ_VM -gt 0 && -f $ROOTDIR/azure/configs/raw_ip.txt ]]; then
       echo "Merge raw_ip.txt from Azure"
       cat $ROOTDIR/azure/configs/raw_ip.txt >> raw_ip.txt
    fi
