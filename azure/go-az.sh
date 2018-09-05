@@ -39,16 +39,17 @@ function init_region
    for region in ${REGIONS[@]}; do
       ./region.sh -r $region -s $SUFFIX -g $GROUP -G init &
    done
-   date
 
 # wait for all resource groups created
    wait
    date
-   for region in ${REGIONS[@]}; do
-      ./region.sh -r $region list
-      ./region.sh -r $region output
-   done
-   date
+
+#   date
+#   for region in ${REGIONS[@]}; do
+#      ./region.sh -r $region list
+#      ./region.sh -r $region output
+#   done
+#   date
 }
 
 function launch_vms
