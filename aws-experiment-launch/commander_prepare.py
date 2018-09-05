@@ -32,6 +32,8 @@ if __name__ == "__main__":
     parser.add_argument('--log_download', type=str,
                         dest='log_download', default='download_logs_from_commander.sh', help='file name of commander log download script')
     parser.add_argument('--azure', action='store_true', dest='azure', help='pure Azure VMs')
+    parser.add_argument('--ts', type=str,
+                        dest='timestamp', default='2018', help='timestamp of the log directory')
     parser.set_defaults(azure=False)
 
     args = parser.parse_args()
@@ -71,9 +73,12 @@ if __name__ == "__main__":
 
     with open(args.log_download, "w") as fout:
         if args.azure:
-            fout.write("scp -r ec2-user@%s:upload tmp\n" % (commander_address))
+            fout.write("scp -r ec2-user@%s:upload logs/%s\n" % (commander_address, args.timestamp))
+            fout.write("aws s3 sync logs s3://harmony-benchmark/logs\n")
         else:
-            fout.write("scp -i ../keys/%s -r ec2-user@%s:upload tmp\n" % (PEMS[commander_region - 1], commander_address))
+            fout.write("scp -i ../keys/%s -r ec2-user@%s:upload logs/%s\n" % (PEMS[commander_region - 1], commander_address, args.timestamp))
+            fout.write("aws s3 sync logs s3://harmony-benchmark/logs\n")
+
     st = os.stat(args.log_download)
     os.chmod(args.log_download, st.st_mode | stat.S_IEXEC)
     LOGGER.info("Generated %s" % args.log_download)
