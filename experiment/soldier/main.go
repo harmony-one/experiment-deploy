@@ -19,6 +19,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -26,6 +27,13 @@ import (
 	"github.com/simple-rules/experiment-deploy/experiment/soldier/s3"
 	"github.com/simple-rules/experiment-deploy/experiment/utils"
 	globalUtils "github.com/simple-rules/harmony-benchmark/utils"
+)
+
+var (
+	version string
+	builtBy string
+	builtAt string
+	commit  string
 )
 
 type soliderSetting struct {
@@ -52,6 +60,11 @@ var (
 	setting       soliderSetting
 	globalSession sessionInfo
 )
+
+func printVersion(me string) {
+	fmt.Fprintf(os.Stderr, "Harmony (C) 2018. %v, version %v-%v (%v %v)\n", path.Base(me), version, commit, builtBy, builtAt)
+	os.Exit(0)
+}
 
 func socketServer() {
 	soldierPort := "1" + setting.port // the soldier port is "1" + node port
@@ -304,7 +317,13 @@ func runClient() error {
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "IP of the node.")
 	port := flag.String("port", "9000", "port of the node.")
+	versionFlag := flag.Bool("version", false, "Output version info")
+
 	flag.Parse()
+
+	if *versionFlag {
+		printVersion(os.Args[0])
+	}
 
 	setting.ip = *ip
 	setting.port = *port

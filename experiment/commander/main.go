@@ -22,11 +22,19 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/simple-rules/experiment-deploy/experiment/utils"
 	globalUtils "github.com/simple-rules/harmony-benchmark/utils"
+)
+
+var (
+	version string
+	builtBy string
+	builtAt string
+	commit  string
 )
 
 type commanderSetting struct {
@@ -48,6 +56,11 @@ var (
 	setting commanderSetting
 	session sessionInfo
 )
+
+func printVersion(me string) {
+	fmt.Fprintf(os.Stderr, "Harmony (C) 2018. %v, version %v-%v (%v %v)\n", path.Base(me), version, commit, builtBy, builtAt)
+	os.Exit(0)
+}
 
 const (
 	DistributionFileName = "distribution_config.txt"
@@ -252,7 +265,13 @@ func main() {
 	mode := flag.String("mode", "local", "The config mode, local or s3")
 	http := flag.Bool("http", false, "Start commander in http mode")
 	configURL := flag.String("config_url", DefaultConfigUrl, "The config URL")
+	versionFlag := flag.Bool("version", false, "Output version info")
+
 	flag.Parse()
+
+	if *versionFlag {
+		printVersion(os.Args[0])
+	}
 
 	config(*ip, *port, *mode, *configURL)
 
