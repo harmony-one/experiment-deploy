@@ -107,11 +107,11 @@ func handleCommand(command string) {
 		log.Println("config\t\t\tDownload config file from s3 or local")
 		log.Println("init\t\t\tStart the benchmark session")
 		log.Println("ping\t\t\tPing each soldier")
-		log.Println("update [app]\t\tUpdate app binary on each soldier")
 		log.Println("kill\t\t\tKill each node on soldier")
-		log.Println("log\t\t\tUpload logs from soldiers to commander")
-		log.Println("update\t\t\tUpdate softwares on solders, downloading from s3")
+		log.Println("log\t\t\t\tUpload logs from soldiers to commander")
+		log.Println("update [bucket] [folder]\tUpdate softwares on solders, download from s3 bucket/folder")
 		log.Println("help\t\t\tPrint this message")
+		log.Println("----------------------------------------------")
 	default:
 		log.Println("Unknown command")
 	}
