@@ -72,11 +72,11 @@ function upload
    fi
 
    for bin in "${!SRC[@]}"; do
-      [ -e $BINDIR/$bin ] && $AWSCLI s3 cp $BINDIR/$bin s3://$BUCKET/$FOLDER/$bin --acl public-read
+      [ -e $BINDIR/$bin ] && $AWSCLI s3 cp $BINDIR/$bin s3://${BUCKET}$FOLDER/$bin --acl public-read
    done
 
    for s in "${SCRIPTS[@]}"; do
-      [ -e $s ] && $AWSCLI s3 cp $s s3://$BUCKET/$FOLDER/$(basename $s) --acl public-read
+      [ -e $s ] && $AWSCLI s3 cp $s s3://${BUCKET}$FOLDER/$(basename $s) --acl public-read
    done
 }
 
@@ -87,7 +87,7 @@ while getopts "hp:a:o:b:f:" option; do
       p) PROFILE=$OPTARG ;;
       a) GOARCH=$OPTARG ;;
       o) GOOS=$OPTARG ;;
-      b) BUCKET=$OPTARG ;;
+      b) BUCKET=$OPTARG/ ;;
       f) FOLDER=$OPTARG ;;
    esac
 done
