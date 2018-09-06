@@ -10,6 +10,7 @@ BINDIR=bin
 BUCKET=unique-bucket-bin
 GOOS=linux
 GOARCH=amd64
+FOLDER=
 
 SCRIPTS=( aws/kill_node.sh aws/go-commander.sh configs/init-node-azure.sh $BINDIR/md5sum-cs.txt )
 
@@ -21,11 +22,12 @@ function usage
 Usage: $ME [OPTIONS] ACTION
 
 OPTIONS:
-   -h          print this help message
-   -p profile  aws profile name
-   -a arch     set build arch (default: $GOARCH)
-   -o os       set build OS (default: $GOOS, windows is supported)
-   -b bucket   set the upload bucket name (default: $BUCKET)
+   -h             print this help message
+   -p profile     aws profile name
+   -a arch        set build arch (default: $GOARCH)
+   -o os          set build OS (default: $GOOS, windows is supported)
+   -b bucket      set the upload bucket name (default: $BUCKET)
+   -f folder      set the upload folder name in the bucket (default: $FOLDER)
 
 ACTION:
    build       build binaries only (default action)
@@ -39,8 +41,8 @@ EXAMPLES:
 # build windows binaries
    $ME -o windows
 
-# upload binaries to my s3 bucket
-   $ME -b mybucket upload
+# upload binaries to my s3 bucket, myfile folder
+   $ME -b mybucket -f myfile upload
 
 EOF
    exit 1
@@ -70,22 +72,23 @@ function upload
    fi
 
    for bin in "${!SRC[@]}"; do
-      [ -e $BINDIR/$bin ] && $AWSCLI s3 cp $BINDIR/$bin s3://$BUCKET/$bin --acl public-read
+      [ -e $BINDIR/$bin ] && $AWSCLI s3 cp $BINDIR/$bin s3://$BUCKET/$FOLDER/$bin --acl public-read
    done
 
    for s in "${SCRIPTS[@]}"; do
-      [ -e $s ] && $AWSCLI s3 cp $s s3://$BUCKET/$(basename $s) --acl public-read
+      [ -e $s ] && $AWSCLI s3 cp $s s3://$BUCKET/$FOLDER/$(basename $s) --acl public-read
    done
 }
 
 ################################ MAIN FUNCTION ##############################
-while getopts "hp:a:o:b:" option; do
+while getopts "hp:a:o:b:f:" option; do
    case $option in
       h) usage ;;
       p) PROFILE=$OPTARG ;;
       a) GOARCH=$OPTARG ;;
       o) GOOS=$OPTARG ;;
       b) BUCKET=$OPTARG ;;
+      f) FOLDER=$OPTARG ;;
    esac
 done
 
