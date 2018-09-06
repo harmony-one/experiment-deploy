@@ -145,6 +145,10 @@ func handleCommand(command string, w *bufio.Writer) {
 		{
 			handleLog2Command(w)
 		}
+	case "update":
+		{
+			handleUpdateCommand(args[1:], w)
+		}
 	}
 }
 
@@ -293,6 +297,46 @@ func handleLog2Command(w *bufio.Writer) {
 		return
 	}
 	logAndReply(w, "Upload log done!")
+}
+
+func handleUpdateCommand(args []string, w *bufio.Writer) {
+	log.Println("Update command")
+
+	var updateFiles = []string{
+		"benchmark",
+		"txgen",
+		"md5sum.txt",
+		"commander",
+		"soldier",
+		"md5sum-cs.txt",
+	}
+
+	var baseURL string
+	if len(args) == 0 {
+		// default bucket
+		baseURL = "http://unique-bucket-bin.s3.amazonaws.com"
+	}
+	if len(args) == 1 {
+		baseURL = fmt.Sprintf("http://%v.s3.amazonaws.com", args[0])
+	}
+	if len(args) == 2 {
+		baseURL = fmt.Sprintf("http://%v.s3.amazonaws.com/%s", args[0], args[1])
+	}
+	count := 0
+	for _, f := range updateFiles {
+		fileURL := fmt.Sprintf("%v/%v", baseURL, f)
+		if err := utils.DownloadFile(f, fileURL); err != nil {
+			log.Println("Update failed: ", f)
+			count++
+		} else {
+			if !strings.HasSuffix(f, ".txt") {
+				os.Chmod(f, 0755)
+			}
+			log.Println("Update succeeded: ", f)
+		}
+	}
+
+	logAndReply(w, fmt.Sprintf("Done Update %v binaries", count))
 }
 
 func runInstance() error {
