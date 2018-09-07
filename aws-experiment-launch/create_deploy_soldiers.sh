@@ -38,7 +38,7 @@ AWS_VM=2
 AZ_VM=0
 SHARD_NUM=2
 CLIENT_NUM=1
-SLEEP_TIME=10
+SLEEP_TIME=60
 PROFILE=harmony
 IP_FILE=
 ROOTDIR=$(dirname $0)/..
@@ -90,7 +90,9 @@ function launch_vms
 
    # wait for the background task to finish
    wait
-   cp $ROOTDIR/azure/configs/benchmark.rg.* logs/$TS
+   if [ $AZ_VM -gt 0 ]; then
+      cp $ROOTDIR/azure/configs/benchmark.rg.* logs/$TS
+   fi
 
    echo "Sleep for $SLEEP_TIME seconds"
    sleep $SLEEP_TIME
@@ -98,6 +100,9 @@ function launch_vms
 
 function collect_ip
 {
+   echo "Collecting IP addresses from AWS"
+   ./collect_public_ips.py --profile ${PROFILE}-ec2 --instance_output instance_output.txt
+
    if [ $AZ_VM -gt 0 ]; then
    (
       echo "Collecting IP addresses from Azure"
@@ -107,29 +112,26 @@ function collect_ip
    ) &
    fi
 
-   echo "Collecting IP addresses from AWS"
-   ./collect_public_ips.py --profile ${PROFILE}-ec2 --instance_output instance_output.txt
-
    wait
 }
 
 function generate_distribution
 {
-   if [[ $AZ_VM -gt 0 && -f $ROOTDIR/azure/configs/raw_ip.txt ]]; then
-      echo "Merge raw_ip.txt from Azure"
-      cat $ROOTDIR/azure/configs/raw_ip.txt >> raw_ip.txt
-   fi
-
    if [  -f "$IP_FILE" ]; then
       echo "Merge pre-launched IP address"
       cat $IP_FILE >> raw_ip.txt
+   fi
+
+   if [[ $AZ_VM -gt 0 && -f $ROOTDIR/azure/configs/raw_ip.txt ]]; then
+      echo "Merge raw_ip.txt from Azure"
+      cat $ROOTDIR/azure/configs/raw_ip.txt >> raw_ip.txt
+      cp $ROOTDIR/azure/configs/*.ips logs/$TS
    fi
 
    grep -vE '^ node' raw_ip.txt > raw_ip.good.txt
    mv -f raw_ip.good.txt raw_ip.txt
 
    cp raw_ip.txt logs/$TS
-   cp $ROOTDIR/azure/configs/*.ips logs/$TS
 
    echo "Generate distribution_config"
    ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM
