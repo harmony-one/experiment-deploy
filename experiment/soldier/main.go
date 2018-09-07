@@ -182,7 +182,13 @@ func handleInitCommand(args []string, w *bufio.Writer) {
 	log.Println("Successfully downloaded config")
 
 	globalSession.config.ReadConfigFile(globalSession.localConfigFileName)
-	globalSession.myConfig = *globalSession.config.GetMyConfigEntry(setting.ip, setting.port)
+	myConfig := globalSession.config.GetMyConfigEntry(setting.ip, setting.port)
+	if myConfig == nil {
+		logAndReply(w, "Failed.")
+		return
+	}
+
+	globalSession.myConfig = *myConfig
 
 	if err := runInstance(); err == nil {
 		logAndReply(w, "Done init.")
