@@ -29,8 +29,9 @@ import (
 )
 
 type soliderSetting struct {
-	ip   string
-	port string
+	ip                string
+	port              string
+	metricsProfileURL string
 }
 
 type sessionInfo struct {
@@ -293,7 +294,7 @@ func runInstance() error {
 
 func runNode() error {
 	log.Println("running instance")
-	return globalUtils.RunCmd("./benchmark", "-ip", setting.ip, "-port", setting.port, "-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder)
+	return globalUtils.RunCmd("./benchmark", "-ip", setting.ip, "-port", setting.port, "-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder, "-metrics_profile_url", setting.metricsProfileURL)
 }
 
 func runClient() error {
@@ -304,10 +305,12 @@ func runClient() error {
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "IP of the node.")
 	port := flag.String("port", "9000", "port of the node.")
+	metricsProfileURL := flag.String("metrics_profile_url", "", "If set, the node will report metrics to this URL")
 	flag.Parse()
 
 	setting.ip = *ip
 	setting.port = *port
+	setting.metricsProfileURL = *metricsProfileURL
 
 	socketServer()
 }
