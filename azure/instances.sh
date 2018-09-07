@@ -65,6 +65,7 @@ function do_launch_instance
       END=$(( $START + $GROUP - 1 ))
       (
       for s in $(seq $START $END); do
+         set -x
          $DRYRUN az group deployment create --name $region.deploy.$TS --resource-group $rg --template-file $TEMPLATE --parameters @${PARAMETERS} count=$COUNT start=${RGTAG}-${s} harmony_benchmark_nsg=$NSG harmony_benchmark_vnet=$VNET 2>>$ERRLOG >> $LOG
          if [ $? -ne 0 ]; then
             echo ERROR deployment $region.deploy.$TS error
@@ -74,9 +75,10 @@ function do_launch_instance
       done
       ) &
    done
-   date
 
    wait
+   echo All deployments of $region.deploy.$TS are done.
+   date
    echo $(date) >> $LOG
    echo $(date) >> $ERRLOG
    echo
