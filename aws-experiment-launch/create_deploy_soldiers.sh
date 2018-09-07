@@ -97,6 +97,9 @@ function launch_vms
    echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
    ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions 1,2,3,4,5,6,7,8 --instances $AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM
 
+   echo "Change go-commander.sh"
+   sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $ROOTDIR/aws/go-commander.sh
+
    # wait for the background task to finish
    wait
    if [ $AZ_VM -gt 0 ]; then
@@ -156,6 +159,7 @@ function prepare_commander
 
 function upload_to_s3
 {
+   aws --profile ${PROFILE}-s3 s3 cp $ROOTDIR/aws/go-commander.sh s3://${BUCKET}/${FOLDER}/go-commander.sh --acl public-read
    aws --profile ${PROFILE}-s3 s3 cp distribution_config.txt s3://${BUCKET}/${FOLDER}/distribution_config.txt --acl public-read
    aws --profile ${PROFILE}-s3 s3 sync logs s3://harmony-benchmark/logs
 }
