@@ -3,18 +3,15 @@
 yum install ruby -y
 cd /home/ec2-user/
 
-curl http://unique-bucket-bin.s3.amazonaws.com/txgen -o txgen
-curl http://unique-bucket-bin.s3.amazonaws.com/soldier -o soldier
-curl http://unique-bucket-bin.s3.amazonaws.com/benchmark -o benchmark
-curl http://unique-bucket-bin.s3.amazonaws.com/commander -o commander
-curl http://unique-bucket-bin.s3.amazonaws.com/go-commander.sh -o go-commander.sh
+BUCKET=unique-bucket-bin
+FOLDER=
 
-chmod +x ./soldier
-chmod +x ./txgen
-chmod +x ./commander
-chmod +x ./kill_node.sh
-chmod +x ./benchmark
-chmod +x ./go-commander.sh
+TESTBIN=( txgen soldier benchmark commander go-commander.sh )
+
+for bin in "${TESTBIN[@]}"; do
+   curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
+   chmod +x ${bin}
+done
 
 echo "* soft     nproc          65535" | sudo tee -a /etc/security/limits.conf
 echo "* hard     nproc          65535" | sudo tee -a /etc/security/limits.conf
