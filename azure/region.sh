@@ -58,9 +58,11 @@ EOF
 
 function do_init_region
 {
+   rm -f configs/$PROFILE.rg.$REGION.txt
    for i in $(seq 1 $GROUP); do
    (
       $DRYRUN ./deploy.sh -i $SUBSCRIPTION -g hb-rg-$REGION-$TAG-${START}$i -n bh-rg-$REGION-deployment -l $REGION -t $TEMPLATE -v $PARAMETER -p start=$START$i
+      echo hb-rg-$REGION-$TAG-${START}$i >> configs/$PROFILE.rg.$REGION.txt
    ) &
    done
    wait
@@ -102,7 +104,7 @@ function do_save_output
 
 DRYRUN=echo
 TS=$(date +%Y%m%d.%H%M%S)
-TAG=$(date +%m%d)
+TAG=$(date +%m%d%H%M)
 REGION=
 TEMPLATE=configs/vnet-template.json
 PARAMETER=configs/vnet-parameters.json

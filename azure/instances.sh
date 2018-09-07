@@ -65,8 +65,12 @@ function do_launch_instance
       END=$(( $START + $GROUP - 1 ))
       (
       for s in $(seq $START $END); do
-         set -x
          $DRYRUN az group deployment create --name $region.deploy.$TS --resource-group $rg --template-file $TEMPLATE --parameters @${PARAMETERS} count=$COUNT start=${RGTAG}-${s} harmony_benchmark_nsg=$NSG harmony_benchmark_vnet=$VNET 2>>$ERRLOG >> $LOG
+         if [ $? -ne 0 ]; then
+            echo ERROR deployment $region.deploy.$TS error
+         else
+            echo SUCCEEDED deployment $region.deploy.$TS
+         fi
       done
       ) &
    done
@@ -113,7 +117,6 @@ function do_terminate_instance
       else
          if [ ${#ID[@]} -gt 0 ]; then
          (
-            set -x
             az vm delete --yes --no-wait --resource-group $rg --ids ${ID[@]+"${ID[@]}"} | tee -a $LOG
          )
          fi
@@ -124,12 +127,14 @@ function do_terminate_instance
 
 function _check_configuration_files
 {
-   RGCONFIG=configs/$PROFILE.rg.$REGION.json
+#   RGCONFIG=configs/$PROFILE.rg.$REGION.json
+   RGCONFIG=configs/$PROFILE.rg.$REGION.txt
    if [ ! -f $RGCONFIG ]; then
       echo Could not find the resource group configuration file: $RGCONFIG
       exit 1
    else
-      RGS=( $($JQ ' .[].name ' $RGCONFIG) )
+#      RGS=( $($JQ ' .[].name ' $RGCONFIG) )
+      mapfile -t RGS < $RGCONFIG
    fi
 
    if [ ! -f $TEMPLATE ]; then

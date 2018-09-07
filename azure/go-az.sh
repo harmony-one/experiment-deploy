@@ -4,7 +4,7 @@ set -euo pipefail
 
 source ./common.sh
 
-SUFFIX=bh
+SUFFIX=$(whoami)
 # use 10 resource group, can launch up to 800*10=8000 vms in one region
 GROUP=$MAX_NUM_RG
 
@@ -39,16 +39,17 @@ function init_region
    for region in ${REGIONS[@]}; do
       ./region.sh -r $region -s $SUFFIX -g $GROUP -G init &
    done
-   date
 
 # wait for all resource groups created
    wait
    date
-   for region in ${REGIONS[@]}; do
-      ./region.sh -r $region list
-      ./region.sh -r $region output
-   done
-   date
+
+#   date
+#   for region in ${REGIONS[@]}; do
+#      ./region.sh -r $region list
+#      ./region.sh -r $region output
+#   done
+#   date
 }
 
 function launch_vms
@@ -91,7 +92,11 @@ function list_ips
 
 function delete_vms
 {
-   echo delet... TODO
+   date
+   for region in ${REGIONS[@]}; do
+      ./instances.sh -r $region -G terminate
+   done
+   date
 }
 
 function deinit_region

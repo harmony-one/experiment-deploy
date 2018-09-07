@@ -19,6 +19,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -26,6 +27,13 @@ import (
 	"github.com/simple-rules/experiment-deploy/experiment/soldier/s3"
 	"github.com/simple-rules/experiment-deploy/experiment/utils"
 	globalUtils "github.com/simple-rules/harmony-benchmark/utils"
+)
+
+var (
+	version string
+	builtBy string
+	builtAt string
+	commit  string
 )
 
 type soliderSetting struct {
@@ -40,6 +48,7 @@ type sessionInfo struct {
 	commanderPort       string
 	localConfigFileName string
 	logFolder           string
+	duration            string
 	config              *globalUtils.DistributionConfig
 	myConfig            globalUtils.ConfigEntry
 }
@@ -53,6 +62,11 @@ var (
 	setting       soliderSetting
 	globalSession sessionInfo
 )
+
+func printVersion(me string) {
+	fmt.Fprintf(os.Stderr, "Harmony (C) 2018. %v, version %v-%v (%v %v)\n", path.Base(me), version, commit, builtBy, builtAt)
+	os.Exit(0)
+}
 
 func socketServer() {
 	soldierPort := "1" + setting.port // the soldier port is "1" + node port
@@ -133,6 +147,10 @@ func handleCommand(command string, w *bufio.Writer) {
 		{
 			handleLog2Command(w)
 		}
+	case "update":
+		{
+			handleUpdateCommand(args[1:], w)
+		}
 	}
 }
 
@@ -147,6 +165,13 @@ func handleInitCommand(args []string, w *bufio.Writer) {
 	globalSession.commanderPort = port
 	configURL := args[2]
 	sessionID := args[3]
+
+	if len(args) > 4 {
+		globalSession.duration = args[4]
+	} else {
+		globalSession.duration = "60"
+	}
+
 	globalSession.id = sessionID
 	globalSession.logFolder = fmt.Sprintf("%slog-%v", logFolderPrefix, sessionID)
 
@@ -158,7 +183,13 @@ func handleInitCommand(args []string, w *bufio.Writer) {
 	log.Println("Successfully downloaded config")
 
 	globalSession.config.ReadConfigFile(globalSession.localConfigFileName)
-	globalSession.myConfig = *globalSession.config.GetMyConfigEntry(setting.ip, setting.port)
+	myConfig := globalSession.config.GetMyConfigEntry(setting.ip, setting.port)
+	if myConfig == nil {
+		logAndReply(w, "Failed.")
+		return
+	}
+
+	globalSession.myConfig = *myConfig
 
 	if err := runInstance(); err == nil {
 		logAndReply(w, "Done init.")
@@ -283,6 +314,46 @@ func handleLog2Command(w *bufio.Writer) {
 	logAndReply(w, "Upload log done!")
 }
 
+func handleUpdateCommand(args []string, w *bufio.Writer) {
+	log.Println("Update command")
+
+	var updateFiles = []string{
+		"benchmark",
+		"txgen",
+		"md5sum.txt",
+		"commander",
+		"soldier",
+		"md5sum-cs.txt",
+	}
+
+	var baseURL string
+	if len(args) == 0 {
+		// default bucket
+		baseURL = "http://unique-bucket-bin.s3.amazonaws.com"
+	}
+	if len(args) == 1 {
+		baseURL = fmt.Sprintf("http://%v.s3.amazonaws.com", args[0])
+	}
+	if len(args) == 2 {
+		baseURL = fmt.Sprintf("http://%v.s3.amazonaws.com/%s", args[0], args[1])
+	}
+	count := 0
+	for _, f := range updateFiles {
+		fileURL := fmt.Sprintf("%v/%v", baseURL, f)
+		if err := utils.DownloadFile(f, fileURL); err != nil {
+			log.Println("Update failed: ", f)
+			count++
+		} else {
+			if !strings.HasSuffix(f, ".txt") {
+				os.Chmod(f, 0755)
+			}
+			log.Println("Update succeeded: ", f)
+		}
+	}
+
+	logAndReply(w, fmt.Sprintf("Done Update %v binaries", count))
+}
+
 func runInstance() error {
 	os.MkdirAll(globalSession.logFolder, os.ModePerm)
 
@@ -299,14 +370,20 @@ func runNode() error {
 
 func runClient() error {
 	log.Println("running client")
-	return globalUtils.RunCmd("./txgen", "-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder)
+	return globalUtils.RunCmd("./txgen", "-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder, "-duration", globalSession.duration)
 }
 
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "IP of the node.")
 	port := flag.String("port", "9000", "port of the node.")
 	metricsProfileURL := flag.String("metrics_profile_url", "", "If set, the node will report metrics to this URL")
+	versionFlag := flag.Bool("version", false, "Output version info")
+
 	flag.Parse()
+
+	if *versionFlag {
+		printVersion(os.Args[0])
+	}
 
 	setting.ip = *ip
 	setting.port = *port

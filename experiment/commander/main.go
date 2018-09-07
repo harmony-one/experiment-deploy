@@ -22,11 +22,19 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/simple-rules/experiment-deploy/experiment/utils"
 	globalUtils "github.com/simple-rules/harmony-benchmark/utils"
+)
+
+var (
+	version string
+	builtBy string
+	builtAt string
+	commit  string
 )
 
 type commanderSetting struct {
@@ -48,6 +56,11 @@ var (
 	setting commanderSetting
 	session sessionInfo
 )
+
+func printVersion(me string) {
+	fmt.Fprintf(os.Stderr, "Harmony (C) 2018. %v, version %v-%v (%v %v)\n", path.Base(me), version, commit, builtBy, builtAt)
+	os.Exit(0)
+}
 
 const (
 	DistributionFileName = "distribution_config.txt"
@@ -85,19 +98,23 @@ func handleCommand(command string) {
 			return
 		}
 		log.Println("New session", session.id)
-
-		dictateNodes(fmt.Sprintf("init %v %v %v %v", setting.ip, setting.port, setting.configURL, session.id))
-	case "ping", "kill", "log", "log2":
+		if len(args) > 1 {
+			dictateNodes(fmt.Sprintf("init %v %v %v %v %v", setting.ip, setting.port, setting.configURL, session.id, args[1]))
+		} else {
+			dictateNodes(fmt.Sprintf("init %v %v %v %v", setting.ip, setting.port, setting.configURL, session.id))
+		}
+	case "ping", "kill", "log", "log2", "update":
 		dictateNodes(command)
-   case "help":
-      log.Println("Supported Commands:")
-      log.Println("config\t\t\tDownload config file from s3 or local")
-      log.Println("init\t\t\tStart the benchmark session")
-      log.Println("ping\t\t\tPing each soldier")
-      log.Println("kill\t\t\tKill each node on soldier")
-      log.Println("log\t\t\tUpload logs from soldiers to commander")
-      log.Println("update\t\t\tUpdate softwares on solders, downloading from s3")
-      log.Println("help\t\t\tPrint this message")
+	case "help":
+		log.Println("Supported Commands:")
+		log.Println("config\t\t\tDownload config file from s3 or local")
+		log.Println("init [sec]\t\tStart the benchmark session, run for [sec] seconds (default:60)")
+		log.Println("ping\t\t\tPing each soldier")
+		log.Println("kill\t\t\tKill each node on soldier")
+		log.Println("log\t\t\t\tUpload logs from soldiers to commander")
+		log.Println("update [bucket] [folder]\tUpdate softwares on solders, download from s3 bucket/folder")
+		log.Println("help\t\t\tPrint this message")
+		log.Println("----------------------------------------------")
 	default:
 		log.Println("Unknown command")
 	}
@@ -207,6 +224,28 @@ func jsonResponse(w http.ResponseWriter, code int, message string) {
 	log.Println(message)
 }
 
+func handleConfigCmdRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		jsonResponse(w, http.StatusBadRequest, "Only get request is supported.")
+		return
+	}
+	if setting.mode == "s3" {
+		// In s3 mode, download the config file from configURL first.
+		if err := utils.DownloadFile(DistributionFileName, setting.configURL); err != nil {
+			jsonResponse(w, http.StatusInternalServerError, fmt.Sprintf("%v", err))
+			return
+		}
+	}
+
+	err := setting.config.ReadConfigFile(DistributionFileName)
+	if err == nil {
+		jsonResponse(w, http.StatusOK, fmt.Sprintf("The loaded config has %v nodes\n", len(setting.config.GetConfigEntries())))
+	} else {
+		jsonResponse(w, http.StatusInternalServerError, "Failed to read config file")
+	}
+	return
+}
+
 func serve() {
 	if setting.mode == "local" {
 		// Only host config file if in local mode
@@ -214,6 +253,8 @@ func serve() {
 		log.Printf("Start to host config file at http://%s:%s/%s\n", setting.ip, setting.port, DistributionFileName)
 	}
 	http.HandleFunc("/upload", handleUploadRequest)
+	http.HandleFunc("/cmd/config", handleConfigCmdRequest)
+
 	err := http.ListenAndServe(":"+setting.port, nil)
 	if err != nil {
 		log.Fatalf("Failed to setup server! Error: %s", err.Error())
@@ -225,19 +266,29 @@ func main() {
 	ip := flag.String("ip", "127.0.0.1", "The ip of commander, i.e. this machine")
 	port := flag.String("port", "8080", "The port which the commander uses to communicate with soldiers")
 	mode := flag.String("mode", "local", "The config mode, local or s3")
+	http := flag.Bool("http", false, "Start commander in http mode")
 	configURL := flag.String("config_url", DefaultConfigUrl, "The config URL")
+	versionFlag := flag.Bool("version", false, "Output version info")
+
 	flag.Parse()
+
+	if *versionFlag {
+		printVersion(os.Args[0])
+	}
 
 	config(*ip, *port, *mode, *configURL)
 
-	go serve()
-
-	scanner := bufio.NewScanner(os.Stdin)
-	for true {
-		log.Printf("Listening to Your Command:")
-		if !scanner.Scan() {
-			break
+	if !*http {
+		go serve()
+		scanner := bufio.NewScanner(os.Stdin)
+		for true {
+			log.Printf("Listening to Your Command:")
+			if !scanner.Scan() {
+				break
+			}
+			handleCommand(scanner.Text())
 		}
-		handleCommand(scanner.Text())
+	} else {
+		serve()
 	}
 }
