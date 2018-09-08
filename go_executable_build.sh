@@ -10,7 +10,7 @@ BINDIR=bin
 BUCKET=unique-bucket-bin
 GOOS=linux
 GOARCH=amd64
-FOLDER=/$(whoami)
+FOLDER=/${WHOAMI:-$USER}
 
 SCRIPTS=( aws/kill_node.sh aws/go-commander.sh configs/userdata-soldier.sh $BINDIR/md5sum-cs.txt )
 

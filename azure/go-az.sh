@@ -4,7 +4,7 @@ set -euo pipefail
 
 source ./common.sh
 
-SUFFIX=$(whoami)
+SUFFIX=${WHOAMI:-$USER}
 # use 10 resource group, can launch up to 800*10=8000 vms in one region
 GROUP=$MAX_NUM_RG
 
