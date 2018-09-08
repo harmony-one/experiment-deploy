@@ -20,7 +20,9 @@ OPTIONS:
    -s shards      number of shards (default: $SHARD_NUM)
    -t clients     number of clients (default: $CLIENT_NUM)
    -p profile     aws profile (default: $PROFILE)
-   -f ip_file     file containing ip address of pre-launched VMs
+   -i ip_file     file containing ip address of pre-launched VMs
+   -b bucket      specify the bucket containing all test binaries (default: $BUCKET)
+   -f folder      specify the folder name in the bucket (default: $FOLDER)
 
 ACTION:
    n/a
@@ -38,13 +40,15 @@ AWS_VM=2
 AZ_VM=0
 SHARD_NUM=2
 CLIENT_NUM=1
-SLEEP_TIME=10
+SLEEP_TIME=60
 PROFILE=harmony
 IP_FILE=
+BUCKET=unique-bucket-bin
+FOLDER=$(whoami)
 ROOTDIR=$(dirname $0)/..
 TS=$(date +%Y%m%d.%H%M%S)
 
-while getopts "hnc:C:s:t:p:f:" option; do
+while getopts "hnc:C:s:t:p:f:b:i:" option; do
    case $option in
       n) DRYRUN=--dry-run ;;
       c) AWS_VM=$OPTARG ;;
@@ -52,7 +56,9 @@ while getopts "hnc:C:s:t:p:f:" option; do
       s) SHARD_NUM=$OPTARG ;;
       t) CLIENT_NUM=$OPTARG ;;
       p) PROFILE=$OPTARG ;;
-      f) IP_FILE=$OPTARG ;;
+      i) IP_FILE=$OPTARG ;;
+      b) BUCKET=$OPTARG ;;
+      f) FOLDER=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done
@@ -85,12 +91,20 @@ function launch_vms
    ) &
    fi
 
+   echo "Change userdata file"
+   sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," userdata-soldier.sh
+
    echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
    ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions 1,2,3,4,5,6,7,8 --instances $AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM
 
+   echo "Change go-commander.sh"
+   sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $ROOTDIR/aws/go-commander.sh
+
    # wait for the background task to finish
    wait
-   cp $ROOTDIR/azure/configs/benchmark.rg.* logs/$TS
+   if [ $AZ_VM -gt 0 ]; then
+      cp $ROOTDIR/azure/configs/benchmark.rg.* logs/$TS
+   fi
 
    echo "Sleep for $SLEEP_TIME seconds"
    sleep $SLEEP_TIME
@@ -98,6 +112,9 @@ function launch_vms
 
 function collect_ip
 {
+   echo "Collecting IP addresses from AWS"
+   ./collect_public_ips.py --profile ${PROFILE}-ec2 --instance_output instance_output.txt
+
    if [ $AZ_VM -gt 0 ]; then
    (
       echo "Collecting IP addresses from Azure"
@@ -107,29 +124,26 @@ function collect_ip
    ) &
    fi
 
-   echo "Collecting IP addresses from AWS"
-   ./collect_public_ips.py --profile ${PROFILE}-ec2 --instance_output instance_output.txt
-
    wait
 }
 
 function generate_distribution
 {
-   if [[ $AZ_VM -gt 0 && -f $ROOTDIR/azure/configs/raw_ip.txt ]]; then
-      echo "Merge raw_ip.txt from Azure"
-      cat $ROOTDIR/azure/configs/raw_ip.txt >> raw_ip.txt
-   fi
-
    if [  -f "$IP_FILE" ]; then
       echo "Merge pre-launched IP address"
       cat $IP_FILE >> raw_ip.txt
+   fi
+
+   if [[ $AZ_VM -gt 0 && -f $ROOTDIR/azure/configs/raw_ip.txt ]]; then
+      echo "Merge raw_ip.txt from Azure"
+      cat $ROOTDIR/azure/configs/raw_ip.txt >> raw_ip.txt
+      cp $ROOTDIR/azure/configs/*.ips logs/$TS
    fi
 
    grep -vE '^ node' raw_ip.txt > raw_ip.good.txt
    mv -f raw_ip.good.txt raw_ip.txt
 
    cp raw_ip.txt logs/$TS
-   cp $ROOTDIR/azure/configs/*.ips logs/$TS
 
    echo "Generate distribution_config"
    ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM
@@ -145,7 +159,8 @@ function prepare_commander
 
 function upload_to_s3
 {
-   aws --profile ${PROFILE}-s3 s3 cp distribution_config.txt s3://unique-bucket-bin/distribution_config.txt --acl public-read-write
+   aws --profile ${PROFILE}-s3 s3 cp $ROOTDIR/aws/go-commander.sh s3://${BUCKET}/${FOLDER}/go-commander.sh --acl public-read
+   aws --profile ${PROFILE}-s3 s3 cp distribution_config.txt s3://${BUCKET}/${FOLDER}/distribution_config.txt --acl public-read
    aws --profile ${PROFILE}-s3 s3 sync logs s3://harmony-benchmark/logs
 }
 

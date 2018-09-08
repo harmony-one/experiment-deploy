@@ -10,7 +10,7 @@ BINDIR=bin
 BUCKET=unique-bucket-bin
 GOOS=linux
 GOARCH=amd64
-FOLDER=
+FOLDER=/$(whoami)
 
 SCRIPTS=( aws/kill_node.sh aws/go-commander.sh configs/init-node-azure.sh $BINDIR/md5sum-cs.txt )
 
@@ -87,8 +87,8 @@ while getopts "hp:a:o:b:f:" option; do
       p) PROFILE=$OPTARG ;;
       a) GOARCH=$OPTARG ;;
       o) GOOS=$OPTARG ;;
-      b) BUCKET=$OPTARG/ ;;
-      f) FOLDER=$OPTARG ;;
+      b) BUCKET=$OPTARG ;;
+      f) FOLDER=/$OPTARG ;;
    esac
 done
 

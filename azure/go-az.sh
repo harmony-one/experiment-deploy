@@ -73,10 +73,11 @@ function launch_vms
    for region in ${REGIONS[@]}; do
       ./instances.sh -r $region -s 99 -c $vm_per_group -g $group -G launch &
    done
-   date
 
 # wait for all instance launched
    wait
+   echo Instance launch in $region is done.
+   date
 }
 
 function list_ips
