@@ -14,7 +14,6 @@ REGION_KEY = 'region_key'
 REGION_SECURITY_GROUP = 'region_security_group'
 REGION_SECURITY_GROUP_ID = 'region_security_group_id'
 REGION_HUMAN_NAME = 'region_human_name'
-INSTANCE_TYPE = 't2.micro'
 REGION_AMI = 'region_ami'
 IAM_INSTANCE_PROFILE = 'BenchMarkCodeDeployInstanceProfile'
 time_stamp = time.time()

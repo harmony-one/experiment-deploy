@@ -24,6 +24,7 @@ OPTIONS:
    -b bucket      specify the bucket containing all test binaries (default: $BUCKET)
    -f folder      specify the folder name in the bucket (default: $FOLDER)
    -r regions     specify the regions for deployment, delimited by , (default: $REGIONS)
+   -w instance    the AWS instance type (default: $INSTANCE)
 
 ACTION:
    n/a
@@ -67,7 +68,7 @@ function launch_vms
    sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," userdata-soldier.sh
 
    echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
-   ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS
+   ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE
 
    echo "Change go-commander.sh"
    sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $ROOTDIR/aws/go-commander.sh
@@ -149,8 +150,9 @@ FOLDER=$(whoami)
 ROOTDIR=$(dirname $0)/..
 TS=$(date +%Y%m%d.%H%M%S)
 REGIONS=1,2,3,4,5,6,7,8
+INSTANCE=t2.micro
 
-while getopts "hnc:C:s:t:p:f:b:i:r:" option; do
+while getopts "hnc:C:s:t:p:f:b:i:r:w:" option; do
    case $option in
       n) DRYRUN=--dry-run ;;
       c) AWS_VM=$OPTARG ;;
@@ -162,6 +164,7 @@ while getopts "hnc:C:s:t:p:f:b:i:r:" option; do
       b) BUCKET=$OPTARG ;;
       f) FOLDER=$OPTARG ;;
       r) REGIONS=$OPTARG ;;
+      w) INSTANCE=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done

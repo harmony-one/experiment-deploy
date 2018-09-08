@@ -57,7 +57,7 @@ def create_instances(config, ec2_client, region_number, number_of_instances, tag
         },
         KeyName=config[region_number][utils.REGION_KEY],
         UserData=utils.USER_DATA,
-        InstanceType=utils.INSTANCE_TYPE,
+        InstanceType=INSTANCE_TYPE,
         TagSpecifications=[
             {
                 'ResourceType': 'instance',
@@ -169,7 +169,11 @@ if __name__ == "__main__":
                         help='append to the current instance_output')
     parser.add_argument('--profile', type=str, dest='aws_profile', default='default',
                         help='set the aws profile name')
+    parser.add_argument('--instancetype', type=str, dest='instance', default='t2.micro',
+                        help='set the aws instance type')
     args = parser.parse_args()
+
+    INSTANCE_TYPE=args.instance
     config = read_region_config(args.region_config)
     region_list = args.regions.split(',')
     num_instance_list = args.num_instance_list.split(',')
