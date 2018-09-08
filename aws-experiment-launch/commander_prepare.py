@@ -64,19 +64,19 @@ if __name__ == "__main__":
 
     with open(args.commander_logging, "w") as fout:
         if args.azure:
-            fout.write("ssh ec2-user@%s\n" % (commander_address))
+            fout.write("ssh -o StrictHostKeyChecking=no ec2-user@%s\n" % (commander_address))
         else:
-            fout.write("ssh -i ../keys/%s ec2-user@%s\n" % (PEMS[commander_region - 1], commander_address))
+            fout.write("ssh -o StrictHostKeyChecking=no -i ../keys/%s ec2-user@%s\n" % (PEMS[commander_region - 1], commander_address))
     st = os.stat(args.commander_logging)
     os.chmod(args.commander_logging, st.st_mode | stat.S_IEXEC)
     LOGGER.info("Generated %s" % args.commander_logging)
 
     with open(args.log_download, "w") as fout:
         if args.azure:
-            fout.write("scp -r ec2-user@%s:upload logs/%s\n" % (commander_address, args.timestamp))
+            fout.write("scp -o StrictHostKeyChecking=no -r ec2-user@%s:upload logs/%s\n" % (commander_address, args.timestamp))
             fout.write("aws s3 sync logs s3://harmony-benchmark/logs\n")
         else:
-            fout.write("ssh -i ../keys/%s ec2-user@%s 'tar cfz - upload' | tar xfz -\n" % (PEMS[commander_region - 1], commander_address))
+            fout.write("ssh -o StrictHostKeyChecking=no -i ../keys/%s ec2-user@%s 'tar cfz - upload' | tar xfz -\n" % (PEMS[commander_region - 1], commander_address))
             fout.write("mv -f upload logs/%s\n" % (args.timestamp))
             fout.write("aws s3 sync logs s3://harmony-benchmark/logs\n")
 

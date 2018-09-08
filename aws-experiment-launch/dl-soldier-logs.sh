@@ -6,7 +6,7 @@ GREP='grep -E'
 DIR=$(pwd)
 DC=distribution_config.txt
 CFG=configuration.txt
-SCP=scp
+SCP='scp -o StrictHostKeyChecking=no'
 UNAME=ec2-user
 
 function usage
