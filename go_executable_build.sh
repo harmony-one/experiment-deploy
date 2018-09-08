@@ -12,7 +12,7 @@ GOOS=linux
 GOARCH=amd64
 FOLDER=/$(whoami)
 
-SCRIPTS=( aws/kill_node.sh aws/go-commander.sh configs/init-node-azure.sh $BINDIR/md5sum-cs.txt )
+SCRIPTS=( aws/kill_node.sh aws/go-commander.sh configs/userdata-soldier.sh $BINDIR/md5sum-cs.txt )
 
 function usage
 {

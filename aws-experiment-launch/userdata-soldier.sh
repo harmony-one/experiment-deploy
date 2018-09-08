@@ -1,10 +1,10 @@
 #!/bin/bash
 
-yum install ruby -y
+mkdir -p /home/ec2-user
 cd /home/ec2-user/
 
 BUCKET=unique-bucket-bin
-FOLDER=
+FOLDER=ec2-user/
 
 TESTBIN=( txgen soldier benchmark commander go-commander.sh )
 
@@ -23,8 +23,13 @@ echo "root soft     nofile         65535" | sudo tee -a /etc/security/limits.con
 echo "root hard     nofile         65535" | sudo tee -a /etc/security/limits.conf
 echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
 
-# Get My IP
-ip=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
+IS_AWS=$(curl -s -I http://169.254.169.254/latest/meta-data/instance-type -o /dev/null -w "%{http_code}")
+if [ "$IS_AWS" != "200" ]; then
+# NOT AWS, Assuming Azure
+   PUB_IP=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-04-02&format=text")
+else
+   PUB_IP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
+fi
 
 NODE_PORT=9000
 SOLDIER_PORT=1$NODE_PORT
@@ -34,4 +39,4 @@ fuser -k -n tcp $SOLDIER_PORT
 fuser -k -n tcp $NODE_PORT
 
 # Run soldier
-./soldier -ip $ip -port $NODE_PORT > soldier_log 2>&1 &
+./soldier -ip $PUB_IP -port $NODE_PORT > soldier-${PUB_IP}.log 2>&1 &
