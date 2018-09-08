@@ -23,6 +23,7 @@ OPTIONS:
    -i ip_file     file containing ip address of pre-launched VMs
    -b bucket      specify the bucket containing all test binaries (default: $BUCKET)
    -f folder      specify the folder name in the bucket (default: $FOLDER)
+   -r regions     specify the regions for deployment, delimited by , (default: $REGIONS)
 
 ACTION:
    n/a
@@ -32,40 +33,11 @@ EXAMPLES:
 
    $ME -c 100 -s 10 -t 1 -f azure/configs/raw_ip.txt
 
+   $ME -r 1,2,3
+
 EOF
    exit 1
 }
-
-AWS_VM=2
-AZ_VM=0
-SHARD_NUM=2
-CLIENT_NUM=1
-SLEEP_TIME=60
-PROFILE=harmony
-IP_FILE=
-BUCKET=unique-bucket-bin
-FOLDER=$(whoami)
-ROOTDIR=$(dirname $0)/..
-TS=$(date +%Y%m%d.%H%M%S)
-
-while getopts "hnc:C:s:t:p:f:b:i:" option; do
-   case $option in
-      n) DRYRUN=--dry-run ;;
-      c) AWS_VM=$OPTARG ;;
-      C) AZ_VM=$OPTARG ;;
-      s) SHARD_NUM=$OPTARG ;;
-      t) CLIENT_NUM=$OPTARG ;;
-      p) PROFILE=$OPTARG ;;
-      i) IP_FILE=$OPTARG ;;
-      b) BUCKET=$OPTARG ;;
-      f) FOLDER=$OPTARG ;;
-      h|?|*) usage ;;
-   esac
-done
-
-shift $(($OPTIND-1))
-
-ACTION=$@
 
 function launch_vms
 {
@@ -95,7 +67,7 @@ function launch_vms
    sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," userdata-soldier.sh
 
    echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
-   ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions 1,2,3,4,5,6,7,8 --instances $AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM,$AWS_VM
+   ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS
 
    echo "Change go-commander.sh"
    sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $ROOTDIR/aws/go-commander.sh
@@ -164,7 +136,47 @@ function upload_to_s3
    aws --profile ${PROFILE}-s3 s3 sync logs s3://harmony-benchmark/logs
 }
 
-####### main #########
+################### VARIABLES ###################
+AWS_VM=2
+AZ_VM=0
+SHARD_NUM=2
+CLIENT_NUM=1
+SLEEP_TIME=60
+PROFILE=harmony
+IP_FILE=
+BUCKET=unique-bucket-bin
+FOLDER=$(whoami)
+ROOTDIR=$(dirname $0)/..
+TS=$(date +%Y%m%d.%H%M%S)
+REGIONS=1,2,3,4,5,6,7,8
+
+while getopts "hnc:C:s:t:p:f:b:i:r:" option; do
+   case $option in
+      n) DRYRUN=--dry-run ;;
+      c) AWS_VM=$OPTARG ;;
+      C) AZ_VM=$OPTARG ;;
+      s) SHARD_NUM=$OPTARG ;;
+      t) CLIENT_NUM=$OPTARG ;;
+      p) PROFILE=$OPTARG ;;
+      i) IP_FILE=$OPTARG ;;
+      b) BUCKET=$OPTARG ;;
+      f) FOLDER=$OPTARG ;;
+      r) REGIONS=$OPTARG ;;
+      h|?|*) usage ;;
+   esac
+done
+
+shift $(($OPTIND-1))
+
+ACTION=$@
+
+NUM_REGIONS=$(echo $REGIONS | awk -F, ' { print NF-1 } ')
+AWS_VMS=$AWS_VM
+for i in $(seq 1 $NUM_REGIONS); do
+   AWS_VMS+=",$AWS_VM"
+done
+
+################### MAIN FUNC ###################
 mkdir -p logs/$TS
 date
 launch_vms
