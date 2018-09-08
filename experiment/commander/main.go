@@ -68,7 +68,7 @@ const (
 )
 
 func handleCommand(command string) {
-	args := strings.Split(command, " ")
+	args := strings.Fields(command)
 	if len(args) <= 0 {
 		return
 	}
@@ -98,11 +98,12 @@ func handleCommand(command string) {
 			return
 		}
 		log.Println("New session", session.id)
+		nodeCmd := fmt.Sprintf("init %v %v %v %v", setting.ip, setting.port, setting.configURL, session.id)
 		if len(args) > 1 {
-			dictateNodes(fmt.Sprintf("init %v %v %v %v %v", setting.ip, setting.port, setting.configURL, session.id, args[1]))
-		} else {
-			dictateNodes(fmt.Sprintf("init %v %v %v %v", setting.ip, setting.port, setting.configURL, session.id))
+			additionalArgs := strings.Join(args[1:], " ")
+			nodeCmd += " " + additionalArgs
 		}
+		dictateNodes(nodeCmd)
 	case "ping", "kill", "log", "log2", "update":
 		dictateNodes(command)
 	case "help":

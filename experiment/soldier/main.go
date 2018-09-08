@@ -48,9 +48,10 @@ type sessionInfo struct {
 	commanderPort       string
 	localConfigFileName string
 	logFolder           string
-	duration            string
 	config              *globalUtils.DistributionConfig
 	myConfig            globalUtils.ConfigEntry
+	txgenAdditionalArgs []string
+	nodeAdditionalArgs  []string
 }
 
 const (
@@ -61,6 +62,15 @@ const (
 var (
 	setting       soliderSetting
 	globalSession sessionInfo
+	txgenArgs     = []string{
+		"-config_file",
+		"-max_num_txs_per_batch",
+		"-log_folder",
+		"-numSubset",
+		"-duration",
+		"-version",
+		"-cross_shard_ratio",
+	}
 )
 
 func printVersion(me string) {
@@ -165,11 +175,19 @@ func handleInitCommand(args []string, w *bufio.Writer) {
 	globalSession.commanderPort = port
 	configURL := args[2]
 	sessionID := args[3]
-
+	globalSession.nodeAdditionalArgs = nil
+	globalSession.txgenAdditionalArgs = nil
 	if len(args) > 4 {
-		globalSession.duration = args[4]
-	} else {
-		globalSession.duration = "60"
+		additionalArgs := args[4:]
+		i := 0
+		for i < len(additionalArgs) {
+			if Include(txgenArgs, additionalArgs[i]) {
+				globalSession.txgenAdditionalArgs = append(globalSession.txgenAdditionalArgs, additionalArgs[i:i+2]...)
+			} else {
+				globalSession.nodeAdditionalArgs = append(globalSession.nodeAdditionalArgs, additionalArgs[i:i+2]...)
+			}
+			i += 2
+		}
 	}
 
 	globalSession.id = sessionID
@@ -211,10 +229,9 @@ func killPort(port string) error {
 	if runtime.GOOS == "windows" {
 		command := fmt.Sprintf("(Get-NetTCPConnection -LocalPort %s).OwningProcess -Force", port)
 		return globalUtils.RunCmd("Stop-Process", "-Id", command)
-	} else {
-		command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", port)
-		return globalUtils.RunCmd("bash", "-c", command)
 	}
+	command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", port)
+	return globalUtils.RunCmd("bash", "-c", command)
 }
 
 func handlePingCommand(w *bufio.Writer) {
@@ -365,18 +382,34 @@ func runInstance() error {
 
 func runNode() error {
 	log.Println("running instance")
-	return globalUtils.RunCmd("./benchmark", "-ip", setting.ip, "-port", setting.port, "-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder, "-metrics_profile_url", setting.metricsProfileURL)
+	args :=
+		append([]string{"-ip", setting.ip, "-port", setting.port, "-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder}, globalSession.nodeAdditionalArgs...)
+	return globalUtils.RunCmd("./benchmark", args...)
 }
 
 func runClient() error {
 	log.Println("running client")
-	return globalUtils.RunCmd("./txgen", "-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder, "-duration", globalSession.duration)
+	args :=
+		append([]string{"-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder}, globalSession.txgenAdditionalArgs...)
+	return globalUtils.RunCmd("./txgen", args...)
+}
+
+func Index(vs []string, t string) int {
+	for i, v := range vs {
+		if v == t {
+			return i
+		}
+	}
+	return -1
+}
+
+func Include(vs []string, t string) bool {
+	return Index(vs, t) >= 0
 }
 
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "IP of the node.")
 	port := flag.String("port", "9000", "port of the node.")
-	metricsProfileURL := flag.String("metrics_profile_url", "", "If set, the node will report metrics to this URL")
 	versionFlag := flag.Bool("version", false, "Output version info")
 
 	flag.Parse()
@@ -387,7 +420,6 @@ func main() {
 
 	setting.ip = *ip
 	setting.port = *port
-	setting.metricsProfileURL = *metricsProfileURL
 
 	socketServer()
 }
