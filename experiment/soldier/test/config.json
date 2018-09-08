@@ -1,0 +1,4 @@
+{
+   "sessionID": "2345-7890",
+   "configURL": "http://unique-bucket-bin.s3.amazonaws.com/ec2-user2/distribution_config.txt"
+}

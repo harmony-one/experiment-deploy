@@ -10,6 +10,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -23,11 +24,30 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/simple-rules/experiment-deploy/experiment/soldier/s3"
 	"github.com/simple-rules/experiment-deploy/experiment/utils"
 	globalUtils "github.com/simple-rules/harmony-benchmark/utils"
 )
+
+type initReq struct {
+	Ip            string `json:"ip"`
+	Port          string `json:"port"`
+	BenchmarkArgs string `json:"benchmarkArgs"`
+	TxgenArgs     string `json:"txgenArgs"`
+}
+
+type updateReq struct {
+	Bucket string `json:"bucket"`
+	Folder string `json:"folder"`
+	File   string `json:"file"`
+}
+
+type configReq struct {
+	SessionID string `json:"sessionId"`
+	ConfigURL string `json:"configURL"`
+}
 
 var (
 	version string
@@ -231,7 +251,7 @@ func killPort(port string) error {
 		return globalUtils.RunCmd("Stop-Process", "-Id", command)
 	}
 	command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", port)
-	return globalUtils.RunCmd("bash", "-c", command)
+	return globalUtils.RunCmd("/bin/bash", "-c", command)
 }
 
 func handlePingCommand(w *bufio.Writer) {
@@ -407,10 +427,176 @@ func Include(vs []string, t string) bool {
 	return Index(vs, t) >= 0
 }
 
+func initHandler(w http.ResponseWriter, r *http.Request) {
+	var res string
+	if r.Method != http.MethodGet {
+		res = "Not Supported Method"
+		io.WriteString(w, res)
+		return
+	}
+	log.Println("Init Handler")
+	if r.Body == nil {
+		http.Error(w, "no data found in the init request", http.StatusBadRequest)
+		return
+	}
+
+	var init initReq
+
+	err := json.NewDecoder(r.Body).Decode(&init)
+	if err != nil {
+		log.Printf("Json decode failed %v\n", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	globalSession.txgenAdditionalArgs = append(globalSession.txgenAdditionalArgs, init.TxgenArgs)
+	globalSession.nodeAdditionalArgs = append(globalSession.nodeAdditionalArgs, init.BenchmarkArgs)
+	if err := runInstance(); err == nil {
+		res = "Done init"
+	} else {
+		res = fmt.Sprintf("Failed init %v", err)
+	}
+	io.WriteString(w, res)
+}
+
+func pingHandler(w http.ResponseWriter, r *http.Request) {
+	var res string
+	if r.Method != http.MethodGet {
+		res = "Not Supported Method"
+		io.WriteString(w, res)
+		return
+	}
+	log.Println("Ping Handler")
+	res = "Succeeded"
+	io.WriteString(w, res)
+}
+
+func updateHandler(w http.ResponseWriter, r *http.Request) {
+	var res string
+	if r.Method != http.MethodGet {
+		res = "Not Supported Method"
+		io.WriteString(w, res)
+		return
+	}
+	log.Println("Update Handler")
+
+	if r.Body == nil {
+		http.Error(w, "no data found in the update request", http.StatusBadRequest)
+		return
+	}
+
+	var update updateReq
+
+	err := json.NewDecoder(r.Body).Decode(&update)
+	if err != nil {
+		log.Printf("Json decode failed %v\n", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	downloadURL := fmt.Sprintf("http://%v.s3.amazonaws.com/%v/%v", update.Bucket, update.Folder, update.File)
+	if err := utils.DownloadFile(update.File, downloadURL); err != nil {
+		log.Println("Update failed: ", downloadURL)
+		res = "Failed"
+	} else {
+		res = "Succeeded"
+	}
+	io.WriteString(w, res)
+}
+
+func killHandler(w http.ResponseWriter, r *http.Request) {
+	var res string
+	if r.Method != http.MethodGet {
+		res = "Not Supported Method"
+		io.WriteString(w, res)
+		return
+	}
+	log.Println("Kill Handler")
+	if err := killPort(setting.port); err == nil {
+		res = "Succeeded"
+	} else {
+		res = "Failed"
+	}
+	io.WriteString(w, res)
+}
+
+func configHandler(w http.ResponseWriter, r *http.Request) {
+	var res string
+	if r.Method != http.MethodGet {
+		res = "Not Supported Method"
+		io.WriteString(w, res)
+		return
+	}
+	log.Println("Config Handler")
+
+	if r.Body == nil {
+		http.Error(w, "no data found in the config request", http.StatusBadRequest)
+		return
+	}
+
+	var config configReq
+
+	err := json.NewDecoder(r.Body).Decode(&config)
+	if err != nil {
+		log.Printf("Json decode failed %v\n", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	globalSession.id = config.SessionID
+	globalSession.logFolder = fmt.Sprintf("%slog-%v", logFolderPrefix, config.SessionID)
+	globalSession.config = globalUtils.NewDistributionConfig()
+
+	// create local config file
+	globalSession.localConfigFileName = fmt.Sprintf("node_config_%v_%v.txt", setting.port, globalSession.id)
+	if err := utils.DownloadFile(globalSession.localConfigFileName, config.ConfigURL); err != nil {
+		log.Println("Failed to downloaded config", config.ConfigURL)
+		res = "Failed to download"
+	} else {
+		log.Println("Successfully downloaded config", config.ConfigURL)
+		globalSession.config.ReadConfigFile(globalSession.localConfigFileName)
+		myConfig := globalSession.config.GetMyConfigEntry(setting.ip, setting.port)
+		if myConfig == nil {
+			res = "Failed to get myconfig"
+		} else {
+			globalSession.myConfig = *myConfig
+			res = "Succeeded"
+		}
+	}
+	io.WriteString(w, res)
+}
+
+func httpServer() {
+	http.HandleFunc("/init", initHandler)
+	http.HandleFunc("/ping", pingHandler)
+	http.HandleFunc("/update", updateHandler)
+	http.HandleFunc("/kill", killHandler)
+	http.HandleFunc("/config", configHandler)
+
+	s := http.Server{
+		Addr:           fmt.Sprintf("%s:1%v", setting.ip, setting.port),
+		Handler:        nil,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+
+	log.Printf("HTTP server listen on port: 1%v", setting.port)
+	log.Println("Supported API:")
+	log.Println("/ping\t\t\tI'm alive!")
+	log.Println("/config\t\t\tDownload distribution config file.")
+	log.Println("/init\t\t\tStart Benchmark/Txgen")
+	log.Println("/update\t\t\tDownload/Update binary")
+	log.Println("/kill\t\t\tKill Running Benchmark/Txgen")
+
+	log.Fatalf(fmt.Sprintf("http server error: %v", s.ListenAndServe()))
+}
+
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "IP of the node.")
 	port := flag.String("port", "9000", "port of the node.")
 	versionFlag := flag.Bool("version", false, "Output version info")
+	http := flag.Bool("http", false, "Start in http server mode")
 
 	flag.Parse()
 
@@ -421,5 +607,9 @@ func main() {
 	setting.ip = *ip
 	setting.port = *port
 
-	socketServer()
+	if *http {
+		httpServer()
+	} else {
+		socketServer()
+	}
 }
