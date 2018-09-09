@@ -6,7 +6,6 @@ import time
 import base64
 import threading
 
-
 MAX_INTANCES_FOR_WAITER = 100
 MAX_INSTANCES_FOR_DEPLOYMENT = 500
 REGION_NAME = 'region_name'
@@ -27,11 +26,13 @@ def get_node_name_tag(region_number):
 def get_node_name_tag2(region_number, tag):
     return region_number + "-" + NODE_NAME_SUFFIX + "-" + str(tag)
 
-with open("userdata-soldier.sh", "r") as userdata_file:
-    USER_DATA = userdata_file.read()
-
+def get_user_data(userdata):
+    global USER_DATA
+    global USER_DATA_BASE64
+    with open(userdata, "r") as userdata_file:
+        USER_DATA = userdata_file.read()
 # UserData must be base64 encoded for spot instances.
-USER_DATA_BASE64 = base64.b64encode(USER_DATA)
+    USER_DATA_BASE64 = base64.b64encode(USER_DATA)
 
 def create_client(profile, config, region_number):
     region_name = config[region_number][REGION_NAME]

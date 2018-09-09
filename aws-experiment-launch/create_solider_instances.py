@@ -171,9 +171,13 @@ if __name__ == "__main__":
                         help='set the aws profile name')
     parser.add_argument('--instancetype', type=str, dest='instance', default='t2.micro',
                         help='set the aws instance type')
+    parser.add_argument('--userdata', type=str, dest='userdata', default='configs/userdata-soldier.sh',
+                        help='set the filename of userdata')
     args = parser.parse_args()
 
     INSTANCE_TYPE=args.instance
+    utils.get_user_data(args.userdata)
+
     config = read_region_config(args.region_config)
     region_list = args.regions.split(',')
     num_instance_list = args.num_instance_list.split(',')

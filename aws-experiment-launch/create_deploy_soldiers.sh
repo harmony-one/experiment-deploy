@@ -25,6 +25,7 @@ OPTIONS:
    -f folder      specify the folder name in the bucket (default: $FOLDER)
    -r regions     specify the regions for deployment, delimited by , (default: $REGIONS)
    -w instance    the AWS instance type (default: $INSTANCE)
+   -u userdata    the userdata file (default: $USERDATA)
 
 ACTION:
    n/a
@@ -65,10 +66,10 @@ function launch_vms
    fi
 
    echo "Change userdata file"
-   sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," userdata-soldier.sh
+   sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA
 
    echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
-   ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE
+   ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA
 
    echo "Change go-commander.sh"
    sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $ROOTDIR/aws/go-commander.sh
@@ -151,8 +152,9 @@ ROOTDIR=$(dirname $0)/..
 TS=$(date +%Y%m%d.%H%M%S)
 REGIONS=1,2,3,4,5,6,7,8
 INSTANCE=t2.micro
+USERDATA=configs/userdata-soldier.sh
 
-while getopts "hnc:C:s:t:p:f:b:i:r:w:" option; do
+while getopts "hnc:C:s:t:p:f:b:i:r:w:u:" option; do
    case $option in
       n) DRYRUN=--dry-run ;;
       c) AWS_VM=$OPTARG ;;
@@ -165,6 +167,7 @@ while getopts "hnc:C:s:t:p:f:b:i:r:w:" option; do
       f) FOLDER=$OPTARG ;;
       r) REGIONS=$OPTARG ;;
       w) INSTANCE=$OPTARG ;;
+      u) USERDATA=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done
