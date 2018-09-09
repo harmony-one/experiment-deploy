@@ -574,7 +574,7 @@ func httpServer() {
 	http.HandleFunc("/config", configHandler)
 
 	s := http.Server{
-		Addr:           fmt.Sprintf("%s:1%v", setting.ip, setting.port),
+		Addr:           fmt.Sprintf("0.0.0.0:1%v", setting.port),
 		Handler:        nil,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
