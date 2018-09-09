@@ -123,6 +123,13 @@ function generate_distribution
    ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM
 
    cp distribution_config.txt logs/$TS
+   cat>configs/profile.json<<EOT
+{
+   "bucket": "$BUCKET",
+   "folder": "$FOLDER",
+   "sessionID": "$TS"
+}
+EOT
 }
 
 function prepare_commander
