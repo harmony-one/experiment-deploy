@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#TODO: parameter validation
+
 set -o pipefail
 
 function usage
@@ -16,6 +18,8 @@ OPTIONS:
                      delimited by ,
    -a application    name of the application to be updated
    -p testplan       file name of the test plan
+   -n num            parallel process num in a group (default: $PARALLEL)
+   -v                verbose
 
 ACTIONS:
    gen               generate test file based on profile (TODO)
@@ -44,6 +48,8 @@ function read_profile
    BUCKET=$($JQ .bucket $PROFILE)
    FOLDER=$($JQ .folder $PROFILE)
    SESSION=$($JQ .sessionID $PROFILE)
+
+   mkdir -p logs/$SESSION
 }
 
 function read_nodes
@@ -55,74 +61,90 @@ function read_nodes
       return 0
    fi
 
+   n=1
    while read line; do
       fields=( $(echo $line) )
+      NODEIPS[$n]=${fields[0]}
       NODES[${fields[0]}]=${fields[2]}
       PORT[${fields[0]}]=${fields[1]}
+      (( n++ ))
    done < $DIST
 
-   echo INFO: read ${#NODES[@]} nodes from $DIST
+   NUM_NODES=${#NODES[@]}
+   NUM_GROUPS=$(( $NUM_NODES / $PARALLEL ))
+   echo INFO: read ${NUM_NODES} nodes from $DIST
 }
 
 function do_simple_cmd
 {
    local cmd=$1
 
-   succeeded=0
-   failed=0
    date
-   for n in "${!NODES[@]}"; do
-      res=$(curl -s http://$n:1${PORT[$n]}/$cmd)
-      if [ "$res" == "Succeeded" ]; then
-         (( succeeded++ ))
-      else
-         (( failed++ ))
-      fi
-   done
 
-   echo $(date): Ping succeeded/$succeeded, failed/$failed nodes
-}
-
-function do_config
+   end=0
+   group=0
+   case $cmd in
+      config) cat>logs/${SESSION}/$cmd.json<<EOT
 {
-   succeeded=0
-   failed=0
-   date
-   for n in "${!NODES[@]}"; do
-      res=$(curl -s -XGET http://$n:1${PORT[$n]}/config \
-      --header "content-type: application/json" \
-      -d "{\"sessionID\":\"$SESSION\",\"configURL\":\"http://$BUCKET.s3.amazonaws.com/$FOLDER/distribution_config.txt\"}" )
-
-      if [ "$res" == "Succeeded" ]; then
-         (( succeeded++ ))
-      else
-         echo ERROR: $res
-         (( failed++ ))
-      fi
-   done
-
-   echo $(date): Config succeeded/$succeeded, failed/$failed nodes
+   "sessionID":"$SESSION",
+   "configURL":"http://$BUCKET.s3.amazonaws.com/$FOLDER/distribution_config.txt"
 }
-
-function do_init
+EOT
+;;
+      init) cat>logs/${SESSION}/$cmd.json<<EOT
 {
-   succeeded=0
-   failed=0
-   date
-   for n in "${!NODES[@]}"; do
-      res=$(curl -s -XGET http://$n:1${PORT[$n]}/init \
-      --header "content-type: application/json" \
-      -d "{\"ip\":\"127.0.0.1\",\"port\":\"9000\",\"benchmarkArgs\":\"\",\"txgenArgs\":\"\"}" )
+   "ip":"127.0.0.1",
+   "port":"9000",
+   "benchmarkArgs":"",
+   "txgenArgs":""
+}
+EOT
+;;
+      update)
+            if [ -z "$APP" ]; then
+               echo ERROR: no application name specified
+               exit 1
+            fi
+            cat>logs/${SESSION}/$cmd.json<<EOT
+{
+   "bucket":"$BUCKET",
+   "folder":"$FOLDER",
+   "file":"$APP"
+}
+EOT
+;;
+   esac
+ 
+   while [ $end -lt $NUM_NODES ]; do
+      start=$(( $PARALLEL * $group + 1 ))
+      end=$(( $PARALLEL + $start - 1 ))
 
-      if [ "$res" == "Done init" ]; then
-         (( succeeded++ ))
-      else
-         echo ERROR: $res
-         (( failed++ ))
+      if [ $end -ge $NUM_NODES ]; then
+         end=$NUM_NODES
       fi
+
+      echo processing group: $group \($start to $end\)
+
+      for n in $(seq $start $end); do
+         local ip=${NODEIPS[$n]}
+         CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
+
+         case $cmd in
+            config|init|update)
+               CMD+=$" -d@logs/${SESSION}/$cmd.json" ;;
+         esac
+
+         [ -n "$VERBOSE" ] && echo $n =\> $CMD
+         $CMD > logs/$SESSION/$cmd.$n.$ip.log &
+      done 
+      wait
+      (( group++ ))
    done
 
-   echo $(date): Init succeeded/$succeeded, failed/$failed nodes
+   succeeded=$(grep Succeeded logs/$SESSION/$cmd.*.log | wc -l)
+   failed=$(( $NUM_NODES - $succeeded ))
+
+   echo $(date): $cmd succeeded/$succeeded, failed/$failed nodes
 }
 
 function do_update
@@ -160,16 +182,22 @@ function generate_tests
 JQ='jq -r -M'
 PROFILE=configs/profile.json
 DIST=distribution_config.txt
+PARALLEL=100
+VERBOSE=
+
 declare -A NODES
+declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:" option; do
+while getopts "hp:f:i:a:n:v" option; do
    case $option in
       p) PROFILE=$OPTARG ;;
       f) DIST=$OPTARG ;;
       i) IPS=$OPTARG ;;
       a) APP=$OPTARG ;;
+      n) PARALLEL=$OPTARG ;;
+      v) VERBOSE=true ;;
       h|?) usage ;;
    esac
 done
@@ -180,11 +208,7 @@ ACTION=$@
 
 case "$ACTION" in
    "gen") read_nodes; generate_tests ;;
-   "ping") read_nodes; do_simple_cmd ping ;;
-   "config") read_nodes; do_config ;;
-   "update") read_nodes; do_update ;;
-   "kill") read_nodes; do_simple_cmd kill ;;
-   "init") read_nodes; do_init ;;
+   "ping"|"kill"|"config"|"init"|"update") read_nodes; do_simple_cmd $ACTION ;;
    "auto") read_nodes; do_auto ;;
    *) usage ;;
 esac
