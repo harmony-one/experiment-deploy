@@ -248,10 +248,10 @@ func handleKillCommand(w *bufio.Writer) {
 func killPort(port string) error {
 	if runtime.GOOS == "windows" {
 		command := fmt.Sprintf("(Get-NetTCPConnection -LocalPort %s).OwningProcess -Force", port)
-		return globalUtils.RunCmd("Stop-Process", "-Id", command)
+		return utils.RunCmd("Stop-Process", "-Id", command)
 	}
 	command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", port)
-	return globalUtils.RunCmd("/bin/bash", "-c", command)
+	return utils.RunCmd("/bin/bash", "-c", command)
 }
 
 func handlePingCommand(w *bufio.Writer) {
@@ -404,14 +404,14 @@ func runNode() error {
 	log.Println("running instance")
 	args :=
 		append([]string{"-ip", setting.ip, "-port", setting.port, "-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder}, globalSession.nodeAdditionalArgs...)
-	return globalUtils.RunCmd("./benchmark", args...)
+	return utils.RunCmd("./benchmark", args...)
 }
 
 func runClient() error {
 	log.Println("running client")
 	args :=
 		append([]string{"-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder}, globalSession.txgenAdditionalArgs...)
-	return globalUtils.RunCmd("./txgen", args...)
+	return utils.RunCmd("./txgen", args...)
 }
 
 func Index(vs []string, t string) int {
@@ -452,7 +452,7 @@ func initHandler(w http.ResponseWriter, r *http.Request) {
 	globalSession.txgenAdditionalArgs = append(globalSession.txgenAdditionalArgs, init.TxgenArgs)
 	globalSession.nodeAdditionalArgs = append(globalSession.nodeAdditionalArgs, init.BenchmarkArgs)
 	if err := runInstance(); err == nil {
-		res = "Done init"
+		res = "Succeeded"
 	} else {
 		res = fmt.Sprintf("Failed init %v", err)
 	}
