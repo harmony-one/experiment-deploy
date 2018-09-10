@@ -2,8 +2,10 @@ package utils
 
 import (
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"os/exec"
 )
 
 func DownloadFile(filepath string, url string) error {
@@ -26,5 +28,24 @@ func DownloadFile(filepath string, url string) error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// RunCmd Runs command `name` with arguments `args`
+func RunCmd(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	if err := cmd.Start(); err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	log.Println("Command running", name, args)
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			log.Printf("Command finished with error: %v", err)
+		} else {
+			log.Printf("Command finished successfully")
+		}
+	}()
 	return nil
 }
