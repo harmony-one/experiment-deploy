@@ -127,28 +127,28 @@ def create_deployment_group(codedeploy, region_number,application_name, deployme
         return response['deploymentGroupId']
 
 def generate_distribution_config2(region_number, node_name_tag, region_config,
-                                  shard_number, client_number, distribution_config):
+                                  shard_number, client_number, distribution_config, commander_number):
     ip_list = collect_public_ips(region_number, node_name_tag, region_config)
-    generate_distribution_config(shard_number, client_number, ip_list, distribution_config)
+    generate_distribution_config(shard_number, client_number, ip_list, distribution_config, commander_number)
 
-def generate_distribution_config3(shard_number, client_number, ip_list_file, distribution_config):
+def generate_distribution_config3(shard_number, client_number, ip_list_file, distribution_config, commander_number):
     with open(ip_list_file, "r") as fin:
         lines = fin.readlines()
         ip_list = [line.strip() for line in lines]
-    generate_distribution_config(shard_number, client_number, ip_list, distribution_config)
+    generate_distribution_config(shard_number, client_number, ip_list, distribution_config, commander_number)
 
-def generate_distribution_config(shard_number, client_number, ip_list, distribution_config):
+def generate_distribution_config(shard_number, client_number, ip_list, distribution_config, commander_number):
     if len(ip_list) < shard_number * 2 + client_number + 1:
         print("Not enough nodes to generate a config file")
         return False
 
     # Create ip for clients.
     commander_id, client_id, leader_id, validator_id = 0, 0, 0, 0
-    validator_number = len(ip_list) - client_number - shard_number - 1
+    validator_number = len(ip_list) - client_number - shard_number - commander_number
     with open(distribution_config, "w") as fout:
         for i in range(len(ip_list)):
             ip, node_name_tag = ip_list[i].split(" ")
-            if commander_id < 1:
+            if commander_id < commander_number:
                 fout.write("%s 9000 commander %d %s\n" % (ip, commander_id, node_name_tag))
                 commander_id = commander_id + 1
             elif leader_id < shard_number:
@@ -157,7 +157,7 @@ def generate_distribution_config(shard_number, client_number, ip_list, distribut
             elif validator_id < validator_number:
                 fout.write("%s 9000 validator %d %s\n" % (ip, validator_id % shard_number, node_name_tag))
                 validator_id = validator_id + 1
-            else:
+            elif client_id < client_number:
                 fout.write("%s 9000 client %d %s\n" % (ip, client_id % shard_number, node_name_tag))
                 client_id = client_id + 1
 

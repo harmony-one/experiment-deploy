@@ -19,6 +19,7 @@ OPTIONS:
    -C instances   number of instances in 3 Azure regions (default: $AZ_VM)
    -s shards      number of shards (default: $SHARD_NUM)
    -t clients     number of clients (default: $CLIENT_NUM)
+   -m commander   number of commander (default: $COMMANDER_NUM)
    -p profile     aws profile (default: $PROFILE)
    -i ip_file     file containing ip address of pre-launched VMs
    -b bucket      specify the bucket containing all test binaries (default: $BUCKET)
@@ -120,7 +121,7 @@ function generate_distribution
    cp raw_ip.txt logs/$TS
 
    echo "Generate distribution_config"
-   ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM
+   ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM --commander_number $COMMANDER_NUM
 
    cp distribution_config.txt logs/$TS
    cat>configs/profile.json<<EOT
@@ -150,6 +151,7 @@ AWS_VM=2
 AZ_VM=0
 SHARD_NUM=2
 CLIENT_NUM=1
+COMMANDER_NUM=1
 SLEEP_TIME=60
 PROFILE=harmony
 IP_FILE=
@@ -161,13 +163,14 @@ REGIONS=1,2,3,4,5,6,7,8
 INSTANCE=t2.micro
 USERDATA=configs/userdata-soldier.sh
 
-while getopts "hnc:C:s:t:p:f:b:i:r:w:u:" option; do
+while getopts "hnc:C:s:t:m:p:f:b:i:r:w:u:" option; do
    case $option in
       n) DRYRUN=--dry-run ;;
       c) AWS_VM=$OPTARG ;;
       C) AZ_VM=$OPTARG ;;
       s) SHARD_NUM=$OPTARG ;;
       t) CLIENT_NUM=$OPTARG ;;
+      m) COMMANDER_NUM=$OPTARG ;;
       p) PROFILE=$OPTARG ;;
       i) IP_FILE=$OPTARG ;;
       b) BUCKET=$OPTARG ;;
@@ -198,7 +201,9 @@ collect_ip
 date
 generate_distribution
 date
-prepare_commander
-date
+if [ $COMMANDER_NUM -gt 0 ]; then
+   prepare_commander
+   date
+fi
 upload_to_s3
 date

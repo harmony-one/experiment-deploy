@@ -25,6 +25,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--shard_number', type=int, dest='shard_number', default=1)
     parser.add_argument('--client_number', type=int, dest='client_number', default=1)
+    parser.add_argument('--commander_number', type=int, dest='commander_number', default=1)
     parser.add_argument('--distribution_config', type=str,
                         dest='distribution_config', default='distribution_config.txt')
     args = parser.parse_args()
@@ -32,8 +33,8 @@ if __name__ == "__main__":
     if args.ip_list_file == None:
         utils.generate_distribution_config2(
                 args.region_number, args.node_name_tag, args.region_config,
-                args.shard_number, args.client_number, args.distribution_config)
+                args.shard_number, args.client_number, args.distribution_config, args.commander_number)
     else:
         utils.generate_distribution_config3(args.shard_number, args.client_number,
-                                            args.ip_list_file, args.distribution_config)
+                                            args.ip_list_file, args.distribution_config, args.commander_number)
     LOGGER.info("Done writing %s" % args.distribution_config)
