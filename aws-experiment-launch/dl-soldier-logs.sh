@@ -25,6 +25,7 @@ OPTIONS:
 NODES:
    leader         download leader logs only
    validator      download validator logs only
+   client         download client logs only
    all            download all logs
 EOT
    exit 1
@@ -99,6 +100,7 @@ NODE=$@
 case $NODE in
    leader) download_logs leader ;;
    validator) download_logs validator ;;
-   all) download_logs leader && download_logs validator ;;
+   client) download_logs client ;;
+   all) download_logs leader ; download_logs validator ; download_logs client ;;
    *) usage ;;
 esac

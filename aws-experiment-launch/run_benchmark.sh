@@ -79,19 +79,21 @@ function do_simple_cmd
 {
    local cmd=$1
 
+   mkdir -p logs/$SESSION/$cmd
+
    date
 
    end=0
    group=0
    case $cmd in
-      config) cat>logs/${SESSION}/$cmd.json<<EOT
+      config) cat>logs/${SESSION}/$cmd/$cmd.json<<EOT
 {
    "sessionID":"$SESSION",
    "configURL":"http://$BUCKET.s3.amazonaws.com/$FOLDER/distribution_config.txt"
 }
 EOT
 ;;
-      init) cat>logs/${SESSION}/$cmd.json<<EOT
+      init) cat>logs/${SESSION}/$cmd/$cmd.json<<EOT
 {
    "ip":"127.0.0.1",
    "port":"9000",
@@ -105,7 +107,7 @@ EOT
                echo ERROR: no application name specified
                exit 1
             fi
-            cat>logs/${SESSION}/$cmd.json<<EOT
+            cat>logs/${SESSION}/$cmd/$cmd.json<<EOT
 {
    "bucket":"$BUCKET",
    "folder":"$FOLDER",
@@ -132,18 +134,18 @@ EOT
 
          case $cmd in
             config|init|update)
-               CMD+=$" -d@logs/${SESSION}/$cmd.json" ;;
+               CMD+=$" -d@logs/${SESSION}/$cmd/$cmd.json" ;;
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         timeout -s SIGINT 60s $CMD > logs/$SESSION/$cmd.$n.$ip.log &
+         timeout -s SIGINT 60s $CMD > logs/$SESSION/$cmd/$cmd.$n.$ip.log &
       done 
       wait
       (( group++ ))
    done
    duration=$SECONDS
 
-   succeeded=$(grep Succeeded logs/$SESSION/$cmd.*.log | wc -l)
+   succeeded=$(grep Succeeded logs/$SESSION/$cmd/$cmd.*.log | wc -l)
    failed=$(( $NUM_NODES - $succeeded ))
 
    echo $(date): $cmd succeeded/$succeeded, failed/$failed nodes, $(($duration / 60)) minutes and $(($duration % 60)) seconds
