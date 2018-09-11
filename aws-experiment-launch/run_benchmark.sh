@@ -115,6 +115,7 @@ EOT
 ;;
    esac
  
+   SECONDS=0
    while [ $end -lt $NUM_NODES ]; do
       start=$(( $PARALLEL * $group + 1 ))
       end=$(( $PARALLEL + $start - 1 ))
@@ -135,16 +136,17 @@ EOT
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         $CMD > logs/$SESSION/$cmd.$n.$ip.log &
+         timeout -s SIGINT 60s $CMD > logs/$SESSION/$cmd.$n.$ip.log &
       done 
       wait
       (( group++ ))
    done
+   duration=$SECONDS
 
    succeeded=$(grep Succeeded logs/$SESSION/$cmd.*.log | wc -l)
    failed=$(( $NUM_NODES - $succeeded ))
 
-   echo $(date): $cmd succeeded/$succeeded, failed/$failed nodes
+   echo $(date): $cmd succeeded/$succeeded, failed/$failed nodes, $(($duration / 60)) minutes and $(($duration % 60)) seconds
 }
 
 function do_update
