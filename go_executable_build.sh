@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # this script is used to generate the binary of commander/soldier
 # TODO: add error and parameter checking
 
@@ -11,6 +11,12 @@ BUCKET=unique-bucket-bin
 GOOS=linux
 GOARCH=amd64
 FOLDER=/${WHOAMI:-$USER}
+
+if [ "$(uname -s)" == "Darwin" ]; then
+   MD5='md5 -r'
+else
+   MD5=md5sum
+fi
 
 SCRIPTS=( aws/kill_node.sh aws/go-commander.sh configs/userdata-soldier.sh $BINDIR/md5sum-cs.txt )
 
@@ -60,7 +66,7 @@ function build_only
       $BINDIR/$bin -version
    done
 
-   md5sum $BINDIR/* > $BINDIR/md5sum-cs.txt
+   $MD5 $BINDIR/* > $BINDIR/md5sum-cs.txt
 }
 
 function upload
