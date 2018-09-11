@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # this script is used to create/deploy soliders on aws/azure
 
 set -euo pipefail
