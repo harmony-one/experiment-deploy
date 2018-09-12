@@ -14,12 +14,17 @@ This script automates the benchmark test.
 
 [OPTIONS]
    -h          print this help message
-   -n num      launch num soldiers
-   -s          skip client launch
+   -n num      launch num soldiers (default: $NUM)
+   -s          skip client launch (default: $SKIP)
    -i file     raw ip file of client (default: $IPFILE)
    -d duration duration of the benchmark test (default: $DURATION)
 
 [ACTIONS]
+   launch      do launch only
+   run         run benchmark
+   log         download logs
+   deinit      sync logs & terminate instances
+   all         do everything (default)
 
 
 [EXAMPLES]
@@ -60,7 +65,7 @@ pushd logs/$TS/leader/tmp_log/log-$TS
 TPS=$( ${THEPWD}/cal_tps.sh )
 popd
 
-aws s3 sync logs s3://harmony-benchmark/logs &
+aws s3 sync ${CACHE}logs s3://harmony-benchmark/logs &
 
 ./terminate_instances.py
 
