@@ -105,19 +105,15 @@ function collect_ip
 
 function generate_distribution
 {
+   if [[ $AZ_VM -gt 0 && -f $ROOTDIR/azure/configs/raw_ip.txt ]]; then
+      echo "Merge raw_ip.txt from Azure"
+      cat $ROOTDIR/azure/configs/raw_ip.txt | grep -vE '^ node' >> raw_ip.txt
+      cp $ROOTDIR/azure/configs/*.ips logs/$TS
+   fi
    if [  -f "$IP_FILE" ]; then
       echo "Merge pre-launched IP address"
       cat $IP_FILE >> raw_ip.txt
    fi
-
-   if [[ $AZ_VM -gt 0 && -f $ROOTDIR/azure/configs/raw_ip.txt ]]; then
-      echo "Merge raw_ip.txt from Azure"
-      cat $ROOTDIR/azure/configs/raw_ip.txt >> raw_ip.txt
-      cp $ROOTDIR/azure/configs/*.ips logs/$TS
-   fi
-
-   grep -vE '^ node' raw_ip.txt > raw_ip.good.txt
-   mv -f raw_ip.good.txt raw_ip.txt
 
    cp raw_ip.txt logs/$TS
 
