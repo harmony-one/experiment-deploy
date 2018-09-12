@@ -32,17 +32,16 @@ class InstanceResource(enum.Enum):
         return self.value
 
 
-def run_one_region_on_demand_instances(profile, config, region_number, number_of_instances, batch_index):
+def run_one_region_on_demand_instances(profile, config, region_number, number_of_instances, node_name):
     ec2_client = utils.create_client(profile, config, region_number)
-    node_name_tag = create_instances(
-        config, ec2_client, region_number, number_of_instances, batch_index)
-    LOGGER.info("Created %s in region %s" % (node_name_tag, region_number))
-    return node_name_tag, ec2_client
+    err = create_instances(
+        config, ec2_client, region_number, number_of_instances, node_name)
+    LOGGER.info("Created %s in region %s" % (node_name, region_number))
+    return err, ec2_client
 
-
-def create_instances(config, ec2_client, region_number, number_of_instances, batch_index):
-    node_name_tag = utils.get_node_name_tag2(region_number, batch_index)
-    LOGGER.info("Creating node_name_tag: %s" % node_name_tag)
+# Returns true on error, false if successful.
+def create_instances(config, ec2_client, region_number, number_of_instances, node_name):
+    LOGGER.info("Creating node_name: %s" % node_name)
     available_zone = utils.get_one_availability_zone(ec2_client)
     LOGGER.info("Looking at zone %s to create instances." % available_zone)
 
@@ -67,7 +66,7 @@ def create_instances(config, ec2_client, region_number, number_of_instances, bat
                 'Tags': [
                     {
                         'Key': 'Name',
-                        'Value': node_name_tag
+                        'Value': node_name
                     },
                 ]
             },
@@ -78,9 +77,9 @@ def create_instances(config, ec2_client, region_number, number_of_instances, bat
     while retry_count > 0:
         try:
             time.sleep(20)
-            instance_ids = utils.get_instance_ids2(ec2_client, node_name_tag)
-            LOGGER.info("Waiting for all %d instances in region %s with node_name_tag %s to be in RUNNING" % (
-                len(instance_ids), region_number, node_name_tag))
+            instance_ids = utils.get_instance_ids2(ec2_client, node_name)
+            LOGGER.info("Waiting for all %d instances in region %s with node_name %s to be in RUNNING" % (
+                len(instance_ids), region_number, node_name))
             break
         except:
             retry_count -= 1
@@ -101,13 +100,13 @@ def create_instances(config, ec2_client, region_number, number_of_instances, bat
         time.sleep(20)
         LOGGER.info("Waiting ...")
         ip_list = utils.collect_public_ips_from_ec2_client(
-            ec2_client, node_name_tag)
+            ec2_client, node_name)
         if len(ip_list) == number_of_instances:
             LOGGER.info("Created %d instances" % number_of_instances)
-            return node_name_tag
+            return False
         retry_count -= 10
     LOGGER.info("Can not get %d instances" % number_of_instances)
-    return node_name_tag
+    return True
 
 
 LOCK_FOR_RUN_ONE_REGION = threading.Lock()
@@ -119,17 +118,18 @@ def run_for_one_region_on_demand(profile, config, region_number, number_of_insta
     while number_of_instances > 0:
         number_of_creation = min(
             utils.MAX_INSTANCES_FOR_DEPLOYMENT, number_of_instances)
-        node_name_tag, ec2_client = run_one_region_on_demand_instances(
-            profile, config, region_number, number_of_creation, batch_index)
-        if node_name_tag:
-            LOGGER.info("Managed to create instances for region %s with node_name_tag %s" %
-                        (region_number, node_name_tag))
-            instance_ids = utils.get_instance_ids2(ec2_client, node_name_tag)
+        node_name = utils.get_node_name(region_number, batch_index)
+        err, ec2_client = run_one_region_on_demand_instances(
+            profile, config, region_number, number_of_creation, node_name)
+        if err:
+            LOGGER.info("Managed to create instances for region %s with node_name %s" %
+                        (region_number, node_name))
+            instance_ids = utils.get_instance_ids2(ec2_client, node_name)
             LOCK_FOR_RUN_ONE_REGION.acquire()
             try:
-                fout.write("%s %s\n" % (node_name_tag, region_number))
+                fout.write("%s %s\n" % (node_name, region_number))
                 for instance_id in instance_ids:
-                    fout2.write(instance_id + " " + node_name_tag + " " + region_number +
+                    fout2.write(instance_id + " " + node_name + " " + region_number +
                                 " " + config[region_number][utils.REGION_NAME] + "\n")
             finally:
                 LOCK_FOR_RUN_ONE_REGION.release()
