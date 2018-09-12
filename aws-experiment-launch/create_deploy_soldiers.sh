@@ -71,7 +71,7 @@ function launch_vms
    sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA
 
    echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
-   $PYTHON ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA --tag $USER
+   $PYTHON ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA --tag $USERID
 
    echo "Change go-commander.sh"
    sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $ROOTDIR/aws/go-commander.sh
@@ -157,7 +157,8 @@ SLEEP_TIME=60
 PROFILE=harmony
 IP_FILE=
 BUCKET=unique-bucket-bin
-FOLDER=${WHOAMI:-$USER}
+USERID=${WHOAMI:-$USER}
+FOLDER=$USERID
 ROOTDIR=$(dirname $0)/..
 TS=$(date +%Y%m%d.%H%M%S)
 REGIONS=1,2,3,4,5,6,7,8
