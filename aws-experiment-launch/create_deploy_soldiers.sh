@@ -70,7 +70,7 @@ function launch_vms
    sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA
 
    echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
-   ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA
+   ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA --tag $USER
 
    echo "Change go-commander.sh"
    sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $ROOTDIR/aws/go-commander.sh

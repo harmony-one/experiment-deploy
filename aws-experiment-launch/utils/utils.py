@@ -23,8 +23,8 @@ NODE_NAME_SUFFIX = "NODE-" + CURRENT_SESSION
 def get_node_name_tag(region_number):
     return region_number + "-" + NODE_NAME_SUFFIX
 
-def get_node_name(region_number, batch_index):
-    return region_number + "-" + NODE_NAME_SUFFIX + "-" + str(batch_index)
+def get_node_name(*argv):
+    return '-'.join(argv) + "-" + NODE_NAME_SUFFIX
 
 def get_user_data(userdata):
     global USER_DATA

@@ -39,9 +39,10 @@ def run_one_region_on_demand_instances(profile, config, region_number, number_of
     LOGGER.info("Created %s in region %s" % (node_name, region_number))
     return err, ec2_client
 
-# Returns true on error, false if successful.
+
 def create_instances(config, ec2_client, region_number, number_of_instances, node_name):
-    LOGGER.info("Creating node_name: %s" % node_name)
+    # Returns true on error, false on success
+    LOGGER.info("Creating nodes with name: %s" % node_name)
     available_zone = utils.get_one_availability_zone(ec2_client)
     LOGGER.info("Looking at zone %s to create instances." % available_zone)
 
@@ -112,16 +113,16 @@ def create_instances(config, ec2_client, region_number, number_of_instances, nod
 LOCK_FOR_RUN_ONE_REGION = threading.Lock()
 
 
-def run_for_one_region_on_demand(profile, config, region_number, number_of_instances, fout, fout2):
+def run_for_one_region_on_demand(profile, config, region_number, number_of_instances, tag, fout, fout2):
     batch_index = 0
     number_of_instances = int(number_of_instances)
     while number_of_instances > 0:
         number_of_creation = min(
             utils.MAX_INSTANCES_FOR_DEPLOYMENT, number_of_instances)
-        node_name = utils.get_node_name(region_number, batch_index)
+        node_name = utils.get_node_name(region_number, str(batch_index), tag)
         err, ec2_client = run_one_region_on_demand_instances(
             profile, config, region_number, number_of_creation, node_name)
-        if err:
+        if not err:
             LOGGER.info("Managed to create instances for region %s with node_name %s" %
                         (region_number, node_name))
             instance_ids = utils.get_instance_ids2(ec2_client, node_name)
@@ -181,6 +182,8 @@ if __name__ == "__main__":
                         help='set the aws instance type')
     parser.add_argument('--userdata', type=str, dest='userdata', default='configs/userdata-soldier.sh',
                         help='set the filename of userdata')
+    parser.add_argument('--tag', type=str, dest='tag', default='',
+                        help='customized tag value')
     args = parser.parse_args()
 
     INSTANCE_TYPE = args.instance
@@ -201,7 +204,7 @@ if __name__ == "__main__":
             number_of_instances = num_instance_list[i]
             if instance_resource == InstanceResource.ON_DEMAND:
                 t = threading.Thread(target=run_for_one_region_on_demand, args=(
-                    args.aws_profile, config, region_number, number_of_instances, fout, fout2))
+                    args.aws_profile, config, region_number, number_of_instances, args.tag, fout, fout2))
             elif instance_resource == InstanceResource.SPOT_FLEET:
                 t = threading.Thread(target=spot_fleet.run_one_region, args=(
                     region_number, number_of_instances, fout, fout2))
