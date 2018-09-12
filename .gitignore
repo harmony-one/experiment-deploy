@@ -22,3 +22,5 @@ keys
 *.swp
 bin
 tmp_log
+aws-experiment-launch/*.ids
+aws-experiment-launch/configs/profile.json
