@@ -12,11 +12,16 @@ Usage: $ME [OPTIONS] ACTION
 OPTIONS:
    -h          print this help message
    -G          do the real work, not dryrun
+   -g filter   grep filter to filter out the instances
 
 ACTION:
    list        list all running instances (id,type,name) - default
    delete      delete all running instances
 
+
+EXAMPLES:
+
+   $ME -g leo -G
 EOT
 
    exit 1
@@ -40,7 +45,7 @@ function list_ids
    for r in ${REGIONS[@]}; do
       if [ "$DRYRUN" == "" ]; then
          echo listing instances in $r
-         $AWS --region $r ec2 describe-instances --no-paginate --filters Name=instance-state-name,Values=running | jq -r '.Reservations[].Instances[] | .InstanceId + ":" + .InstanceType + ":" + .Tags[].Value' > $r.ids
+         $AWS --region $r ec2 describe-instances --no-paginate --filters Name=instance-state-name,Values=running | jq -r '.Reservations[].Instances[] | .InstanceId + ":" + .InstanceType + ":" + .Tags[].Value' | grep -E $FILTER > $r.ids
          echo $(wc -l $r.ids) running instances found
       else
          echo "$AWS --region $r ec2 describe-instances --no-paginate --filters Name=instance-state-name,Values=running | jq -r '.Reservations[].Instances[] | .InstanceId + \":\" + .InstanceType'"
@@ -51,12 +56,14 @@ function list_ids
 ############################### GLOBAL VARIABLES ###############################
 DRYRUN=echo
 AWS=aws
+FILTER=.
 
 ############################### MAIN FUNCTION    ###############################
-while getopts "hG" option; do
+while getopts "hGg:" option; do
    case $option in
       h) usage ;;
       G) DRYRUN= ;;
+      g) FILTER=$OPTARG ;;
    esac
 done
 
