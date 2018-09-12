@@ -2,9 +2,9 @@
 
 set -x
 
-PWD=$(pwd)
+THEPWD=$(pwd)
 
-./create_deploy_soldiers.sh -c 125 -s 10 -t 1 -m 0 -u configs/userdata-soldier-http.sh -3
+./create_deploy_soldiers.sh -c 25 -s 10 -t 1 -m 0 -u configs/userdata-soldier-http.sh
 
 # ./launch-client-only.sh
 
@@ -35,9 +35,12 @@ popd
 sleep 10
 
 pushd logs/$TS/leader/tmp_log/log-$TS
-${PWD}/cal_tps.sh
+TPS=$( ${THEPWD}/cal_tps.sh )
 popd
 
 aws s3 sync logs s3://harmony-benchmark/logs &
 
 python3.7 ./terminate_instances.py
+
+echo ============= TPS ==============
+echo $TPS
