@@ -10,10 +10,10 @@ import threading
 import time
 import enum
 
-#TODO REMOVE UTILS
-from utils import utils, spot_fleet, logger
+#TODO REMOVE UTILS 
+from utils import utils, spot_fleet, mylogger
 
-LOGGER = logger.getLogger(__file__)
+LOGGER = mylogger.getLogger(__file__)
 REGION_NAME = 'region_name'
 REGION_KEY = 'region_key'
 REGION_SECURITY_GROUP = 'region_security_group'

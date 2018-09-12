@@ -4,6 +4,13 @@
 
 set -o pipefail
 
+if [ "$(uname -s)" == "Darwin" ]; then
+   TIMEOUT=gtimeout
+else
+   TIMEOUT=timeout
+fi
+
+
 function usage
 {
    ME=$(basename $0)
@@ -138,7 +145,7 @@ EOT
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         timeout -s SIGINT 60s $CMD > logs/$SESSION/$cmd/$cmd.$n.$ip.log &
+         $TIMEOUT -s SIGINT 60s $CMD > logs/$SESSION/$cmd/$cmd.$n.$ip.log &
       done 
       wait
       (( group++ ))

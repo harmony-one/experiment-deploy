@@ -8,10 +8,10 @@ import sys
 import threading
 import boto3
 
-from utils import utils, spot_fleet, logger
+from utils import utils, spot_fleet, mylogger
 
 logging.basicConfig(level=logging.INFO, format='%(threadName)s %(asctime)s - %(name)s - %(levelname)s - %(message)s')
-LOGGER = logging.getLogger(__file__)
+LOGGER = mylogger.getLogger(__file__)
 LOGGER.setLevel(logging.INFO)
 
 REGION_NAME = 'region_name'

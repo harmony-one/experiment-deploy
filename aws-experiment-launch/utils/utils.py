@@ -29,7 +29,7 @@ def get_node_name(region_number, batch_index):
 def get_user_data(userdata):
     global USER_DATA
     global USER_DATA_BASE64
-    with open(userdata, "r") as userdata_file:
+    with open(userdata, "rb") as userdata_file:
         USER_DATA = userdata_file.read()
 # UserData must be base64 encoded for spot instances.
     USER_DATA_BASE64 = base64.b64encode(USER_DATA)

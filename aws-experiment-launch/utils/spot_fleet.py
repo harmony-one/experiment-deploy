@@ -1,7 +1,7 @@
 import utils
-import logger
-import launch_template
-LOGGER = logger.getLogger(__file__)
+import utils.mylogger
+
+LOGGER = utils.mylogger.getLogger(__file__)
 
 
 def create_launch_specification(region_number, instanceType):
