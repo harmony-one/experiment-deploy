@@ -32,16 +32,16 @@ class InstanceResource(enum.Enum):
         return self.value
 
 
-def run_one_region_on_demand_instances(profile, config, region_number, number_of_instances, tag):
+def run_one_region_on_demand_instances(profile, config, region_number, number_of_instances, batch_index):
     ec2_client = utils.create_client(profile, config, region_number)
     node_name_tag = create_instances(
-        config, ec2_client, region_number, number_of_instances, tag)
+        config, ec2_client, region_number, number_of_instances, batch_index)
     LOGGER.info("Created %s in region %s" % (node_name_tag, region_number))
     return node_name_tag, ec2_client
 
 
-def create_instances(config, ec2_client, region_number, number_of_instances, tag):
-    node_name_tag = utils.get_node_name_tag2(region_number, tag)
+def create_instances(config, ec2_client, region_number, number_of_instances, batch_index):
+    node_name_tag = utils.get_node_name_tag2(region_number, batch_index)
     LOGGER.info("Creating node_name_tag: %s" % node_name_tag)
     available_zone = utils.get_one_availability_zone(ec2_client)
     LOGGER.info("Looking at zone %s to create instances." % available_zone)
@@ -114,13 +114,13 @@ LOCK_FOR_RUN_ONE_REGION = threading.Lock()
 
 
 def run_for_one_region_on_demand(profile, config, region_number, number_of_instances, fout, fout2):
-    tag = 0
+    batch_index = 0
     number_of_instances = int(number_of_instances)
     while number_of_instances > 0:
         number_of_creation = min(
             utils.MAX_INSTANCES_FOR_DEPLOYMENT, number_of_instances)
         node_name_tag, ec2_client = run_one_region_on_demand_instances(
-            profile, config, region_number, number_of_creation, tag)
+            profile, config, region_number, number_of_creation, batch_index)
         if node_name_tag:
             LOGGER.info("Managed to create instances for region %s with node_name_tag %s" %
                         (region_number, node_name_tag))
@@ -137,7 +137,7 @@ def run_for_one_region_on_demand(profile, config, region_number, number_of_insta
             LOGGER.info("Failed to create instances for region %s" %
                         region_number)
         number_of_instances -= number_of_creation
-        tag += 1
+        batch_index += 1
 
 
 def read_region_config(region_config='configuration.txt'):
