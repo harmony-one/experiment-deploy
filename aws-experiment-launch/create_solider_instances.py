@@ -10,7 +10,7 @@ import threading
 import time
 import enum
 
-#TODO REMOVE UTILS 
+#TODO REMOVE UTILS
 from utils import utils, spot_fleet, logger
 
 LOGGER = logger.getLogger(__file__)
@@ -22,6 +22,7 @@ REGION_HUMAN_NAME = 'region_human_name'
 INSTANCE_TYPE = 't2.micro'
 REGION_AMI = 'region_ami'
 
+
 class InstanceResource(enum.Enum):
     ON_DEMAND = 'ondemand'
     SPOT_INSTANCE = 'spot'
@@ -30,12 +31,14 @@ class InstanceResource(enum.Enum):
     def __str__(self):
         return self.value
 
+
 def run_one_region_on_demand_instances(profile, config, region_number, number_of_instances, tag):
     ec2_client = utils.create_client(profile, config, region_number)
     node_name_tag = create_instances(
         config, ec2_client, region_number, number_of_instances, tag)
     LOGGER.info("Created %s in region %s" % (node_name_tag, region_number))
     return node_name_tag, ec2_client
+
 
 def create_instances(config, ec2_client, region_number, number_of_instances, tag):
     node_name_tag = utils.get_node_name_tag2(region_number, tag)
@@ -109,15 +112,17 @@ def create_instances(config, ec2_client, region_number, number_of_instances, tag
 
 LOCK_FOR_RUN_ONE_REGION = threading.Lock()
 
+
 def run_for_one_region_on_demand(profile, config, region_number, number_of_instances, fout, fout2):
     tag = 0
     number_of_instances = int(number_of_instances)
     while number_of_instances > 0:
-        number_of_creation = min(utils.MAX_INSTANCES_FOR_DEPLOYMENT, number_of_instances)
+        number_of_creation = min(
+            utils.MAX_INSTANCES_FOR_DEPLOYMENT, number_of_instances)
         node_name_tag, ec2_client = run_one_region_on_demand_instances(
             profile, config, region_number, number_of_creation, tag)
         if node_name_tag:
-            LOGGER.info("Managed to create instances for region %s with name_name_tag %s" %
+            LOGGER.info("Managed to create instances for region %s with node_name_tag %s" %
                         (region_number, node_name_tag))
             instance_ids = utils.get_instance_ids2(ec2_client, node_name_tag)
             LOCK_FOR_RUN_ONE_REGION.acquire()
@@ -129,9 +134,11 @@ def run_for_one_region_on_demand(profile, config, region_number, number_of_insta
             finally:
                 LOCK_FOR_RUN_ONE_REGION.release()
         else:
-            LOGGER.info("Failed to create instances for region %s" % region_number)
+            LOGGER.info("Failed to create instances for region %s" %
+                        region_number)
         number_of_instances -= number_of_creation
         tag += 1
+
 
 def read_region_config(region_config='configuration.txt'):
     global CONFIG
@@ -149,6 +156,7 @@ def read_region_config(region_config='configuration.txt'):
             config[region_num][REGION_SECURITY_GROUP_ID] = mylist[6]
     CONFIG = config
     return config
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -175,7 +183,7 @@ if __name__ == "__main__":
                         help='set the filename of userdata')
     args = parser.parse_args()
 
-    INSTANCE_TYPE=args.instance
+    INSTANCE_TYPE = args.instance
     utils.get_user_data(args.userdata)
 
     config = read_region_config(args.region_config)
