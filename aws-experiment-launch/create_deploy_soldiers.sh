@@ -27,6 +27,7 @@ OPTIONS:
    -r regions     specify the regions for deployment, delimited by , (default: $REGIONS)
    -w instance    the AWS instance type (default: $INSTANCE)
    -u userdata    the userdata file (default: $USERDATA)
+   -3             use python3.7 (default: $PYTHON)
 
 ACTION:
    n/a
@@ -70,7 +71,7 @@ function launch_vms
    sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA
 
    echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
-   ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA --tag $USER
+   $PYTHON ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA --tag $USER
 
    echo "Change go-commander.sh"
    sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $ROOTDIR/aws/go-commander.sh
@@ -88,7 +89,7 @@ function launch_vms
 function collect_ip
 {
    echo "Collecting IP addresses from AWS"
-   ./collect_public_ips.py --profile ${PROFILE}-ec2 --instance_output instance_output.txt
+   $PYTHON ./collect_public_ips.py --profile ${PROFILE}-ec2 --instance_output instance_output.txt
 
    if [ $AZ_VM -gt 0 ]; then
    (
@@ -121,7 +122,7 @@ function generate_distribution
    cp raw_ip.txt logs/$TS
 
    echo "Generate distribution_config"
-   ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM --commander_number $COMMANDER_NUM
+   $PYTHON ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM --commander_number $COMMANDER_NUM
 
    cp distribution_config.txt logs/$TS
    cat>configs/profile.json<<EOT
@@ -136,7 +137,7 @@ EOT
 function prepare_commander
 {
    echo "Run commander prepare"
-   ./commander_prepare.py --ts $TS
+   $PYTHON ./commander_prepare.py --ts $TS
 }
 
 function upload_to_s3
@@ -162,8 +163,9 @@ TS=$(date +%Y%m%d.%H%M%S)
 REGIONS=1,2,3,4,5,6,7,8
 INSTANCE=t2.micro
 USERDATA=configs/userdata-soldier.sh
+PYTHON=python
 
-while getopts "hnc:C:s:t:m:p:f:b:i:r:w:u:" option; do
+while getopts "hnc:C:s:t:m:p:f:b:i:r:w:u:3" option; do
    case $option in
       n) DRYRUN=--dry-run ;;
       c) AWS_VM=$OPTARG ;;
@@ -178,6 +180,7 @@ while getopts "hnc:C:s:t:m:p:f:b:i:r:w:u:" option; do
       r) REGIONS=$OPTARG ;;
       w) INSTANCE=$OPTARG ;;
       u) USERDATA=$OPTARG ;;
+      3) PYTHON=python3.7 ;;
       h|?|*) usage ;;
    esac
 done
