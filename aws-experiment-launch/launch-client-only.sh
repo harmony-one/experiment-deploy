@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
+TAG=${WHOAMI:-USER}
+
 ./create_solider_instances.py \
 --regions 1 \
 --instances 1 \
 --instancetype c5.xlarge \
 --profile harmony-ec2 \
---tag powerclient \
+--tag ${TAG}-powerclient \
 --userdata configs/userdata-soldier-http.sh \
 --instance_output instance_output-client.txt \
 --instance_ids_output instance_ids_output-client.txt
