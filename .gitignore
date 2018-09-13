@@ -33,7 +33,6 @@ aws-experiment-launch/configs/profile.json
 .vscode
 
 # Executables
-harmony-benchmark
 *.pyc
 *.exe
 *.out
