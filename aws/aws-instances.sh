@@ -31,11 +31,24 @@ function terminate_ids
 {
    for r in ${REGIONS[@]}; do
       echo terminating instances in $r
-      id=$(cat $r.ids | cut -f 1 -d: | tr '\n' ' ')
-      if [ "$id" != "" ]; then
-         $DRYRUN $AWS --region $r ec2 terminate-instances --instance-ids $id
+      if [ $(wc -l $r.ids | cut -f 1 -d ' ') -gt 500 ]; then
+         split -l 300 --additional-suffix=.ids $r.ids $r-split-
+         for f in $r-split-*.ids; do
+            id=$(cat $f | cut -f 1 -d: | tr '\n' ' ')
+            if [ "$id" != "" ]; then
+               $DRYRUN $AWS --region $r ec2 terminate-instances --instance-ids $id
+            else
+               echo no $r.ids file
+            fi
+         done
+         rm -f $r-split-*.ids
       else
-         echo no $r.ids file
+         id=$(cat $r.ids | cut -f 1 -d: | tr '\n' ' ')
+         if [ "$id" != "" ]; then
+            $DRYRUN $AWS --region $r ec2 terminate-instances --instance-ids $id
+         else
+            echo no $r.ids file
+         fi
       fi
    done
 }
