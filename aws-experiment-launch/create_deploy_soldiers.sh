@@ -45,7 +45,7 @@ EOF
 
 function launch_vms
 {
-   MAX_VM_PER_DEPLOY=200
+   MAX_VM_PER_DEPLOY=800
    if [ $AZ_VM -gt 0 ]; then
    (
       if [ $AZ_VM -gt $MAX_VM_PER_DEPLOY ]; then

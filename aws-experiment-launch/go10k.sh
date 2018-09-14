@@ -33,9 +33,11 @@ EOT
    exit 0
 }
 
+mkdir -p logs
+
 ./launch-client-only.sh
 
-./create_deploy_soldiers.sh -c 1250 -s 10 -t 1 -m 0 -u configs/userdata-soldier-http.sh -i raw_ip-client.txt
+./create_deploy_soldiers.sh -c 1250 -s 25 -t 1 -m 0 -u configs/userdata-soldier-http.sh -i raw_ip-client.txt
 
 sleep 10
 
@@ -66,6 +68,7 @@ TPS=$( ${THEPWD}/cal_tps.sh )
 popd
 
 aws s3 sync ${CACHE}logs s3://harmony-benchmark/logs &
+aws s3 sync logs s3://harmony-benchmark/logs &
 
 ./terminate_instances.py
 
