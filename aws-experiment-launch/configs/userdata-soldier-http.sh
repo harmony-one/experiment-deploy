@@ -13,6 +13,13 @@ for bin in "${TESTBIN[@]}"; do
    chmod +x ${bin}
 done
 
+sysctl -w net.core.somaxconn=1024
+sysctl -w net.core.netdev_max_backlog=65536
+sysctl -w net.ipv4.tcp_tw_reuse=1
+sysctl -w net.ipv4.tcp_rmem='4096 65536 16777216'
+sysctl -w net.ipv4.tcp_wmem='4096 65536 16777216'
+sysctl -w net.ipv4.tcp_mem='65536 131072 262144'
+
 echo "* soft     nproc          65535" | sudo tee -a /etc/security/limits.conf
 echo "* hard     nproc          65535" | sudo tee -a /etc/security/limits.conf
 echo "* soft     nofile         65535" | sudo tee -a /etc/security/limits.conf
