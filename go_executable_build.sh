@@ -63,10 +63,12 @@ function build_only
 
    for bin in "${!SRC[@]}"; do
       env GOOS=$GOOS GOARCH=$GOARCH go build -ldflags="-X main.version=v${VERSION} -X main.commit=${COMMIT} -X main.builtAt=${BUILTAT} -X main.builtBy=${BUILTBY}" -o $BINDIR/$bin ${SRC[$bin]}
-      $BINDIR/$bin -version
+      if [ "$(uname -s)" == "Linux" ]; then
+         $BINDIR/$bin -version
+      fi
    done
 
-   $MD5 $BINDIR/* > $BINDIR/md5sum-cs.txt
+   $MD5 $BINDIR/* > $BINDIR/md5sum-cs.txt 2> /dev/null
 }
 
 function upload
