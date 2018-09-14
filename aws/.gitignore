@@ -1,1 +1,3 @@
 logs/*.log
+*.ids
+go-commander.sh

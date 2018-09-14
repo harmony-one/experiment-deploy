@@ -37,7 +37,7 @@ mkdir -p logs
 
 ./launch-client-only.sh
 
-./create_deploy_soldiers.sh -c 1250 -s 25 -t 1 -m 0 -u configs/userdata-soldier-http.sh -i raw_ip-client.txt
+./create_deploy_soldiers.sh -c 125 -s 10 -t 1 -m 0 -u configs/userdata-soldier-http.sh -i raw_ip-client.txt
 
 cat instance_ids_output-client.txt >> instance_ids_output.txt
 cat instance_output-client.txt >> instance_output.txt

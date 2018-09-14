@@ -68,13 +68,13 @@ function launch_vms
    fi
 
    echo "Change userdata file"
-   sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA
+   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA > $USERDATA.aws
 
    echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
-   $PYTHON ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA --tag $USERID
+   $PYTHON ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA.aws --tag $USERID
 
    echo "Change go-commander.sh"
-   sed -i.orig "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $ROOTDIR/aws/go-commander.sh
+   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $ROOTDIR/aws/go-commander.template > $ROOTDIR/aws/go-commander.sh
 
    # wait for the background task to finish
    wait
