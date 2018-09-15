@@ -37,10 +37,15 @@ mkdir -p logs
 
 ./launch-client-only.sh
 
-./create_deploy_soldiers.sh -c 1250 -s 25 -t 1 -m 0 -u configs/userdata-soldier-http.sh -i raw_ip-client.txt
+./launch-leaders-only.sh
+
+./create_deploy_soldiers.sh -c 1250 -s 25 -t 1 -m 0 -u configs/userdata-soldier-http.sh -i raw_ip-client.txt -l raw_ip-leaders.txt
 
 cat instance_ids_output-client.txt >> instance_ids_output.txt
 cat instance_output-client.txt >> instance_output.txt
+
+cat instance_ids_output-leaders.txt >> instance_ids_output.txt
+cat instance_output-leaders.txt >> instance_output.txt
 
 sleep 10
 
