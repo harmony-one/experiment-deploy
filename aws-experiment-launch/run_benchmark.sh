@@ -154,12 +154,12 @@ EOT
    done
    duration=$SECONDS
 
-   succeeded=$(grep Succeeded $LOGDIR/$cmd/$cmd.*.log | wc -l)
+   succeeded=$(find $LOGDIR/$cmd -name $cmd.*.log -type f -exec grep Succeeded {} \; | wc -l)
    failed=$(( $NUM_NODES - $succeeded ))
 
    echo $(date): $cmd succeeded/$succeeded, failed/$failed nodes, $(($duration / 60)) minutes and $(($duration % 60)) seconds
 
-   rm -f $LOGDIR/$cmd/$cmd.*.log
+   rm -rf $LOGDIR/$cmd
 }
 
 function do_update
