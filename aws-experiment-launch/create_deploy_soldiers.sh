@@ -146,7 +146,6 @@ function upload_to_s3
 {
    aws --profile ${PROFILE}-s3 s3 cp $ROOTDIR/aws/go-commander.sh s3://${BUCKET}/${FOLDER}/go-commander.sh --acl public-read
    aws --profile ${PROFILE}-s3 s3 cp distribution_config.txt s3://${BUCKET}/${FOLDER}/distribution_config.txt --acl public-read
-   aws --profile ${PROFILE}-s3 s3 sync logs s3://harmony-benchmark/logs
 }
 
 ################### VARIABLES ###################
