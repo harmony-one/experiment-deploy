@@ -22,6 +22,7 @@ OPTIONS:
    -m commander   number of commander (default: $COMMANDER_NUM)
    -p profile     aws profile (default: $PROFILE)
    -i ip_file     file containing ip address of pre-launched VMs
+   -l leaders     file containing ip addresses of leader VMs
    -b bucket      specify the bucket containing all test binaries (default: $BUCKET)
    -f folder      specify the folder name in the bucket (default: $FOLDER)
    -r regions     specify the regions for deployment, delimited by , (default: $REGIONS)
@@ -115,6 +116,11 @@ function generate_distribution
       cat $IP_FILE >> raw_ip.txt
    fi
 
+   if [ -f "$LEADERS" ]; then
+      cat $LEADERS raw_ip.txt > raw_ip.txt.tmp.$USERID
+      mv -f raw_ip.txt.tmp.$USERID raw_ip.txt
+   fi
+
    cp raw_ip.txt logs/$TS
 
    echo "Generate distribution_config"
@@ -162,7 +168,7 @@ INSTANCE=t2.micro
 USERDATA=configs/userdata-soldier.sh
 PYTHON=python
 
-while getopts "hnc:C:s:t:m:p:f:b:i:r:w:u:3" option; do
+while getopts "hnc:C:s:t:m:p:f:b:i:r:w:u:3l:" option; do
    case $option in
       n) DRYRUN=--dry-run ;;
       c) AWS_VM=$OPTARG ;;
@@ -178,6 +184,7 @@ while getopts "hnc:C:s:t:m:p:f:b:i:r:w:u:3" option; do
       w) INSTANCE=$OPTARG ;;
       u) USERDATA=$OPTARG ;;
       3) PYTHON=python3.7 ;;
+      l) LEADERS=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done
