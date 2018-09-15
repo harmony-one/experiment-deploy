@@ -76,7 +76,7 @@ pushd logs/$TS/leader/tmp_log/log-$TS
 TPS=$( ${THEPWD}/cal_tps.sh )
 popd
 
-aws s3 sync ${CACHE}logs/log-$TS s3://harmony-benchmark/logs/log-$TS &
+aws s3 sync ${CACHE}logs/$TS s3://harmony-benchmark/logs/$TS &
 aws s3 sync logs/run s3://harmony-benchmark/logs/run &
 
 ./terminate_instances.py

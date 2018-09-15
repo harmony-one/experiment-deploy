@@ -60,7 +60,8 @@ pushd logs
 TS=$(ls -dlrt 2018* | tail -1 | awk -F ' ' ' { print $NF } ' )
 popd
 
-./dl-soldier-logs.sh -s $TS -g all benchmark
+./dl-soldier-logs.sh -s $TS -g leader benchmark
+./dl-soldier-logs.sh -s $TS -g client benchmark
 
 ./run_benchmark.sh kill
 
@@ -70,8 +71,8 @@ pushd logs/$TS/leader/tmp_log/log-$TS
 TPS=$( ${THEPWD}/cal_tps.sh )
 popd
 
-aws s3 sync ${CACHE}logs s3://harmony-benchmark/logs &
-aws s3 sync logs s3://harmony-benchmark/logs &
+aws s3 sync ${CACHE}logs/$TS s3://harmony-benchmark/logs/$TS &
+aws s3 sync logs/run s3://harmony-benchmark/logs/run &
 
 ./terminate_instances.py
 
