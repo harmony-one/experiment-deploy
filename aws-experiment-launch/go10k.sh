@@ -3,7 +3,7 @@
 set -x
 
 THEPWD=$(pwd)
-SKIPLEADER=false
+SKIPLEADER=true
 PARALLEL=500
 
 function usage
