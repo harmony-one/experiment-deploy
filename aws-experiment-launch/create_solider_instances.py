@@ -74,7 +74,7 @@ def create_instances(config, ec2_client, region_number, number_of_instances, nod
         ],
     )
 
-    retry_count = 10
+    retry_count = 20
     while retry_count > 0:
         try:
             time.sleep(20)
@@ -85,7 +85,7 @@ def create_instances(config, ec2_client, region_number, number_of_instances, nod
         except:
             retry_count -= 1
             LOGGER.info("Failed to get instance ids. Retry again.")
-    retry_count = 10
+    retry_count = 20
     while retry_count > 0:
         try:
             time.sleep(20)
