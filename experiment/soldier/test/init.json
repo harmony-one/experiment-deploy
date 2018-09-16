@@ -1,6 +1,6 @@
 {
    "ip": "127.0.0.1",
    "port": "9999",
-   "benchmarkArgs": "-profile",
-   "txgenArgs": "-duration 30"
+   "benchmarkArgs": "-metrics_report_url http://34.218.238.198:3000/report",
+   "txgenArgs": "-duration -1"
 }
