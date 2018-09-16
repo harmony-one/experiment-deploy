@@ -449,8 +449,8 @@ func initHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	globalSession.txgenAdditionalArgs = append(globalSession.txgenAdditionalArgs, init.TxgenArgs)
-	globalSession.nodeAdditionalArgs = append(globalSession.nodeAdditionalArgs, init.BenchmarkArgs)
+	globalSession.txgenAdditionalArgs = append(globalSession.txgenAdditionalArgs, strings.Split(init.TxgenArgs, " ")...)
+	globalSession.nodeAdditionalArgs = append(globalSession.nodeAdditionalArgs, strings.Split(init.BenchmarkArgs, " ")...)
 	if err := runInstance(); err == nil {
 		res = "Succeeded"
 	} else {
