@@ -67,7 +67,7 @@ wait
 cat instance_ids_output-client.txt >> instance_ids_output.txt
 cat instance_output-client.txt >> instance_output.txt
 
-rm instance_ids_output-client.txt instance_output-client.txt &
+rm instance_ids_output-client.txt instance_output-client.txt raw_ip-client.txt &
 
 if [ "$SKIPLEADER" == "false" ]; then
    cat instance_ids_output-leaders.txt >> instance_ids_output.txt

@@ -5,7 +5,7 @@ TAG=${WHOAMI:-USER}
 ./create_solider_instances.py \
 --regions 1 \
 --instances 1 \
---instancetype c5.xlarge \
+--instancetype r5.2xlarge \
 --profile harmony-ec2 \
 --tag ${TAG}-powerclient \
 --userdata configs/userdata-soldier-http.sh \
