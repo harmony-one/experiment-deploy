@@ -46,9 +46,14 @@ EOF
 
 function launch_vms
 {
+   echo "Change userdata file"
+   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA > $USERDATA.aws
+
    MAX_VM_PER_DEPLOY=800
    if [ $AZ_VM -gt 0 ]; then
    (
+      aws s3 cp $USERDATA.aws s3://unique-bucket-bin/nodes/userdata-soldier.sh --acl public-read
+
       if [ $AZ_VM -gt $MAX_VM_PER_DEPLOY ]; then
          VG_GROUP=$(( $AZ_VM / $MAX_VM_PER_DEPLOY ))
          reminder=$(( $AZ_VM % $MAX_VM_PER_DEPLOY ))
@@ -67,9 +72,6 @@ function launch_vms
       popd
    ) &
    fi
-
-   echo "Change userdata file"
-   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA > $USERDATA.aws
 
    echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
    $PYTHON ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA.aws --tag $USERID
