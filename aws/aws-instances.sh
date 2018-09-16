@@ -30,8 +30,9 @@ EOT
 function terminate_ids
 {
    for r in ${REGIONS[@]}; do
-      echo terminating instances in $r
-      if [ $(wc -l $r.ids | cut -f 1 -d ' ') -gt 500 ]; then
+      NUM=$(wc -l $r.ids | cut -f 1 -d ' ')
+      echo terminating instances in $r: $NUM instances
+      if [ $NUM -gt 500 ]; then
          split -l 300 --additional-suffix=.ids $r.ids $r-split-
          for f in $r-split-*.ids; do
             id=$(cat $f | cut -f 1 -d: | tr '\n' ' ')
