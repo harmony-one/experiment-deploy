@@ -27,6 +27,7 @@ OPTIONS:
    -p testplan       file name of the test plan
    -n num            parallel process num in a group (default: $PARALLEL)
    -v                verbose
+   -D dashboard_ip   enable dashboard support, specify the ip address of dashboard server (default: $DASHBOARD)
 
 ACTIONS:
    gen               generate test file based on profile (TODO)
@@ -90,8 +91,6 @@ function do_simple_cmd
 
    mkdir -p $LOGDIR/$cmd
 
-   date
-
    end=0
    group=0
    case $cmd in
@@ -106,8 +105,8 @@ EOT
 {
    "ip":"127.0.0.1",
    "port":"9000",
-   "benchmarkArgs":"",
-   "txgenArgs":""
+   "benchmarkArgs":"$DASHBOARD",
+   "txgenArgs":"-duration -1"
 }
 EOT
 ;;
@@ -199,13 +198,14 @@ PROFILE=configs/profile.json
 DIST=distribution_config.txt
 PARALLEL=100
 VERBOSE=
+DASHBOARD=
 
 declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:v" option; do
+while getopts "hp:f:i:a:n:vD:" option; do
    case $option in
       p) PROFILE=$OPTARG ;;
       f) DIST=$OPTARG ;;
@@ -213,6 +213,7 @@ while getopts "hp:f:i:a:n:v" option; do
       a) APP=$OPTARG ;;
       n) PARALLEL=$OPTARG ;;
       v) VERBOSE=true ;;
+      D) DASHBOARD="-metrics_report_url http://$OPTARG/report" ;;
       h|?) usage ;;
    esac
 done
