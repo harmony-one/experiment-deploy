@@ -5,6 +5,7 @@ import sys
 import time
 import base64
 import threading
+from botocore.config import Config
 
 MAX_INTANCES_FOR_WAITER = 100
 MAX_INSTANCES_FOR_DEPLOYMENT = 500
@@ -75,7 +76,12 @@ def create_ec2_client(profile, region_number, region_config):
         session = boto3.Session(region_name=region_name)
     else:
         session = boto3.Session(profile_name=profile, region_name=region_name)
-    return session.client('ec2'), session
+    ec2config = Config(
+        retries = dict(
+            max_attempts = 10
+        )
+    )
+    return session.client('ec2', config=ec2config), session
 
 def collect_public_ips_from_ec2_client(ec2_client, node_name_tag):
     filters = [{'Name': 'tag:Name','Values': [node_name_tag]}]
