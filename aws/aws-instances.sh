@@ -43,7 +43,7 @@ function terminate_ids
          done
          rm -f $r-split-*.ids
       else
-         id=$(cat $r.ids | cut -f 1 -d: | tr '\n' ' ')
+         id=$(cat $r.ids | cut -f 1 | tr '\n' ' ')
          if [ "$id" != "" ]; then
             $DRYRUN $AWS --region $r ec2 terminate-instances --instance-ids $id
          else
@@ -56,13 +56,8 @@ function terminate_ids
 function list_ids
 {
    for r in ${REGIONS[@]}; do
-      if [ "$DRYRUN" == "" ]; then
-         echo listing instances in $r
-         $AWS --region $r ec2 describe-instances --no-paginate --filters Name=instance-state-name,Values=running | jq -r '.Reservations[].Instances[] | .InstanceId + ":" + .InstanceType + ":" + .Tags[].Value' | grep -E $FILTER > $r.ids
-         echo $(wc -l $r.ids) running instances found
-      else
-         echo "$AWS --region $r ec2 describe-instances --no-paginate --filters Name=instance-state-name,Values=running | jq -r '.Reservations[].Instances[] | .InstanceId + \":\" + .InstanceType'"
-      fi
+      $AWS --region $r ec2 describe-instances --no-paginate --filters Name=instance-state-name,Values=running | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | [.id, .type, .tag.Value ] | @tsv ' | grep -E $FILTER > $r.ids
+      echo $(wc -l $r.ids | cut -f1 -d' ') running instances found in $r
    done
 }
 
@@ -86,12 +81,15 @@ ACTION=${1:-list}
 
 case "$ACTION" in
    "list") list_ids ;;
-   "delete") terminate_ids;;
+   "delete")
+      terminate_ids
+      if [ -n "$DRYRUN" ]; then
+         echo
+         echo "******************************"
+         echo Use -G to execute the command!
+         echo "******************************"
+      fi
+      ;;
 esac
 
-if [ -n "$DRYRUN" ]; then
-   echo
-   echo "******************************"
-   echo Use -G to execute the command!
-   echo "******************************"
-fi
+
