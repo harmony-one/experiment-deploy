@@ -43,7 +43,12 @@ def create_client(profile, config, region_number):
     else:
         session = boto3.Session(profile_name=profile, region_name=region_name)
     # Create a client.
-    return session.client('ec2')
+    ec2config = Config(
+        retries = dict(
+            max_attempts = 10
+        )
+    )
+    return session.client('ec2', config=ec2config)
 
 def read_region_config(region_config='configuration.txt'):
     global CONFIG
