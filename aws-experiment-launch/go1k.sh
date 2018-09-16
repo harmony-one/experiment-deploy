@@ -35,6 +35,8 @@ EOT
 
 mkdir -p logs
 
+SECONDS=0
+
 ./launch-client-only.sh
 
 ./create_deploy_soldiers.sh -c 125 -s 10 -t 1 -m 0 -u configs/userdata-soldier-http.sh -i raw_ip-client.txt
@@ -42,15 +44,16 @@ mkdir -p logs
 cat instance_ids_output-client.txt >> instance_ids_output.txt
 cat instance_output-client.txt >> instance_output.txt
 
-sleep 10
+rm instance_ids_output-client.txt instance_output-client.txt &
 
-./run_benchmark.sh ping
+#sleep 10
+#./run_benchmark.sh ping
 
-sleep 10
+sleep 3
 
 ./run_benchmark.sh config
 
-sleep 10
+sleep 3
 
 ./run_benchmark.sh init
 
@@ -61,22 +64,32 @@ TS=$(ls -dlrt 2018* | tail -1 | awk -F ' ' ' { print $NF } ' )
 popd
 
 ./dl-soldier-logs.sh -s $TS -g leader benchmark
-./dl-soldier-logs.sh -s $TS -g client benchmark
-
-./run_benchmark.sh kill
-
-sleep 10
-
 pushd logs/$TS/leader/tmp_log/log-$TS
 TPS=$( ${THEPWD}/cal_tps.sh )
 popd
 
-aws s3 sync ${CACHE}logs/$TS s3://harmony-benchmark/logs/$TS &
-aws s3 sync logs/run s3://harmony-benchmark/logs/run &
+echo ============= TPS ==============
+echo $TPS
 
-./terminate_instances.py
+sleep 3
+
+./dl-soldier-logs.sh -s $TS -g client benchmark &
+./dl-soldier-logs.sh -s $TS -p 500 -g validator benchmark &
+
+# ./run_benchmark.sh kill &
+# sleep 10
 
 wait
 
+aws s3 sync logs/$TS s3://harmony-benchmark/logs/$TS 2>&1 > /dev/null &
+aws s3 sync logs/run s3://harmony-benchmark/logs/run 2>&1 > /dev/null &
+./terminate_instances.py 2>&1 > /dev/null &
+
 echo ============= TPS ==============
 echo $TPS
+
+wait
+
+duration=$SECONDS
+
+echo This Run Takes $(($duration / 60)) minutes and $(($duration % 60)) seconds

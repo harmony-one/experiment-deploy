@@ -147,7 +147,7 @@ EOT
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         $TIMEOUT -s SIGINT 60s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
+         $TIMEOUT -s SIGINT 20s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
       done 
       wait
       (( group++ ))
