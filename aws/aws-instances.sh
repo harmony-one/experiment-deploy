@@ -35,7 +35,7 @@ function terminate_ids
       if [ $NUM -gt 500 ]; then
          split -l 300 --additional-suffix=.ids $r.ids $r-split-
          for f in $r-split-*.ids; do
-            id=$(cat $f | cut -f 1 -d: | tr '\n' ' ')
+            id=$(cat $f | cut -f 1 | tr '\n' ' ')
             if [ "$id" != "" ]; then
                $DRYRUN $AWS --region $r ec2 terminate-instances --instance-ids $id
             else
