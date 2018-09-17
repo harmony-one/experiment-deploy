@@ -1,0 +1,20 @@
+{
+   "description": "aws 400 nodes on 1 shards",
+   "num_vm_aws": 50,
+   "num_vm_azure": 0,
+   "shards": 1,
+   "powerclient": false,
+   "client": "t2.micro",
+   "powerleader": false,
+   "leader": "t2.micro",
+   "master": 0,
+   "duration": 300,
+   "parallel": 50,
+   "dashboard": true,
+   "logs": {
+         "leader": true,
+         "client": true,
+         "validator": false,
+         "soldier": false
+    }
+}
