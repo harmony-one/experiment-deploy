@@ -1,5 +1,7 @@
 #!/bin/bash
 
+exec > /var/log/harmony-benchmark-startup.out 2>&1
+
 mkdir -p /home/ec2-user
 cd /home/ec2-user
 
