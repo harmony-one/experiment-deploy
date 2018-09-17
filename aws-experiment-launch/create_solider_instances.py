@@ -34,10 +34,10 @@ class InstanceResource(enum.Enum):
 
 def run_one_region_on_demand_instances(profile, config, region_number, number_of_instances, node_name):
     ec2_client = utils.create_client(profile, config, region_number)
-    err = create_instances(
+    num_filled = create_instances(
         config, ec2_client, region_number, number_of_instances, node_name)
     LOGGER.info("Created %s in region %s" % (node_name, region_number))
-    return err, ec2_client
+    return num_filled, ec2_client
 
 
 def create_instances(config, ec2_client, region_number, number_of_instances, node_name):
@@ -104,10 +104,10 @@ def create_instances(config, ec2_client, region_number, number_of_instances, nod
             ec2_client, node_name)
         if len(ip_list) == number_of_instances:
             LOGGER.info("Created %d instances" % number_of_instances)
-            return False
+            return number_of_instances
         retry_count -= 10
-    LOGGER.info("Can not get %d instances" % number_of_instances)
-    return True
+    LOGGER.info("Can not get %d instances, got only %d" % (number_of_instances, len(ip_list)))
+    return len(ip_list)
 
 
 LOCK_FOR_RUN_ONE_REGION = threading.Lock()
@@ -120,11 +120,11 @@ def run_for_one_region_on_demand(profile, config, region_number, number_of_insta
         number_of_creation = min(
             utils.MAX_INSTANCES_FOR_DEPLOYMENT, number_of_instances)
         node_name = utils.get_node_name(region_number, str(batch_index), tag)
-        err, ec2_client = run_one_region_on_demand_instances(
+        num_filled, ec2_client = run_one_region_on_demand_instances(
             profile, config, region_number, number_of_creation, node_name)
-        if not err:
-            LOGGER.info("Managed to create instances for region %s with node_name %s" %
-                        (region_number, node_name))
+        if num_filled > 0:
+            LOGGER.info("Managed to create %d instances for region %s with node_name %s" %
+                        (num_filled, region_number, node_name))
             instance_ids = utils.get_instance_ids2(ec2_client, node_name)
             LOCK_FOR_RUN_ONE_REGION.acquire()
             try:
