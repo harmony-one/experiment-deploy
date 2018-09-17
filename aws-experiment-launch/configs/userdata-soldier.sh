@@ -30,13 +30,42 @@ echo "root soft     nofile         65535" | sudo tee -a /etc/security/limits.con
 echo "root hard     nofile         65535" | sudo tee -a /etc/security/limits.conf
 echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
 
-IS_AWS=$(curl -s -I http://169.254.169.254/latest/meta-data/instance-type -o /dev/null -w "%{http_code}")
-if [ "$IS_AWS" != "200" ]; then
-# NOT AWS, Assuming Azure
-   PUB_IP=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-04-02&format=text")
-else
-   PUB_IP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
-fi
+get_vm_flavor() {
+	local resp
+	if \
+		resp=$(curl -s -H 'Metadata-Flavor: Google' -o /dev/null -w '%{http_code}' 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip') && \
+		[ "X${resp}" = "X200" ]
+	then
+		echo "gcp"
+	elif
+		resp=$(curl -s -I http://169.254.169.254/latest/meta-data/instance-type -o /dev/null -w "%{http_code}") && \
+		[ "X${resp}" = "X200" ]
+	then
+		echo "aws"
+	elif
+		resp=$(curl -s -H Metadata:true -o /dev/null -w "%{http_code}" "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-04-02&format=text") && \
+		[ "X${resp}" = "X200" ]
+	then
+		echo "azure"
+	fi
+}
+
+case $(get_vm_flavor) in
+aws)
+	PUB_IP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
+	;;
+azure)
+	PUB_IP=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-04-02&format=text")
+	;;
+gcp)
+	PUB_IP=$(curl -s -H 'Metadata-Flavor: Google' 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip')
+	yum install -y psmisc	# for fuser
+	;;
+*)
+	echo "ERROR: unknown VM flavor.  Instance is unusable."
+	exit
+	;;
+esac
 
 NODE_PORT=9000
 SOLDIER_PORT=1$NODE_PORT
