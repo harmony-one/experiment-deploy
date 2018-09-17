@@ -1,6 +1,8 @@
+from __future__ import absolute_import
+
 import unittest
 
-from utils import generate_distribution_config
+from .utils import generate_distribution_config
 
 class TestCreateAndDeploy(unittest.TestCase):
 

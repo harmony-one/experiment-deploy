@@ -1,4 +1,6 @@
-import utils
+from __future__ import absolute_import
+
+from . import utils
 
 
 def get_launch_template_name(region_number):
