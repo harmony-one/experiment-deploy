@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
-set -x
-
 THEPWD=$(pwd)
+SKIPLEADER=true
+SKIPCLIENT=false
+PARALLEL=500
+LAUNCH_OPT=
+DASHBOARD=
 
 function usage
 {
@@ -13,18 +16,20 @@ Usage: $ME [OPTIONS] ACTIONS
 This script automates the benchmark test.
 
 [OPTIONS]
-   -h          print this help message
-   -n num      launch num soldiers (default: $NUM)
-   -s          skip client launch (default: $SKIP)
-   -i file     raw ip file of client (default: $IPFILE)
-   -d duration duration of the benchmark test (default: $DURATION)
+   -h             print this help message
+   -n num         launch num soldiers (default: $NUM)
+   -s             skip client launch (default: $SKIPCLIENT)
+   -S             skip power leader launch (default: $SKIPLEADER)
+   -i file        raw ip file of client (default: $IPFILE)
+   -d duration    duration of the benchmark test (default: $DURATION)
+   -D             enable dashboard (default: $DASHBOARD)
 
 [ACTIONS]
-   launch      do launch only
-   run         run benchmark
-   log         download logs
-   deinit      sync logs & terminate instances
-   all         do everything (default)
+   launch         do launch only
+   run            run benchmark
+   log            download logs
+   deinit         sync logs & terminate instances
+   all            do everything (default)
 
 
 [EXAMPLES]
@@ -33,30 +38,65 @@ EOT
    exit 0
 }
 
+
+while getopts "sShn:D" option; do
+   case $option in
+      S) SKIPLEADER=true ;;
+      s) SKIPCLIENT=true ;;
+      n) NUM=$OPTARG ;;
+      D) DASHBOARD='-D' ;;
+      h) usage ;;
+   esac
+done
+
+shift $(($OPTIND-1))
+
+ACTION=$@
+
 mkdir -p logs
 
 SECONDS=0
 
-./launch-client-only.sh
+if [ "$SKIPCLIENT" == "false" ]; then
+   ./launch-client-only.sh r5.large &
+   LAUNCH_OPT+=' -i raw_ip-client.txt'
+fi
 
-./create_deploy_soldiers.sh -c 125 -s 10 -t 1 -m 0 -u configs/userdata-soldier-http.sh -i raw_ip-client.txt
+if [ "$SKIPLEADER" == "false" ]; then
+   ./launch-leaders-only.sh &
+   LAUNCH_OPT+=' -l raw_ip-leaders.txt'
+fi
 
-cat instance_ids_output-client.txt >> instance_ids_output.txt
-cat instance_output-client.txt >> instance_output.txt
+wait
 
-rm instance_ids_output-client.txt instance_output-client.txt raw_ip-client.txt &
+./create_deploy_soldiers.sh -c 125 -s 10 -t 1 -m 0 -u configs/userdata-soldier-http.sh ${DASHBOARD} ${LAUNCH_OPT}
+
+if [ "$SKIPCLIENT" == "false" ]; then
+   cat instance_ids_output-client.txt >> instance_ids_output.txt
+   cat instance_output-client.txt >> instance_output.txt
+   rm instance_ids_output-client.txt instance_output-client.txt raw_ip-client.txt &
+fi
+
+
+if [ "$SKIPLEADER" == "false" ]; then
+   cat instance_ids_output-leaders.txt >> instance_ids_output.txt
+   cat instance_output-leaders.txt >> instance_output.txt
+   rm instance_ids_output-leaders.txt instance_output-leaders.txt &
+fi
 
 #sleep 10
 #./run_benchmark.sh ping
 
 sleep 3
 
-./run_benchmark.sh config
+./run_benchmark.sh -n ${PARALLEL} config
 
 sleep 3
 
-./run_benchmark.sh init
+# enable dashboard
+./run_benchmark.sh -n ${PARALLEL} -D 34.218.238.198:3000 init
 
+echo sleeping ...
 sleep 300
 
 pushd logs
@@ -73,8 +113,10 @@ echo $TPS
 
 sleep 3
 
+./dl-soldier-logs.sh -s $TS -g leader soldier &
 ./dl-soldier-logs.sh -s $TS -g client benchmark &
-./dl-soldier-logs.sh -s $TS -p 500 -g validator benchmark &
+./dl-soldier-logs.sh -s $TS -g client soldier &
+./dl-soldier-logs.sh -s $TS -p ${PARALLEL} -g validator benchmark &
 
 # ./run_benchmark.sh kill &
 # sleep 10
@@ -89,6 +131,8 @@ echo ============= TPS ==============
 echo $TPS
 
 wait
+echo ============= TPS ==============
+echo $TPS
 
 duration=$SECONDS
 
