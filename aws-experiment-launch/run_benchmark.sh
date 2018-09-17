@@ -200,7 +200,7 @@ DIST=distribution_config.txt
 PARALLEL=100
 VERBOSE=
 DASHBOARD=
-ATTACK="-attacked_mode 1"
+ATTACK="-attacked_mode 2"
 
 declare -A NODES
 declare -A NODEIPS
@@ -216,7 +216,7 @@ while getopts "hp:f:i:a:n:vD:A" option; do
       n) PARALLEL=$OPTARG ;;
       v) VERBOSE=true ;;
       D) DASHBOARD="-metrics_report_url http://$OPTARG/report" ;;
-      A) ATTACK="-attacked_mode 1" ;;
+      A) ATTACK="-attacked_mode 2" ;;
       h|?) usage ;;
    esac
 done
