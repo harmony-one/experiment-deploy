@@ -28,6 +28,7 @@ OPTIONS:
    -n num            parallel process num in a group (default: $PARALLEL)
    -v                verbose
    -D dashboard_ip   enable dashboard support, specify the ip address of dashboard server (default: $DASHBOARD)
+   -A                enable attack support, (default is on: $ATTACK)
 
 ACTIONS:
    gen               generate test file based on profile (TODO)
@@ -105,7 +106,7 @@ EOT
 {
    "ip":"127.0.0.1",
    "port":"9000",
-   "benchmarkArgs":"$DASHBOARD",
+   "benchmarkArgs":"$DASHBOARD $ATTACK",
    "txgenArgs":"-duration -1"
 }
 EOT
@@ -199,13 +200,14 @@ DIST=distribution_config.txt
 PARALLEL=100
 VERBOSE=
 DASHBOARD=
+ATTACK="-attacked_mode 1"
 
 declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:vD:" option; do
+while getopts "hp:f:i:a:n:vD:A" option; do
    case $option in
       p) PROFILE=$OPTARG ;;
       f) DIST=$OPTARG ;;
@@ -214,6 +216,7 @@ while getopts "hp:f:i:a:n:vD:" option; do
       n) PARALLEL=$OPTARG ;;
       v) VERBOSE=true ;;
       D) DASHBOARD="-metrics_report_url http://$OPTARG/report" ;;
+      A) ATTACK="-attacked_mode 1" ;;
       h|?) usage ;;
    esac
 done
