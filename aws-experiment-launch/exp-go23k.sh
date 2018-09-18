@@ -61,7 +61,6 @@ SECONDS=0
 #sleep 10
 ./run_benchmark.sh -n ${PARALLEL}  kill
 echo killing
-sleep 300
 echo "starting"
 
 sleep 3
