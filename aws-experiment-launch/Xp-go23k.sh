@@ -89,7 +89,7 @@ fi
 
 sleep 3
 
-RUN_BENCHMARK=run_benchmark-attack-cross30.sh 
+RUN_BENCHMARK=run_benchmark-attack-cross90.sh 
 
 #./run_benchmark.sh -n ${PARALLEL} kill
 
@@ -109,6 +109,7 @@ popd
 
 ./dl-soldier-logs.sh -s $TS -g leader benchmark
 pushd logs/$TS/leader/tmp_log/log-$TS
+
 TPS=$( ${THEPWD}/cal_tps.sh )
 popd
 
@@ -119,8 +120,10 @@ sleep 3
 
 ./dl-soldier-logs.sh -s $TS -g leader soldier &
 ./dl-soldier-logs.sh -s $TS -g client benchmark &
-./dl-soldier-logs.sh -s $TS -g client soldier &
-./dl-soldier-logs.sh -s $TS -p ${PARALLEL} -g validator benchmark &
+#Commenting out client soldier logs
+#./dl-soldier-logs.sh -s $TS -g client soldier &
+# Commenting out validator logs
+#./dl-soldier-logs.sh -s $TS -p ${PARALLEL} -g validator benchmark &
 
 # ./run_benchmark.sh kill &
 # sleep 10
