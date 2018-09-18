@@ -76,7 +76,6 @@ azure)
 	;;
 gcp)
 	PUB_IP=$(curl -s -H 'Metadata-Flavor: Google' 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip')
-	yum install -y psmisc	# for fuser
 	;;
 *)
 	err "Unknown VM flavor.  Instance is unusable."
@@ -90,10 +89,6 @@ msg "Public IP: ${PUB_IP}"
 msg "Soldier port: ${SOLDIER_PORT}"
 msg "Node port: ${NODE_PORT}"
 msg "Soldier log: ${SOLDIER_LOG}"
-
-msg "Killing existing soldier/node..."
-fuser -k -n tcp $SOLDIER_PORT
-fuser -k -n tcp $NODE_PORT
 
 msg "Running soldier..."
 ./soldier -ip $PUB_IP -port $NODE_PORT > "${SOLDIER_LOG}" 2>&1 &
