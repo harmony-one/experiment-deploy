@@ -98,7 +98,7 @@ RUN_BENCHMARK=run_benchmark-attack-cross30.sh
 sleep 3
 
 # enable dashboard
-./${RUN_BENCHMARK} -n ${PARALLEL} -D 34.218.238.198:3000 init
+./${RUN_BENCHMARK} -n ${PARALLEL} -C -D 34.218.238.198:3000 init
 
 echo sleeping ...
 sleep 300
