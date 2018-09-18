@@ -2,6 +2,10 @@
 
 exec > /var/log/harmony-benchmark-startup.out 2>&1
 
+progname="${0##*/}"
+msg() { case $# in 0);; *) echo "${progname}: $*" >&2;; esac; }
+err() { msg ERROR: "$@"; exit 1; }
+
 mkdir -p /home/ec2-user
 cd /home/ec2-user
 
@@ -11,13 +15,17 @@ FOLDER=leo/
 TESTBIN=( txgen soldier benchmark commander go-commander.sh )
 
 for bin in "${TESTBIN[@]}"; do
-   while ! curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
+   url="http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin}"
+   msg "Downloading ${bin} from ${url}..."
+   while ! curl "${url}" -o ${bin}
    do
+      msg "Download from ${url} failed; see above for errors.  Retrying..."
       sleep 1
    done
    chmod +x ${bin}
 done
 
+msg "Tweaking networking sysctls..."
 sysctl -w net.core.somaxconn=1024
 sysctl -w net.core.netdev_max_backlog=65536
 sysctl -w net.ipv4.tcp_tw_reuse=1
@@ -25,6 +33,7 @@ sysctl -w net.ipv4.tcp_rmem='4096 65536 16777216'
 sysctl -w net.ipv4.tcp_wmem='4096 65536 16777216'
 sysctl -w net.ipv4.tcp_mem='65536 131072 262144'
 
+msg "Setting rlimits..."
 echo "* soft     nproc          65535" | sudo tee -a /etc/security/limits.conf
 echo "* hard     nproc          65535" | sudo tee -a /etc/security/limits.conf
 echo "* soft     nofile         65535" | sudo tee -a /etc/security/limits.conf
@@ -55,7 +64,10 @@ get_vm_flavor() {
 	fi
 }
 
-case $(get_vm_flavor) in
+vm_flavor=$(get_vm_flavor)
+msg "Current VM flavor: ${vm_flavor}"
+
+case "${vm_flavor}" in
 aws)
 	PUB_IP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
 	;;
@@ -67,17 +79,23 @@ gcp)
 	yum install -y psmisc	# for fuser
 	;;
 *)
-	echo "ERROR: unknown VM flavor.  Instance is unusable."
-	exit
+	err "Unknown VM flavor.  Instance is unusable."
 	;;
 esac
 
 NODE_PORT=9000
 SOLDIER_PORT=1$NODE_PORT
+SOLDIER_LOG="$(pwd)/soldier-${PUB_IP}.log"
+msg "Public IP: ${PUB_IP}"
+msg "Soldier port: ${SOLDIER_PORT}"
+msg "Node port: ${NODE_PORT}"
+msg "Soldier log: ${SOLDIER_LOG}"
 
-# Kill existing soldier/node
+msg "Killing existing soldier/node..."
 fuser -k -n tcp $SOLDIER_PORT
 fuser -k -n tcp $NODE_PORT
 
-# Run soldier
-./soldier -ip $PUB_IP -port $NODE_PORT -http > soldier-${PUB_IP}.log 2>&1 &
+msg "Running soldier..."
+./soldier -ip $PUB_IP -port $NODE_PORT -http > "${SOLDIER_LOG}" 2>&1 &
+
+msg "Finished.  Soldier is running (PID $!)."
