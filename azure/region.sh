@@ -37,6 +37,7 @@ Action:
    init           do deployment to init a region
    delete         delete all resources in one region
    output         update profile to save the resource group data
+   purge          purge all resources in resource group
 
 Examples:
    $ME -r eastus list
@@ -100,6 +101,24 @@ function do_save_output
    az group list --query "[?starts_with(name,'hb-rg-$REGION')]" > configs/$PROFILE.rg.$REGION.json
 }
 
+function do_purge_resources
+{
+   rgs=$(az group list --query "[?starts_with(name,'hb-rg-$REGION')]" | $JQ '.[].name')
+   for i in ${rgs}; do
+      if [ "$YESNO" != "yes" ]; then
+         read -p "Do you want to purge all resources in group: $i (yes/no)?" yesno
+      else
+         yesno=yes
+      fi
+      if [ "$yesno" = "yes" ]; then
+      (
+         set -x
+         az group deployment create --name "bh-rg-$REGION-deployment" --resource-group "$i" --template-file "$CLEANUP" --mode Complete
+      )
+      fi
+   done
+}
+
 ######################################################
 
 DRYRUN=echo
@@ -108,6 +127,7 @@ TAG=$(date +%m%d%H%M)
 REGION=
 TEMPLATE=configs/vnet-template.json
 PARAMETER=configs/vnet-parameters.json
+CLEANUP=configs/rgcleanup.template.json
 PROFILE=benchmark
 GROUP=1
 START=100
@@ -148,6 +168,8 @@ case $ACTION in
       do_init_region ;;
    output)
       do_save_output ;;
+   purge)
+      do_purge_resources ;;
    *)
       usage "Invalid/missing Action '$ACTION'" ;;
 esac

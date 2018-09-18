@@ -26,6 +26,7 @@ ACTION:
    delete      delete all vms
    deinit      deinit Azure regions
    listip      list ip address of all instances
+   purge       purge all resource in resource group
 
 $MAX_NUM_RG <= NUM_VMS <= $MAX_VM_PER_REGION
 
@@ -113,6 +114,13 @@ function deinit_region
    echo using ./regin.sh -r REGION list
 }
 
+function purge_resources
+{
+   for region in ${REGIONS[@]}; do
+      ./region.sh -r $region -y purge
+   done
+}
+
 ###############################
 while getopts "hs:g:" option; do
    case $option in
@@ -142,6 +150,7 @@ case "$ACTION" in
    "delete") delete_vms ;;
    "deinit") deinit_region ;;
    "listip") list_ips ;;
+   "purge") purge_resources ;;
    *) usage ;;
 esac
 
