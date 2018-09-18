@@ -106,8 +106,8 @@ EOT
 {
    "ip":"127.0.0.1",
    "port":"9000",
-   "benchmarkArgs":"$DASHBOARD $CROSSTX",
-   "txgenArgs":"-duration -1"
+   "benchmarkArgs":"$DASHBOARD",
+   "txgenArgs":"-duration -1 $CROSSTX"
 }
 EOT
 ;;
