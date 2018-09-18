@@ -93,7 +93,9 @@ EOT
 
 sleep 3
 
-./${RUN_BENCHMARK} -n ${PARALLEL} config
+# Alok: no need to do config again, unless you change distribution_config.txt
+# This will save you a few minutes
+# ./${RUN_BENCHMARK} -n ${PARALLEL} config
 
 sleep 3
 

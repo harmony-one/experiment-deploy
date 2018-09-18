@@ -60,7 +60,10 @@ mkdir -p logs
 SECONDS=0
 
 if [ "$SKIPCLIENT" == "false" ]; then
-   ./launch-client-only.sh r5.4xlarge &
+# for 1k instance, use r5.large should be enough (Alok)
+# for 10k instance, use r5.xlarge should be enough (Alok)
+# for 20k instance, use r5.2xlarge (Alok)
+   ./launch-client-only.sh r5.large &
    LAUNCH_OPT+=' -i raw_ip-client.txt'
 fi
 
