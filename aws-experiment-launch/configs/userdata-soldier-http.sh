@@ -11,7 +11,10 @@ FOLDER=leo/
 TESTBIN=( txgen soldier benchmark commander go-commander.sh )
 
 for bin in "${TESTBIN[@]}"; do
-   curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
+   while ! curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
+   do
+      sleep 1
+   done
    chmod +x ${bin}
 done
 
