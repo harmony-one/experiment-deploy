@@ -133,7 +133,7 @@ sleep 3
 
 
 #Leo: killing current consensus.
-./${RUN_BENCHMARK} kill &
+./${RUN_BENCHMARK} -n ${PARALLEL} kill 
 # sleep 10
 
 wait

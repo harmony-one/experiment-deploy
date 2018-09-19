@@ -129,7 +129,7 @@ sleep 3
 # ./dl-soldier-logs.sh -s $TS -p ${PARALLEL} -g validator benchmark &
 
 #Leo: killing current consensus.
-./${RUN_BENCHMARK} kill &
+./${RUN_BENCHMARK} -n ${PARALLEL} kill 
 # sleep 10
 
 wait
