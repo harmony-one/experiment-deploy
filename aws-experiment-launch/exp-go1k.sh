@@ -7,7 +7,7 @@ PARALLEL=500
 LAUNCH_OPT=
 DASHBOARD=
 #Leo: adding benchmark script here.
-RUN_BENCHMARK=run_benchmark-attack-cross90.sh 
+RUN_BENCHMARK=run_benchmark-attack-cross00.sh 
 
 function usage
 {
