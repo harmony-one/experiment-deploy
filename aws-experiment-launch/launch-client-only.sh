@@ -3,10 +3,12 @@
 TAG=${WHOAMI:-$USER}
 
 INSTANCE=${1:-r5.xlarge}
+REGIONS=${2:-1}
+NUM_VM=${3:-1}
 
 ./create_solider_instances.py \
---regions 1 \
---instances 1 \
+--regions $REGIONS \
+--instances $NUM_VM \
 --instancetype $INSTANCE \
 --profile harmony-ec2 \
 --tag ${TAG}-powerclient \

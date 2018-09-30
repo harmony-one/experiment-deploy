@@ -195,7 +195,7 @@ function generate_tests
 
 #################### VARS ####################
 JQ='jq -r -M'
-PROFILE=configs/profile.json
+PROFILE=configs/profile-tiny.json
 DIST=distribution_config.txt
 PARALLEL=100
 VERBOSE=

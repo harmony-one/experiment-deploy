@@ -112,7 +112,7 @@ sleep 300
 #popd
 #Leo: Instead reading it from configs
 pushd configs
-TS=$(cat profile.json | grep sessionID | egrep -o "[0-9]+\.[0-9]+")
+TS=$(cat profile-tiny.json | grep sessionID | egrep -o "[0-9]+\.[0-9]+")
 popd
 
 ./dl-soldier-logs.sh -s $TS -g leader benchmark

@@ -28,10 +28,10 @@ OPTIONS:
    -n num            parallel process num in a group (default: $PARALLEL)
    -v                verbose
    -D dashboard_ip   enable dashboard support, specify the ip address of dashboard server (default: $DASHBOARD)
-   -A                enable attack support, (default is on: $ATTACK)
+   -A attacked_mode  enable attacked mode support (default mode: $ATTACK)
+   -C cross_ratio    enable cross_shard_ratio (default ratio: $CROSSTX)
 
 ACTIONS:
-   gen               generate test file based on profile (TODO)
    auto              automate the test execution based on test plan (TODO)
    ping              ping each soldier
    config            configure distribution_config to each soldier
@@ -47,16 +47,23 @@ EOT
    exit 0
 }
 
+function logging
+{
+   echo $(date) : $@
+   SECONDS=0
+}
+
+function errexit
+{
+   logging "$@ . Exiting ..."
+   exit -1
+}
+
 function read_profile
 {
-   if [ ! -f $PROFILE ]; then
-      echo ERROR: $PROFILE does not exist or not readable
-      exit 1
-   fi
-
-   BUCKET=$($JQ .bucket $PROFILE)
-   FOLDER=$($JQ .folder $PROFILE)
-   SESSION=$($JQ .sessionID $PROFILE)
+   BUCKET=$($JQ .bucket $CONFIG_FILE)
+   FOLDER=$($JQ .folder $CONFIG_FILE)
+   SESSION=$($JQ .sessionID $CONFIG_FILE)
 
    LOGDIR=${CACHE}logs/$SESSION
 
@@ -106,8 +113,8 @@ EOT
 {
    "ip":"127.0.0.1",
    "port":"9000",
-   "benchmarkArgs":"$DASHBOARD $ATTACK",
-   "txgenArgs":"-duration -1"
+   "benchmarkArgs":"$DASHBOARD -attacked_mode $ATTACK",
+   "txgenArgs":"-duration -1 -cross_shard_ratio $CROSSTX"
 }
 EOT
 ;;
@@ -188,35 +195,43 @@ function do_update
    echo $(date): Update succeeded/$succeeded, failed/$failed nodes
 }
 
-function generate_tests
+function do_auto
 {
-   echo todo
+   echo TODO
 }
 
 #################### VARS ####################
 JQ='jq -r -M'
-PROFILE=configs/profile.json
+CONFIG_DIR=configs
+PROFILE=tiny
+CONFIG_FILE=$CONFIG_DIR/profile-${PROFILE}.json
 DIST=distribution_config.txt
 PARALLEL=100
 VERBOSE=
 DASHBOARD=
-ATTACK="-attacked_mode 2"
+ATTACK=2
+CROSSTX=30
 
 declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:vD:A" option; do
+while getopts "hp:f:i:a:n:vD:A:C:" option; do
    case $option in
-      p) PROFILE=$OPTARG ;;
+      p)
+         PROFILE=$OPTARG
+         CONFIG_FILE=$CONFIG_DIR/profile-${PROFILE}.json
+         [ ! -e $CONFIG_FILE ] && errexit "can't find config file : $CONFIG_FILE"
+         ;;
       f) DIST=$OPTARG ;;
       i) IPS=$OPTARG ;;
       a) APP=$OPTARG ;;
       n) PARALLEL=$OPTARG ;;
       v) VERBOSE=true ;;
       D) DASHBOARD="-metrics_report_url http://$OPTARG/report" ;;
-      A) ATTACK="-attacked_mode 2" ;;
+      A) ATTACK=$OPTARG ;;
+      C) CROSSTX=$OPTARG ;;
       h|?) usage ;;
    esac
 done
@@ -225,9 +240,10 @@ shift $(($OPTIND-1))
 
 ACTION=$@
 
+read_nodes
+
 case "$ACTION" in
-   "gen") read_nodes; generate_tests ;;
-   "ping"|"kill"|"config"|"init"|"update") read_nodes; do_simple_cmd $ACTION ;;
-   "auto") read_nodes; do_auto ;;
+   "ping"|"kill"|"config"|"init"|"update") do_simple_cmd $ACTION ;;
+   "auto") do_auto ;;
    *) usage ;;
 esac

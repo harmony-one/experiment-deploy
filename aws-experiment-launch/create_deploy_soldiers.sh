@@ -16,11 +16,13 @@ OPTIONS:
    -h             print this help message
    -n             dryrun mode
    -c instances   number of instances in 8 AWS regions (default: $AWS_VM)
+                  Note, the input can be list of num, ex, 100,100,200,200,200,100,100,100
    -C instances   number of instances in 3 Azure regions (default: $AZ_VM)
    -s shards      number of shards (default: $SHARD_NUM)
    -t clients     number of clients (default: $CLIENT_NUM)
    -m commander   number of commander (default: $COMMANDER_NUM)
-   -p profile     aws profile (default: $PROFILE)
+   -p profile     aws profile (default: $AWS_PROFILE)
+   -P run_profile generate run profile (default: $RUN_PROFILE)
    -i ip_file     file containing ip address of pre-launched VMs
    -l leaders     file containing ip addresses of leader VMs
    -b bucket      specify the bucket containing all test binaries (default: $BUCKET)
@@ -74,7 +76,7 @@ function launch_vms
    fi
 
    echo "$(date) Creating $AWS_VM instances at 8 AWS regions"
-   $PYTHON ./create_solider_instances.py --profile ${PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA.aws --tag $USERID
+   $PYTHON ./create_solider_instances.py --profile ${AWS_PROFILE}-ec2 --regions $REGIONS --instances $AWS_VMS --instancetype $INSTANCE --userdata $USERDATA.aws --tag $USERID
 
    echo "Change go-commander.sh"
    sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $ROOTDIR/aws/go-commander.template > $ROOTDIR/aws/go-commander.sh
@@ -92,7 +94,7 @@ function launch_vms
 function collect_ip
 {
    echo "Collecting IP addresses from AWS"
-   $PYTHON ./collect_public_ips.py --profile ${PROFILE}-ec2 --instance_output instance_output.txt
+   $PYTHON ./collect_public_ips.py --profile ${AWS_PROFILE}-ec2 --instance_output instance_output.txt
 
    if [ $AZ_VM -gt 0 ]; then
    (
@@ -129,7 +131,7 @@ function generate_distribution
    $PYTHON ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM --commander_number $COMMANDER_NUM
 
    cp distribution_config.txt logs/$TS
-   cat>configs/profile.json<<EOT
+   cat>configs/profile-${RUN_PROFILE}.json<<EOT
 {
    "bucket": "$BUCKET",
    "folder": "$FOLDER",
@@ -146,8 +148,8 @@ function prepare_commander
 
 function upload_to_s3
 {
-   aws --profile ${PROFILE}-s3 s3 cp $ROOTDIR/aws/go-commander.sh s3://${BUCKET}/${FOLDER}/go-commander.sh --acl public-read
-   aws --profile ${PROFILE}-s3 s3 cp distribution_config.txt s3://${BUCKET}/${FOLDER}/distribution_config.txt --acl public-read
+   aws --profile ${AWS_PROFILE}-s3 s3 cp $ROOTDIR/aws/go-commander.sh s3://${BUCKET}/${FOLDER}/go-commander.sh --acl public-read
+   aws --profile ${AWS_PROFILE}-s3 s3 cp distribution_config.txt s3://${BUCKET}/${FOLDER}/distribution_config.txt --acl public-read
 }
 
 ################### VARIABLES ###################
@@ -156,8 +158,9 @@ AZ_VM=0
 SHARD_NUM=2
 CLIENT_NUM=1
 COMMANDER_NUM=1
-SLEEP_TIME=30
-PROFILE=harmony
+SLEEP_TIME=10
+AWS_PROFILE=harmony
+RUN_PROFILE=tiny
 LEADERS=
 IP_FILE=
 BUCKET=unique-bucket-bin
@@ -170,7 +173,7 @@ INSTANCE=t2.micro
 USERDATA=configs/userdata-soldier.sh
 PYTHON=python
 
-while getopts "hnc:C:s:t:m:p:f:b:i:r:w:u:3l:" option; do
+while getopts "hnc:C:s:t:m:p:P:f:b:i:r:w:u:3l:" option; do
    case $option in
       n) DRYRUN=--dry-run ;;
       c) AWS_VM=$OPTARG ;;
@@ -178,7 +181,8 @@ while getopts "hnc:C:s:t:m:p:f:b:i:r:w:u:3l:" option; do
       s) SHARD_NUM=$OPTARG ;;
       t) CLIENT_NUM=$OPTARG ;;
       m) COMMANDER_NUM=$OPTARG ;;
-      p) PROFILE=$OPTARG ;;
+      p) AWS_PROFILE=$OPTARG ;;
+      P) RUN_PROFILE=$OPTARG ;;
       i) IP_FILE=$OPTARG ;;
       b) BUCKET=$OPTARG ;;
       f) FOLDER=$OPTARG ;;
@@ -197,9 +201,12 @@ ACTION=$@
 
 NUM_REGIONS=$(echo $REGIONS | awk -F, ' { print NF-1 } ')
 AWS_VMS=$AWS_VM
-for i in $(seq 1 $NUM_REGIONS); do
-   AWS_VMS+=",$AWS_VM"
-done
+echo $AWS_VM | grep -q ,
+if [ "$?" != "0" ]; then
+   for i in $(seq 1 $NUM_REGIONS); do
+      AWS_VMS+=",$AWS_VM"
+   done
+fi
 
 ################### MAIN FUNC ###################
 mkdir -p logs/$TS

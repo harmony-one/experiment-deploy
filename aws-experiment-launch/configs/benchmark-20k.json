@@ -1,20 +1,65 @@
 {
-   "description": "aws 20k nodes on 50 shards",
-   "num_vm_aws": 2500,
-   "num_vm_azure": 0,
-   "shards": 50,
-   "powerclient": true,
-   "client": "r5.2xlarge",
-   "powerleader": false,
-   "leader": "t2.micro",
-   "master": 0,
-   "duration": 900,
-   "parallel": 1000,
-   "dashboard": true,
-   "logs": {
-         "leader": true,
-         "client": true,
-         "validator": false,
-         "soldier": true 
-    }
+  "description": "aws 20k nodes on 50 shards",
+  "aws": {
+    "type": "t3.micro",
+    "num_vm": [
+      1000,
+      3000,
+      1500,
+      3000,
+      1000,
+      3000,
+      1000,
+      3000
+    ],
+    "regions": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ]
+  },
+  "azure": {
+    "num_vm": 1200,
+    "regions": [
+      "eastus",
+      "westeurope",
+      "southeastasia"
+    ]
+  },
+  "client": {
+    "regions": [
+      1
+    ],
+    "num_vm": 1,
+    "type": "r5.xlarge"
+  },
+  "leader": {
+    "regions": [],
+    "num_vm": 0,
+    "type": "t3.micro"
+  },
+  "benchmark": {
+    "shards": 40,
+    "duration": 300,
+    "dashboard": true,
+    "crosstx": 50,
+    "attacked_mode": 2
+  },
+  "logs": {
+    "leader": true,
+    "client": true,
+    "validator": false,
+    "soldier": true
+  },
+  "dashboard": {
+    "server": "34.218.238.198",
+    "port": 3000
+  },
+  "parallel": 500,
+  "userdata": "configs/userdata-soldier-http.sh"
 }
