@@ -1,0 +1,19 @@
+{
+   "launch": [
+      {
+         "region": "pdx",
+         "type": "t3.micro",
+         "number": 5,
+         "ami": "default"
+      },
+      {
+         "region": "iad",
+         "type": "t3.micro",
+         "number": 5
+      }
+   ],
+   "userdata": {
+      "name": "http",
+      "file": "../../configs/userdata-soldier-http.sh"
+   }
+}

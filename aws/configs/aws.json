@@ -1,0 +1,74 @@
+{
+  "regions": [
+    {
+      "name": "pdx",
+      "ext-name": "us-west-2",
+      "vpc": {
+        "id": "vpc-cd3e33b4",
+        "sg": "sg-020cb5729fa212d43"
+      },
+      "ami": {
+        "default": "ami-a9d09ed1"
+      },
+      "keypair": "oregon-key-benchmark",
+      "code": "4"
+    },
+    {
+      "name": "iad",
+      "ext-name": "us-east-1",
+      "vpc": {
+        "id": "vpc-88c9c2f3",
+        "sg": "sg-04d0b62ee08ce8800"
+      },
+      "ami": {
+        "default": "ami-b70554c8"
+      },
+      "keypair": "virginia-key-benchmark",
+      "code": "1"
+    }
+  ],
+  "keyfiles": [
+    {
+      "keypair": "california-key-benchmark",
+      "keyfile": "../keys/california-key-benchmark.pem"
+    },
+    {
+      "keypair": "ireland-key-benchmark",
+      "keyfile": "../keys/ireland-key-benchmark.pem"
+    },
+    {
+      "keypair": "oregon-key-benchmark",
+      "keyfile": "../keys/oregon-key-benchmark.pem"
+    },
+    {
+      "keypair": "tokyo-key-benchmark",
+      "keyfile": "../keys/tokyo-key-benchmark.pem"
+    },
+    {
+      "keypair": "frankfurt-key-benchmark",
+      "keyfile": "../keys/frankfurt-key-benchmark.pem"
+    },
+    {
+      "keypair": "ohio-key-benchmark",
+      "keyfile": "../keys/ohio-key-benchmark.pem"
+    },
+    {
+      "keypair": "singapore-key-benchmark",
+      "keyfile": "../keys/singapore-key-benchmark.pem"
+    },
+    {
+      "keypair": "virginia-key-benchmark",
+      "keyfile": "../keys/virginia-key-benchmark.pem"
+    }
+  ],
+  "userdata": [
+  {
+     "name": "http:",
+     "file": "../../configs/userdata-soldier-http.sh"
+  },
+  {
+     "name": "legacy",
+     "file": "../../configs/userdata-soldier.sh"
+  }
+  ]
+}
