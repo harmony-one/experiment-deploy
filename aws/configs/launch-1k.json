@@ -10,10 +10,41 @@
          "region": "iad",
          "type": "t3.micro",
          "number": 5
+      },
+      {
+         "region": "sfo",
+         "type": "t3.micro",
+         "number": 5
+      },
+      {
+         "region": "dub",
+         "type": "t3.micro",
+         "number": 5
+      },
+      {
+         "region": "nrt",
+         "type": "t3.micro",
+         "number": 5
+      },
+      {
+         "region": "fra",
+         "type": "t3.micro",
+         "number": 5
+      },
+      {
+         "region": "cmh",
+         "type": "t3.micro",
+         "number": 5
+      },
+      {
+         "region": "sin",
+         "type": "t3.micro",
+         "number": 5
       }
    ],
    "userdata": {
       "name": "http",
       "file": "../../configs/userdata-soldier-http.sh"
-   }
+   },
+   "batch": 100
 }
