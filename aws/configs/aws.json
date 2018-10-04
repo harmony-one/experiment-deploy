@@ -148,5 +148,15 @@
       "name": "legacy",
       "file": "../../configs/userdata-soldier.sh"
     }
+  ],
+  "instance": [
+    {
+      "name": "t3.micro",
+      "price": 0.0104
+    },
+    {
+      "name": "t2.micro",
+      "price": 0.0116
+    }
   ]
 }

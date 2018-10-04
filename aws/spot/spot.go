@@ -16,6 +16,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -54,10 +55,16 @@ type UserDataStruct struct {
 	File string `json:"file"`
 }
 
+type InstancePrice struct {
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
+}
+
 type AWSRegions struct {
-	Regions  []*Region         `json:"regions"`
-	KeyFiles []*KeyFile        `json:"keyfiles"`
-	UserData []*UserDataStruct `json:"userdata"`
+	Regions   []*Region         `json:"regions"`
+	KeyFiles  []*KeyFile        `json:"keyfiles"`
+	UserData  []*UserDataStruct `json:"userdata"`
+	Instances []*InstancePrice  `json:"instance"`
 }
 
 type InstanceConfig struct {
@@ -173,7 +180,16 @@ func findSubnet(svc *ec2.EC2, vpc Vpc) ([]*ec2.Subnet, error) {
 	return subnets.Subnets, nil
 }
 
-func launchSpotInstances(reg *Region, i *InstanceConfig) error {
+func getPrice(aws *AWSRegions, insttype string) float64 {
+	for _, i := range aws.Instances {
+		if strings.Compare(i.Name, insttype) == 0 {
+			return i.Price
+		}
+	}
+	return 0
+}
+
+func launchSpotInstances(reg *Region, i *InstanceConfig, regs *AWSRegions) error {
 	defer wg.Done()
 
 	messages <- fmt.Sprintf("launching spot instances in region: %v\n", reg.Name)
@@ -197,8 +213,16 @@ func launchSpotInstances(reg *Region, i *InstanceConfig) error {
 
 	var reservations []*string
 	input := ec2.RunInstancesInput{
-		ImageId:          aws.String(amiId),
-		InstanceType:     aws.String(i.Type),
+		ImageId:      aws.String(amiId),
+		InstanceType: aws.String(i.Type),
+
+		InstanceMarketOptions: &ec2.InstanceMarketOptionsRequest{
+			MarketType: aws.String("spot"),
+			SpotOptions: &ec2.SpotMarketOptions{
+				MaxPrice: aws.String(strconv.FormatFloat(getPrice(regs, i.Type), 'g', 10, 64)),
+			},
+		},
+
 		MinCount:         aws.Int64(int64(i.Number / 2)),
 		MaxCount:         aws.Int64(int64(i.Number)),
 		KeyName:          aws.String(reg.KeyPair),
@@ -321,7 +345,7 @@ func main() {
 		if err != nil {
 			exitErrorf("findRegion Error: %v", err)
 		}
-		go launchSpotInstances(region, r)
+		go launchSpotInstances(region, r, regions)
 	}
 	go func() {
 		for i := range messages {
