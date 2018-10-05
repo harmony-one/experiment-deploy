@@ -1,5 +1,16 @@
 package main
 
+// this program is used to launch ec2 ondemain/spot instances
+// todo: 10-04
+//
+// *. support userdata (p0)
+// *. wait longer to launch instances (p0)
+// *. generate instance*.txt file (p1)
+// *. support batch launch  (p1)
+// *. test of 20k/30k launch (p1)k
+// *. support mixture instance type (p2)
+// *. add launch limit in aws.json (p2)
+
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	//	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -238,7 +249,7 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 					Tags: []*ec2.Tag{
 						{
 							Key:   aws.String("Name"),
-							Value: aws.String(fmt.Sprintf("%s-%s-%s-od", reg.Code, whoami, now)),
+							Value: aws.String(fmt.Sprintf("%s-%s-od-%s", reg.Code, whoami, now)),
 						},
 					},
 				},
@@ -267,7 +278,7 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 					Tags: []*ec2.Tag{
 						{
 							Key:   aws.String("Name"),
-							Value: aws.String(fmt.Sprintf("%s-%s-%s-spot", reg.Code, whoami, now)),
+							Value: aws.String(fmt.Sprintf("%s-%s-spot-%s", reg.Code, whoami, now)),
 						},
 					},
 				},
@@ -326,16 +337,15 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 		},
 	}
 
-	messages <- fmt.Sprintf("%v/%s: sleeping for %d seconds ...", reg.Name, instType, 30)
+	messages <- fmt.Sprintf("%v/%s: sleeping for %d seconds ...", reg.Name, instType, WAIT_COUNT)
 	time.Sleep(WAIT_COUNT * time.Second)
 
 	num := 0
-	for m := 0; m < WAIT_COUNT; m++ {
+	for m := 0; num < int(*input.MaxCount) && m < WAIT_COUNT; m++ {
 		result, err := svc.DescribeInstances(instanceInput)
 
 		if err != nil {
 			fmt.Errorf("DescribeInstances Error: %v", err)
-			break
 		}
 
 		/*
@@ -352,7 +362,7 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 						num++
 					}
 				} else {
-					time.Sleep(100 * time.Millisecond)
+					time.Sleep(1 * time.Second)
 				}
 			}
 		}
