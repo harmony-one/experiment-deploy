@@ -3,8 +3,8 @@ package main
 // this program is used to launch ec2 ondemain/spot instances
 // todo: 10-04
 //
-// *. support userdata (p0)
-// *. wait longer to launch instances (p0)
+// *. support userdata (p0) - done
+// *. wait longer to launch instances (p0) - done
 // *. generate instance*.txt file (p1)
 // *. support batch launch  (p1)
 // *. test of 20k/30k launch (p1)k
@@ -249,7 +249,7 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 					Tags: []*ec2.Tag{
 						{
 							Key:   aws.String("Name"),
-							Value: aws.String(fmt.Sprintf("%s-%s-od-%s", reg.Code, whoami, now)),
+							Value: aws.String(fmt.Sprintf("%s-%s-od-%s", reg.Code, *tag, now)),
 						},
 					},
 				},
@@ -279,7 +279,7 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 					Tags: []*ec2.Tag{
 						{
 							Key:   aws.String("Name"),
-							Value: aws.String(fmt.Sprintf("%s-%s-spot-%s", reg.Code, whoami, now)),
+							Value: aws.String(fmt.Sprintf("%s-%s-spot-%s", reg.Code, *tag, now)),
 						},
 					},
 				},
@@ -358,7 +358,7 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 		*/
 		for _, r := range result.Reservations {
 			for _, inst := range r.Instances {
-				if *inst.PublicIpAddress != "" {
+				if inst != nil && *inst.PublicIpAddress != "" {
 					if _, ok := myInstances.Load(*inst.PublicIpAddress); !ok {
 						myInstances.Store(*inst.PublicIpAddress, *inst.PublicDnsName)
 						num++
@@ -378,6 +378,11 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 
 func main() {
 	flag.Parse()
+
+	if *tag == "" {
+		whoami = os.Getenv("USER")
+		tag = &whoami
+	}
 
 	regions, err := parseAWSRegionConfig(filepath.Join(*configDir, *awsProfile))
 	if err != nil {
