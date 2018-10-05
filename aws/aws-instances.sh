@@ -12,7 +12,7 @@ Usage: $ME [OPTIONS] ACTION
 OPTIONS:
    -h          print this help message
    -G          do the real work, not dryrun
-   -g filter   grep filter to filter out the instances
+   -g filter   grep filter to filter out the instances (default: $FILTER)
 
 ACTION:
    list        list all running instances (id,type,name) - default
@@ -56,6 +56,8 @@ function terminate_ids
 
 function list_ids
 {
+   echo Listing running instance with name filter \"$FILTER\" ..
+
    for r in ${REGIONS[@]}; do
       $AWS --region $r ec2 describe-instances --no-paginate --filters Name=instance-state-name,Values=running | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | [.id, .type, .tag.Value ] | @tsv ' | grep -E $FILTER > $r.ids
       echo $(wc -l $r.ids | cut -f1 -d' ') running instances found in $r
@@ -65,7 +67,7 @@ function list_ids
 ############################### GLOBAL VARIABLES ###############################
 DRYRUN=echo
 AWS=aws
-FILTER=.
+FILTER=${WHOAMI:-USER}
 
 ############################### MAIN FUNCTION    ###############################
 while getopts "hGg:" option; do
