@@ -119,7 +119,7 @@ var (
 	debug         = flag.Int("debug", 0, "enable debug output level")
 	tag           = flag.String("tag", whoami, "a tag in instance name")
 
-	userData = flag.String("user_data", "userdata.sh", "userdata file for instance launch")
+	userDataString string
 
 	myInstances sync.Map
 
@@ -254,6 +254,7 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 					},
 				},
 			},
+			UserData: &userDataString,
 		}
 
 	case Spot:
@@ -283,6 +284,7 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 					},
 				},
 			},
+			UserData: &userDataString,
 		}
 	}
 
@@ -391,15 +393,12 @@ func main() {
 
 	debugOutput(0, launches.RegionInstances)
 
-	var userDataString string
 	if data, err := ioutil.ReadFile(launches.UserData.File); err != nil {
 		exitErrorf("Unable to read userdata file: %v", launches.UserData.File)
 	} else {
-		// encode userData
 		userDataString = base64.StdEncoding.EncodeToString(data)
+		debugOutput(2, userDataString)
 	}
-
-	debugOutput(2, userDataString)
 
 	start := time.Now()
 
