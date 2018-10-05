@@ -70,7 +70,8 @@ type AWSRegions struct {
 type InstanceConfig struct {
 	RegionName string `json:"region"`
 	Type       string `json:"type"`
-	Number     int    `json:"number"`
+	Number     int    `json:"ondemand"`
+	Spot       int    `json:"spot"`
 	AmiName    string `json:"ami",omitempty`
 }
 
@@ -79,6 +80,23 @@ type LaunchConfig struct {
 	UserData        *UserDataStruct   `json:"userdata"`
 	Batch           int               `json:"batch"`
 }
+
+type InstType int
+
+func (i InstType) String() string {
+	switch i {
+	case OnDemand:
+		return "OnDemand"
+	case Spot:
+		return "Spot"
+	}
+	return "Unknown"
+}
+
+const (
+	OnDemand InstType = iota
+	Spot     InstType = iota
+)
 
 var (
 	whoami        = os.Getenv("WHOAMI")
@@ -92,11 +110,18 @@ var (
 
 	userData = flag.String("user_data", "userdata.sh", "userdata file for instance launch")
 
-	myInstances map[string]string = make(map[string]string)
-	wg          sync.WaitGroup
+	myInstances sync.Map
+
+	wg sync.WaitGroup
 
 	messages = make(chan string)
 )
+
+func debugOutput(level int, msg interface{}) {
+	if *debug > level {
+		fmt.Println(pretty.Formatter(msg))
+	}
+}
 
 func exitErrorf(msg string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, msg+"\n", args...)
@@ -173,9 +198,8 @@ func findSubnet(svc *ec2.EC2, vpc Vpc) ([]*ec2.Subnet, error) {
 	if err != nil {
 		return nil, fmt.Errorf("DescribeSubnets Error: %v", err)
 	}
-	if *debug > 1 {
-		fmt.Printf("Subnet output: %v", pretty.Formatter(subnets))
-	}
+
+	debugOutput(1, subnets)
 
 	return subnets.Subnets, nil
 }
@@ -189,10 +213,82 @@ func getPrice(aws *AWSRegions, insttype string) float64 {
 	return 0
 }
 
-func launchSpotInstances(reg *Region, i *InstanceConfig, regs *AWSRegions) error {
+func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instType InstType) (*ec2.RunInstancesInput, error) {
+
+	amiId, err := findAMI(reg, i.AmiName)
+	if err != nil {
+		messages <- fmt.Sprintf("%v: findAMI Error %v", reg.Name, err)
+		return nil, fmt.Errorf("findAMI Error %v", err)
+	}
+
+	var input ec2.RunInstancesInput
+
+	switch instType {
+	case OnDemand:
+		input = ec2.RunInstancesInput{
+			ImageId:          aws.String(amiId),
+			InstanceType:     aws.String(i.Type),
+			MinCount:         aws.Int64(int64(i.Number / 2)),
+			MaxCount:         aws.Int64(int64(i.Number)),
+			KeyName:          aws.String(reg.KeyPair),
+			SecurityGroupIds: []*string{aws.String(reg.Vpc.Sg)},
+			TagSpecifications: []*ec2.TagSpecification{
+				{
+					ResourceType: aws.String("instance"),
+					Tags: []*ec2.Tag{
+						{
+							Key:   aws.String("Name"),
+							Value: aws.String(fmt.Sprintf("%s-%s-%s-od", reg.Code, whoami, now)),
+						},
+					},
+				},
+			},
+		}
+
+	case Spot:
+		input = ec2.RunInstancesInput{
+			ImageId:      aws.String(amiId),
+			InstanceType: aws.String(i.Type),
+
+			InstanceMarketOptions: &ec2.InstanceMarketOptionsRequest{
+				MarketType: aws.String("spot"),
+				SpotOptions: &ec2.SpotMarketOptions{
+					MaxPrice: aws.String(strconv.FormatFloat(getPrice(regs, i.Type), 'g', 10, 64)),
+				},
+			},
+
+			MinCount:         aws.Int64(int64(i.Spot / 2)),
+			MaxCount:         aws.Int64(int64(i.Spot)),
+			KeyName:          aws.String(reg.KeyPair),
+			SecurityGroupIds: []*string{aws.String(reg.Vpc.Sg)},
+			TagSpecifications: []*ec2.TagSpecification{
+				{
+					ResourceType: aws.String("instance"),
+					Tags: []*ec2.Tag{
+						{
+							Key:   aws.String("Name"),
+							Value: aws.String(fmt.Sprintf("%s-%s-%s-spot", reg.Code, whoami, now)),
+						},
+					},
+				},
+			},
+		}
+	}
+
+	debugOutput(1, input)
+
+	return &input, nil
+}
+
+func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) error {
 	defer wg.Done()
 
-	messages <- fmt.Sprintf("launching spot instances in region: %v\n", reg.Name)
+	reg, err := findRegion(regs, i.RegionName)
+	if err != nil {
+		return fmt.Errorf("findRegion Error: %v", err)
+	}
+
+	messages <- fmt.Sprintf("launching %s instances in region: %v", instType, reg.Name)
 
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String(reg.ExtName)},
@@ -205,54 +301,19 @@ func launchSpotInstances(reg *Region, i *InstanceConfig, regs *AWSRegions) error
 	// Create an EC2 service client.
 	svc := ec2.New(sess)
 
-	amiId, err := findAMI(reg, i.AmiName)
-	if err != nil {
-		messages <- fmt.Sprintf("%v: findAMI Error %v", reg.Name, err)
-		return fmt.Errorf("findAMI Error %v", err)
-	}
-
 	var reservations []*string
-	input := ec2.RunInstancesInput{
-		ImageId:      aws.String(amiId),
-		InstanceType: aws.String(i.Type),
 
-		InstanceMarketOptions: &ec2.InstanceMarketOptionsRequest{
-			MarketType: aws.String("spot"),
-			SpotOptions: &ec2.SpotMarketOptions{
-				MaxPrice: aws.String(strconv.FormatFloat(getPrice(regs, i.Type), 'g', 10, 64)),
-			},
-		},
+	input, err := getInstancesInput(reg, i, regs, instType)
 
-		MinCount:         aws.Int64(int64(i.Number / 2)),
-		MaxCount:         aws.Int64(int64(i.Number)),
-		KeyName:          aws.String(reg.KeyPair),
-		SecurityGroupIds: []*string{aws.String(reg.Vpc.Sg)},
-		TagSpecifications: []*ec2.TagSpecification{
-			{
-				ResourceType: aws.String("instance"),
-				Tags: []*ec2.Tag{
-					{
-						Key:   aws.String("Name"),
-						Value: aws.String(fmt.Sprintf("%s-%s-%s-1", reg.Code, whoami, now)),
-					},
-				},
-			},
-		},
-	}
+	start := time.Now()
 
-	if *debug > 1 {
-		fmt.Printf("input: %v\n", pretty.Formatter(input))
-	}
-
-	reservation, err := svc.RunInstances(&input)
+	reservation, err := svc.RunInstances(input)
 
 	if err != nil {
 		return err
 	}
 
-	if *debug > 0 {
-		fmt.Println(pretty.Formatter(reservation))
-	}
+	debugOutput(0, reservation)
 
 	reservations = append(reservations, reservation.ReservationId)
 
@@ -265,9 +326,10 @@ func launchSpotInstances(reg *Region, i *InstanceConfig, regs *AWSRegions) error
 		},
 	}
 
-	messages <- fmt.Sprintf("%v: sleeping for %d seconds\n", reg.Name, WAIT_COUNT)
+	messages <- fmt.Sprintf("%v/%s: sleeping for %d seconds ...", reg.Name, instType, 30)
 	time.Sleep(WAIT_COUNT * time.Second)
 
+	num := 0
 	for m := 0; m < WAIT_COUNT; m++ {
 		result, err := svc.DescribeInstances(instanceInput)
 
@@ -285,8 +347,9 @@ func launchSpotInstances(reg *Region, i *InstanceConfig, regs *AWSRegions) error
 		for _, r := range result.Reservations {
 			for _, inst := range r.Instances {
 				if *inst.PublicIpAddress != "" {
-					if _, ok := myInstances[*inst.PublicIpAddress]; !ok {
-						myInstances[*inst.PublicIpAddress] = *inst.PublicDnsName
+					if _, ok := myInstances.Load(*inst.PublicIpAddress); !ok {
+						myInstances.Store(*inst.PublicIpAddress, *inst.PublicDnsName)
+						num++
 					}
 				} else {
 					time.Sleep(100 * time.Millisecond)
@@ -295,12 +358,9 @@ func launchSpotInstances(reg *Region, i *InstanceConfig, regs *AWSRegions) error
 		}
 	}
 
-	if *debug > 1 {
-		for ip, name := range myInstances {
-			fmt.Printf("[%v] => [%v]\n", ip, name)
-		}
-	}
-	messages <- fmt.Sprintf("%v: %d instances", reg.Name, len(myInstances))
+	debugOutput(2, myInstances)
+
+	messages <- fmt.Sprintf("%v: %d %s instances (used %v)", reg.Name, num, instType, time.Since(start))
 	return nil
 }
 
@@ -311,17 +371,15 @@ func main() {
 	if err != nil {
 		exitErrorf("Exiting ... : %v", err)
 	}
-	if *debug > 1 {
-		fmt.Printf("regions: %# v\n", pretty.Formatter(regions))
-	}
+
+	debugOutput(1, regions)
 
 	launches, err := parseLaunchConfig(filepath.Join(*configDir, *launchProfile))
 	if err != nil {
 		exitErrorf("Exiting ... : %v", err)
 	}
-	if *debug > 0 {
-		fmt.Printf("launch: %# v\n", pretty.Formatter(launches))
-	}
+
+	debugOutput(0, launches.RegionInstances)
 
 	var userDataString string
 	if data, err := ioutil.ReadFile(launches.UserData.File); err != nil {
@@ -331,21 +389,19 @@ func main() {
 		userDataString = base64.StdEncoding.EncodeToString(data)
 	}
 
-	if *debug > 2 {
-		fmt.Printf("userdata encoded: %# v\n", pretty.Formatter(userDataString))
-		data, err := base64.StdEncoding.DecodeString(userDataString)
-		if err == nil {
-			fmt.Printf("userdata decoded: %q\n", data)
-		}
-	}
+	debugOutput(2, userDataString)
+
+	start := time.Now()
 
 	for _, r := range launches.RegionInstances {
-		wg.Add(1)
-		region, err := findRegion(regions, r.RegionName)
-		if err != nil {
-			exitErrorf("findRegion Error: %v", err)
+		if r.Number > 0 {
+			wg.Add(1)
+			go launchInstances(r, regions, OnDemand)
 		}
-		go launchSpotInstances(region, r, regions)
+		if r.Spot > 0 {
+			wg.Add(1)
+			go launchInstances(r, regions, Spot)
+		}
 	}
 	go func() {
 		for i := range messages {
@@ -353,4 +409,6 @@ func main() {
 		}
 	}()
 	wg.Wait()
+
+	fmt.Println("Total Used: ", time.Since(start))
 }

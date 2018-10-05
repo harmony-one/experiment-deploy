@@ -3,43 +3,51 @@
       {
          "region": "pdx",
          "type": "t3.micro",
-         "number": 5,
-         "ami": "default"
+         "ondemand": 25,
+         "ami": "default",
+         "spot": 100
       },
       {
          "region": "iad",
          "type": "t3.micro",
-         "number": 5
+         "ondemand": 25,
+         "spot": 100
       },
       {
          "region": "sfo",
          "type": "t3.micro",
-         "number": 5
+         "ondemand": 25,
+         "spot": 100
       },
       {
          "region": "dub",
          "type": "t3.micro",
-         "number": 5
+         "ondemand": 25,
+         "spot": 100
       },
       {
          "region": "nrt",
          "type": "t3.micro",
-         "number": 5
+         "ondemand": 25,
+         "spot": 100
       },
       {
          "region": "fra",
          "type": "t3.micro",
-         "number": 5
+         "ondemand": 25,
+         "spot": 100
       },
       {
          "region": "cmh",
          "type": "t3.micro",
-         "number": 5
+         "ondemand": 25,
+         "spot": 100
       },
       {
          "region": "sin",
          "type": "t3.micro",
-         "number": 5
+         "ondemand": 25,
+         "spot": 100
       }
    ],
    "userdata": {
