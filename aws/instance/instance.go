@@ -115,7 +115,7 @@ var (
 	now    = fmt.Sprintf("%d-%02d-%02d_%02d_%02d_%02d", t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second())
 
 	configDir     = flag.String("config_dir", "../configs", "the directory of all the configuration files")
-	launchProfile = flag.String("launch_profile", "launch-1k.json", "the profile name for instance launch")
+	launchProfile = flag.String("launch_profile", "launch-10.json", "the profile name for instance launch")
 	awsProfile    = flag.String("aws_profile", "aws.json", "the profile of the aws configuration")
 	debug         = flag.Int("debug", 0, "enable debug output level")
 	tag           = flag.String("tag", whoami, "a tag in instance name")
@@ -264,7 +264,9 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 			},
 			UserData: &userDataString,
 		}
-		myInstancesTag.Store(reg.Code, tagValue)
+		if _, ok := myInstancesTag.Load(tagValue); !ok {
+			myInstancesTag.Store(tagValue, reg.Code)
+		}
 
 	case Spot:
 		tagValue := fmt.Sprintf("%s-%s-spot-%s", reg.Code, *tag, now)
@@ -297,7 +299,9 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 			},
 			UserData: &userDataString,
 		}
-		myInstancesTag.Store(reg.Code, tagValue)
+		if _, ok := myInstancesTag.Load(tagValue); !ok {
+			myInstancesTag.Store(tagValue, reg.Code)
+		}
 	}
 
 	debugOutput(1, input)

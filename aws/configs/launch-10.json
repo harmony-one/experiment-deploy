@@ -22,7 +22,7 @@
     {
       "region": "dub",
       "type": "t3.micro",
-      "ondemand": 1,
+      "ondemand": 0,
       "spot": 1
     },
     {
@@ -46,7 +46,7 @@
     {
       "region": "pdx",
       "type": "t2.micro",
-      "ondemand": 1,
+      "ondemand": 0,
       "spot": 1
     },
     {

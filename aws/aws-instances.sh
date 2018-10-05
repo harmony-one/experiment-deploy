@@ -62,6 +62,8 @@ function list_ids
       $AWS --region $r ec2 describe-instances --no-paginate --filters Name=instance-state-name,Values=running | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | [.id, .type, .tag.Value ] | @tsv ' | grep -E $FILTER > $r.ids
       echo $(wc -l $r.ids | cut -f1 -d' ') running instances found in $r
    done
+   num=$(wc -l *.ids | tail -n 1)
+   echo $num running instances found with name fileter: \"$FILTER\"
 }
 
 ############################### GLOBAL VARIABLES ###############################
