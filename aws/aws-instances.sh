@@ -37,7 +37,7 @@ function terminate_ids
          for f in $r-split-*.ids; do
             id=$(cat $f | cut -f 1 | tr '\n' ' ')
             if [ "$id" != "" ]; then
-               $DRYRUN $AWS --region $r ec2 terminate-instances --instance-ids $id
+               $DRYRUN $AWS --region $r ec2 terminate-instances --instance-ids $id --query 'TerminatingInstances[*].InstanceId'
             else
                echo no $r.ids file
             fi
@@ -46,7 +46,7 @@ function terminate_ids
       else
          id=$(cat $r.ids | cut -f 1 | tr '\n' ' ')
          if [ "$id" != "" ]; then
-            $DRYRUN $AWS --region $r ec2 terminate-instances --instance-ids $id
+            $DRYRUN $AWS --region $r ec2 terminate-instances --instance-ids $id --query 'TerminatingInstances[*].InstanceId'
          else
             echo no $r.ids file
          fi
