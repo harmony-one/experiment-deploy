@@ -5,10 +5,10 @@ package main
 //
 // *. support userdata (p0) - done
 // *. wait longer to launch instances (p0) - done
-// *. generate instance*.txt file (p1)
+// *. generate instance*.txt file (p1) - done
 // *. support batch launch  (p1)
 // *. test of 20k/30k launch (p1)k
-// *. support mixture instance type (p2)
+// *. support mixture instance type (p2) - done
 // *. add launch limit in aws.json (p2)
 
 import (
@@ -110,18 +110,24 @@ const (
 )
 
 var (
-	whoami        = os.Getenv("WHOAMI")
-	t             = time.Now()
-	now           = fmt.Sprintf("%d-%02d-%02d_%02d_%02d_%02d", t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second())
+	whoami = os.Getenv("WHOAMI")
+	t      = time.Now()
+	now    = fmt.Sprintf("%d-%02d-%02d_%02d_%02d_%02d", t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second())
+
 	configDir     = flag.String("config_dir", "../configs", "the directory of all the configuration files")
 	launchProfile = flag.String("launch_profile", "launch-1k.json", "the profile name for instance launch")
 	awsProfile    = flag.String("aws_profile", "aws.json", "the profile of the aws configuration")
 	debug         = flag.Int("debug", 0, "enable debug output level")
 	tag           = flag.String("tag", whoami, "a tag in instance name")
+	outputFile    = flag.String("output", "instance_ids_output.txt", "file name of instance ids")
+	tagFile       = flag.String("tag_file", "instance_output.txt", "file name of tags used to terminate instances")
+	ipFile        = flag.String("ip_file", "raw_ip.txt", "file name of ip addresses of instances")
 
 	userDataString string
 
-	myInstances sync.Map
+	myInstances    sync.Map
+	myInstancesId  sync.Map
+	myInstancesTag sync.Map
 
 	wg sync.WaitGroup
 
@@ -236,10 +242,12 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 
 	switch instType {
 	case OnDemand:
+		tagValue := fmt.Sprintf("%s-%s-od-%s", reg.Code, *tag, now)
+
 		input = ec2.RunInstancesInput{
 			ImageId:          aws.String(amiId),
 			InstanceType:     aws.String(i.Type),
-			MinCount:         aws.Int64(int64(i.Number / 2)),
+			MinCount:         aws.Int64(1),
 			MaxCount:         aws.Int64(int64(i.Number)),
 			KeyName:          aws.String(reg.KeyPair),
 			SecurityGroupIds: []*string{aws.String(reg.Vpc.Sg)},
@@ -249,15 +257,18 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 					Tags: []*ec2.Tag{
 						{
 							Key:   aws.String("Name"),
-							Value: aws.String(fmt.Sprintf("%s-%s-od-%s", reg.Code, *tag, now)),
+							Value: aws.String(tagValue),
 						},
 					},
 				},
 			},
 			UserData: &userDataString,
 		}
+		myInstancesTag.Store(reg.Code, tagValue)
 
 	case Spot:
+		tagValue := fmt.Sprintf("%s-%s-spot-%s", reg.Code, *tag, now)
+
 		input = ec2.RunInstancesInput{
 			ImageId:      aws.String(amiId),
 			InstanceType: aws.String(i.Type),
@@ -269,7 +280,7 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 				},
 			},
 
-			MinCount:         aws.Int64(int64(i.Spot / 2)),
+			MinCount:         aws.Int64(1),
 			MaxCount:         aws.Int64(int64(i.Spot)),
 			KeyName:          aws.String(reg.KeyPair),
 			SecurityGroupIds: []*string{aws.String(reg.Vpc.Sg)},
@@ -279,13 +290,14 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 					Tags: []*ec2.Tag{
 						{
 							Key:   aws.String("Name"),
-							Value: aws.String(fmt.Sprintf("%s-%s-spot-%s", reg.Code, *tag, now)),
+							Value: aws.String(tagValue),
 						},
 					},
 				},
 			},
 			UserData: &userDataString,
 		}
+		myInstancesTag.Store(reg.Code, tagValue)
 	}
 
 	debugOutput(1, input)
@@ -361,6 +373,12 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 				if inst != nil && *inst.PublicIpAddress != "" {
 					if _, ok := myInstances.Load(*inst.PublicIpAddress); !ok {
 						myInstances.Store(*inst.PublicIpAddress, *inst.PublicDnsName)
+						for _, t := range inst.Tags {
+							if *t.Key == "Name" {
+								myInstancesId.Store(*inst.InstanceId, *t.Value)
+								break
+							}
+						}
 						num++
 					}
 				} else {
@@ -374,6 +392,54 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 
 	messages <- fmt.Sprintf("%v: %d %s instances (used %v)", reg.Name, num, instType, time.Since(start))
 	return nil
+}
+
+func saveOutput() {
+	ipf, err := os.Create(*ipFile)
+	if err != nil {
+		fmt.Printf("Can't open file %s to write. %v", *ipFile, err)
+		return
+	}
+	defer ipf.Close()
+
+	f, err := os.Create(*outputFile)
+	if err != nil {
+		fmt.Printf("Can't open file %s to write. %v", *outputFile, err)
+		return
+	}
+	defer f.Close()
+
+	f1, err := os.Create(*tagFile)
+	if err != nil {
+		fmt.Printf("Can't open file %s to write. %v", *tagFile, err)
+		return
+	}
+	defer f1.Close()
+
+	myInstances.Range(func(k, v interface{}) bool {
+		_, err := ipf.Write([]byte(fmt.Sprintf("%v %v\n", k, v)))
+		if err != nil {
+			fmt.Printf("Write to file error %v", err)
+			return false
+		}
+		return true
+	})
+	myInstancesId.Range(func(k, v interface{}) bool {
+		_, err := f.Write([]byte(fmt.Sprintf("%v %v\n", k, v)))
+		if err != nil {
+			fmt.Printf("Write to file error %v", err)
+			return false
+		}
+		return true
+	})
+	myInstancesTag.Range(func(k, v interface{}) bool {
+		_, err := f1.Write([]byte(fmt.Sprintf("%v %v\n", k, v)))
+		if err != nil {
+			fmt.Printf("Write to file error %v", err)
+			return false
+		}
+		return true
+	})
 }
 
 func main() {
@@ -423,6 +489,8 @@ func main() {
 		}
 	}()
 	wg.Wait()
+
+	saveOutput()
 
 	fmt.Println("Total Used: ", time.Since(start))
 }

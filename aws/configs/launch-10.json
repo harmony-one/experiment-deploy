@@ -1,0 +1,70 @@
+{
+  "launch": [
+    {
+      "region": "pdx",
+      "type": "t3.micro",
+      "ondemand": 1,
+      "ami": "default",
+      "spot": 1
+    },
+    {
+      "region": "iad",
+      "type": "t3.micro",
+      "ondemand": 1,
+      "spot": 1
+    },
+    {
+      "region": "sfo",
+      "type": "t3.micro",
+      "ondemand": 2,
+      "spot": 2
+    },
+    {
+      "region": "dub",
+      "type": "t3.micro",
+      "ondemand": 1,
+      "spot": 1
+    },
+    {
+      "region": "nrt",
+      "type": "t3.micro",
+      "ondemand": 1,
+      "spot": 0
+    },
+    {
+      "region": "fra",
+      "type": "t3.micro",
+      "ondemand": 1,
+      "spot": 1
+    },
+    {
+      "region": "cmh",
+      "type": "t3.micro",
+      "ondemand": 1,
+      "spot": 0
+    },
+    {
+      "region": "pdx",
+      "type": "t2.micro",
+      "ondemand": 1,
+      "spot": 1
+    },
+    {
+      "region": "iad",
+      "type": "t2.micro",
+      "ondemand": 1,
+      "spot": 1
+    },
+    {
+      "region": "sin",
+      "type": "t3.micro",
+      "ondemand": 1,
+      "spot": 0
+    }
+  ],
+  "userdata": {
+    "name": "http",
+    "file": "../../configs/userdata-soldier-http.sh"
+  },
+  "batch": 100
+}
