@@ -5,6 +5,7 @@
 declare -A SRC
 SRC[commander]=experiment/commander/main.go
 SRC[soldier]=experiment/soldier/main.go
+SRC[instance]=aws/instance/instance.go
 
 BINDIR=bin
 BUCKET=unique-bucket-bin
