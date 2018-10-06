@@ -26,6 +26,7 @@ import (
 	"github.com/kr/pretty"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -110,6 +111,13 @@ const (
 )
 
 var (
+	version string
+	builtBy string
+	builtAt string
+	commit  string
+)
+
+var (
 	whoami = os.Getenv("WHOAMI")
 	t      = time.Now()
 	now    = fmt.Sprintf("%d-%02d-%02d_%02d_%02d_%02d", t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second())
@@ -119,6 +127,7 @@ var (
 	awsProfile    = flag.String("aws_profile", "aws.json", "the profile of the aws configuration")
 	debug         = flag.Int("debug", 0, "enable debug output level")
 	tag           = flag.String("tag", whoami, "a tag in instance name")
+	versionFlag   = flag.Bool("version", false, "Output version info")
 	outputFile    = flag.String("output", "instance_ids_output.txt", "file name of instance ids")
 	tagFile       = flag.String("tag_file", "instance_output.txt", "file name of tags used to terminate instances")
 	ipFile        = flag.String("ip_file", "raw_ip.txt", "file name of ip addresses of instances")
@@ -133,6 +142,11 @@ var (
 
 	messages = make(chan string)
 )
+
+func printVersion(me string) {
+	fmt.Fprintf(os.Stderr, "Harmony (C) 2018. %v, version %v-%v (%v %v)\n", path.Base(me), version, commit, builtBy, builtAt)
+	os.Exit(0)
+}
 
 func debugOutput(level int, msg interface{}) {
 	if *debug > level {
@@ -448,6 +462,10 @@ func saveOutput() {
 
 func main() {
 	flag.Parse()
+
+	if *versionFlag {
+		printVersion(os.Args[0])
+	}
 
 	if *tag == "" {
 		whoami = os.Getenv("USER")
