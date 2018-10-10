@@ -131,6 +131,9 @@ var (
 	outputFile    = flag.String("output", "instance_ids_output.txt", "file name of instance ids")
 	tagFile       = flag.String("tag_file", "instance_output.txt", "file name of tags used to terminate instances")
 	ipFile        = flag.String("ip_file", "raw_ip.txt", "file name of ip addresses of instances")
+	instanceType  = flag.String("instance_type", "t3.micro", "type of the instance, will override profile")
+	instanceCount = flag.Int("instance_count", 0, "number of instance to be launched in each region, will override profile")
+	launchRegion  = flag.String("launch_region", "pdx", "list of regions, separated by ',', will override profile")
 
 	userDataString string
 
@@ -495,14 +498,29 @@ func main() {
 
 	start := time.Now()
 
-	for _, r := range launches.RegionInstances {
-		if r.Number > 0 {
+	if *instanceCount != 0 {
+		regionList := strings.Split(*launchRegion, ",")
+		for _, r := range regionList {
+			rc := InstanceConfig{
+				RegionName: r,
+				Type:       *instanceType,
+				Number:     *instanceCount,
+				Spot:       0,
+				AmiName:    "default",
+			}
 			wg.Add(1)
-			go launchInstances(r, regions, OnDemand)
+			go launchInstances(&rc, regions, OnDemand)
 		}
-		if r.Spot > 0 {
-			wg.Add(1)
-			go launchInstances(r, regions, Spot)
+	} else {
+		for _, r := range launches.RegionInstances {
+			if r.Number > 0 {
+				wg.Add(1)
+				go launchInstances(r, regions, OnDemand)
+			}
+			if r.Spot > 0 {
+				wg.Add(1)
+				go launchInstances(r, regions, Spot)
+			}
 		}
 	}
 	go func() {
