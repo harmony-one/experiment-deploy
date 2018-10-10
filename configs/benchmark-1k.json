@@ -1,0 +1,35 @@
+{
+  "description": "aws 1k nodes on 10 shards",
+  "client": {
+    "num_vm": 5,
+    "type": "t3.medium",
+    "regions": "pdx,iad"
+  },
+  "azure": {
+    "num_vm": 0,
+    "regions": [
+      "eastus",
+      "westeurope",
+      "southeastasia"
+    ]
+  },
+  "benchmark": {
+    "shards": 10,
+    "duration": 300,
+    "dashboard": true,
+    "crosstx": 30,
+    "attacked_mode": 2
+  },
+  "logs": {
+    "leader": true,
+    "client": true,
+    "validator": false,
+    "soldier": true
+  },
+  "dashboard": {
+    "server": "34.218.238.198",
+    "port": 3000
+  },
+  "parallel": 100,
+  "userdata": "userdata-soldier-http.sh"
+}

@@ -2,6 +2,8 @@ azure/logs/*.log
 azure/configs/*.ips
 azure/configs/raw_ip.txt
 configs/*.ip
+configs/profile-*.json
+configs/*.aws
 azure/archive
 azure/configs/*.bak
 azure/configs/benchmark.*.txt
