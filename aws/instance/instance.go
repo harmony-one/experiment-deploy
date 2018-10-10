@@ -393,10 +393,10 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 			for _, inst := range r.Instances {
 				if inst != nil && *inst.PublicIpAddress != "" {
 					if _, ok := myInstances.Load(*inst.PublicIpAddress); !ok {
-						myInstances.Store(*inst.PublicIpAddress, *inst.PublicDnsName)
 						for _, t := range inst.Tags {
 							if *t.Key == "Name" {
 								myInstancesId.Store(*inst.InstanceId, *t.Value)
+								myInstances.Store(*inst.PublicIpAddress, *t.Value)
 								break
 							}
 						}
@@ -489,8 +489,8 @@ func main() {
 
 	debugOutput(0, launches.RegionInstances)
 
-	if data, err := ioutil.ReadFile(launches.UserData.File); err != nil {
-		exitErrorf("Unable to read userdata file: %v", launches.UserData.File)
+	if data, err := ioutil.ReadFile(filepath.Join(*configDir, launches.UserData.File)); err != nil {
+		exitErrorf("Exiting ... : %v", err)
 	} else {
 		userDataString = base64.StdEncoding.EncodeToString(data)
 		debugOutput(2, userDataString)
