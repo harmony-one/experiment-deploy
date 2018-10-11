@@ -35,7 +35,8 @@ import (
 )
 
 const (
-	WAIT_COUNT = 60
+	WAIT_COUNT   = 60
+	WAIT_RUNNING = 300 // wait for all instances report running state
 )
 
 type Vpc struct {
@@ -144,6 +145,8 @@ var (
 	wg sync.WaitGroup
 
 	messages = make(chan string)
+
+	totalInstances int
 )
 
 func printVersion(me string) {
@@ -284,6 +287,7 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 		if _, ok := myInstancesTag.Load(tagValue); !ok {
 			myInstancesTag.Store(tagValue, reg.Code)
 		}
+		totalInstances += i.Number
 
 	case Spot:
 		tagValue := fmt.Sprintf("%s-%s-spot-%s", reg.Code, *tag, now)
@@ -319,6 +323,7 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 		if _, ok := myInstancesTag.Load(tagValue); !ok {
 			myInstancesTag.Store(tagValue, reg.Code)
 		}
+		totalInstances += i.Spot
 	}
 
 	debugOutput(1, input)
@@ -376,7 +381,12 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 	time.Sleep(WAIT_COUNT * time.Second)
 
 	num := 0
-	for m := 0; num < int(*input.MaxCount) && m < WAIT_COUNT; m++ {
+
+	/* wait to get all the public IP address */
+	/* wait until mininum number of instance */
+
+	wait_start := time.Now()
+	for duration := 0; num < int(*input.MaxCount) && duration < WAIT_RUNNING; duration = int(time.Since(wait_start).Seconds()) {
 		result, err := svc.DescribeInstances(instanceInput)
 
 		if err != nil {
@@ -391,7 +401,7 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 		*/
 		for _, r := range result.Reservations {
 			for _, inst := range r.Instances {
-				if inst != nil && *inst.PublicIpAddress != "" {
+				if inst != nil && *inst.PublicIpAddress != "" && *inst.State.Name == "running" {
 					if _, ok := myInstances.Load(*inst.PublicIpAddress); !ok {
 						for _, t := range inst.Tags {
 							if *t.Key == "Name" {

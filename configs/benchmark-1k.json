@@ -1,9 +1,14 @@
 {
   "description": "aws 1k nodes on 10 shards",
   "client": {
-    "num_vm": 5,
+    "num_vm": 1,
     "type": "t3.medium",
     "regions": "pdx,iad"
+  },
+  "leader": {
+    "num_vm": 2,
+    "type": "t3.micro",
+    "regions": "pdx,iad,sin,fra,nrt"
   },
   "azure": {
     "num_vm": 0,
@@ -31,5 +36,8 @@
     "port": 3000
   },
   "parallel": 100,
-  "userdata": "userdata-soldier-http.sh"
+  "userdata": "userdata-soldier-http.sh",
+  "flow": {
+     "wait_for_launch": 300
+  }
 }

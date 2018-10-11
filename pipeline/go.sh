@@ -91,6 +91,22 @@ function do_launch
       logging using regular client
    fi
 
+   if [ ${configs[leader.num_vm]} -gt 0 ]; then
+      logging launching ${configs[leader.num_vm]} non-standard leader: ${configs[leader.type]}
+      ../bin/instance \
+      -config_dir $CONFIG_DIR \
+      -instance_count ${configs[leader.num_vm]} \
+      -instance_type ${configs[leader.type]} \
+      -launch_region ${configs[leader.regions]} \
+      -ip_file raw_ip-leader.txt \
+      -output instance_ids_output-leader.txt \
+      -tag_file instance_output-leader.txt \
+      -tag ${TAG}-leader \
+      -launch_profile launch-$PROFILE.json
+      LAUNCH_OPT+=' -l raw_ip-leader.txt'
+      num_leader=$(cat raw_ip-leader.txt | wc -l)
+   fi
+
    ./deploy.sh \
    -C ${configs[azure.num_vm]} \
    -s ${configs[benchmark.shards]} \
@@ -103,6 +119,12 @@ function do_launch
       cat instance_ids_output-client.txt >> instance_ids_output.txt
       cat instance_output-client.txt >> instance_output.txt
       rm instance_ids_output-client.txt instance_output-client.txt raw_ip-client.txt &
+   fi
+
+   if [ ${configs[leader.num_vm]} -gt 0 ]; then
+      cat instance_ids_output-leader.txt >> instance_ids_output.txt
+      cat instance_output-leader.txt >> instance_output.txt
+      rm instance_ids_output-leader.txt instance_output-leader.txt raw_ip-leader.txt &
    fi
 
    expense launch
@@ -128,7 +150,8 @@ function do_run
    echo sleeping ${configs[benchmark.duration]} ...
    sleep ${configs[benchmark.duration]}
 
-   ./run_benchmark.sh -p $PROFILE kill &
+#  no need to kill as we will terminate the instances
+#   ./run_benchmark.sh -p $PROFILE kill &
 
    expense run
 }
@@ -178,7 +201,15 @@ function do_deinit
    if [ ${configs[azure.num_vm]} -gt 0 ]; then
       ../azure/go-az.sh deinit &
    fi
-   ./terminate_instances.py 2>&1 > /dev/null &
+
+   TAGS=( $(cat instance_output.txt  | cut -f1 -d' ' | sed s,^[1-9]-,, | sort -u) )
+   for tag in ${TAGS[@]}; do
+      ./aws-instances.sh -g $tag
+      ./aws-instances.sh -G delete
+   done
+
+#   ./terminate_instances.py 2>&1 > /dev/null &
+
    wait
    expense deinit
    cat ${THEPWD}/logs/$TS/tps.txt
@@ -188,7 +219,7 @@ function read_profile
 {
    logging reading benchmark config file: $BENCHMARK_FILE
 
-   keys=( description aws.profile azure.num_vm azure.regions client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port userdata )
+   keys=( description aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port userdata flow.wait_for_launch )
 
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_FILE)
@@ -200,6 +231,8 @@ function read_profile
 function do_all
 {
    do_launch
+   echo sleeping ${configs[flow.wait_for_launch]} ...
+   sleep  ${configs[flow.wait_for_launch]}
    do_run
    download_logs
    analyze_logs

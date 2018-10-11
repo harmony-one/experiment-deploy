@@ -116,6 +116,11 @@ function generate_distribution
       cat $IP_FILE >> raw_ip.txt
    fi
 
+   if [ -f "$LEADERS" ]; then
+      cat $LEADERS raw_ip.txt > raw_ip.txt.tmp.$USERID
+      mv -f raw_ip.txt.tmp.$USERID raw_ip.txt
+   fi
+
    cp raw_ip.txt logs/$TS
 
    echo "Generate distribution_config"
