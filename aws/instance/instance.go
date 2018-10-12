@@ -401,7 +401,7 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 		*/
 		for _, r := range result.Reservations {
 			for _, inst := range r.Instances {
-				if inst != nil && *inst.PublicIpAddress != "" && *inst.State.Name == "running" {
+				if inst != nil && inst.PublicIpAddress != nil && *inst.PublicIpAddress != "" {
 					if _, ok := myInstances.Load(*inst.PublicIpAddress); !ok {
 						for _, t := range inst.Tags {
 							if *t.Key == "Name" {
@@ -421,7 +421,7 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 
 	debugOutput(2, myInstances)
 
-	messages <- fmt.Sprintf("%v: %d %s instances (used %v)", reg.Name, num, instType, time.Since(start))
+	messages <- fmt.Sprintf("%v: %d/%d %s instances (used %v)", reg.Name, num, totalInstances, instType, time.Since(start))
 	return nil
 }
 

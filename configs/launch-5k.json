@@ -1,0 +1,58 @@
+{
+   "launch": [
+      {
+         "region": "pdx",
+         "type": "t3.micro",
+         "ondemand": 5,
+         "ami": "default",
+         "spot": 600
+      },
+      {
+         "region": "iad",
+         "type": "t3.micro",
+         "ondemand": 5,
+         "spot": 600
+      },
+      {
+         "region": "sfo",
+         "type": "t3.micro",
+         "ondemand": 5,
+         "spot": 600
+      },
+      {
+         "region": "dub",
+         "type": "t3.micro",
+         "ondemand": 5,
+         "spot": 600
+      },
+      {
+         "region": "nrt",
+         "type": "t3.micro",
+         "ondemand": 5,
+         "spot": 600
+      },
+      {
+         "region": "fra",
+         "type": "t3.micro",
+         "ondemand": 5,
+         "spot": 600
+      },
+      {
+         "region": "cmh",
+         "type": "t3.micro",
+         "ondemand": 5,
+         "spot": 600
+      },
+      {
+         "region": "sin",
+         "type": "t3.micro",
+         "ondemand": 5,
+         "spot": 600
+      }
+   ],
+   "userdata": {
+      "name": "http",
+      "file": "userdata-soldier-http.sh.aws"
+   },
+   "batch": 100
+}

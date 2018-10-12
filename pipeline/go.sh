@@ -127,6 +127,23 @@ function do_launch
       rm instance_ids_output-leader.txt instance_output-leader.txt raw_ip-leader.txt &
    fi
 
+   RETRY=8
+   r=0
+
+   while [ $r -le $RETRY ]; do
+      local total=$(./aws-instances.sh -g $TAG | tail -n 1 | cut -f 1 -d ' ')
+      local expected=$(wc -l raw_ip.txt | cut -f 1 -d ' ')
+      if [ $total -ge $expected ]; then
+         echo "all $expected instances are in running state"
+         break
+      else
+         echo "$total/$expected instances are in running state"
+      fi
+      echo sleeping 60s ...
+      sleep 60
+      (( r++ ))
+   done
+
    expense launch
 }
 
@@ -202,13 +219,13 @@ function do_deinit
       ../azure/go-az.sh deinit &
    fi
 
-   TAGS=( $(cat instance_output.txt  | cut -f1 -d' ' | sed s,^[1-9]-,, | sort -u) )
-   for tag in ${TAGS[@]}; do
-      ./aws-instances.sh -g $tag
-      ./aws-instances.sh -G delete
-   done
+#   TAGS=( $(cat instance_output.txt  | cut -f1 -d' ' | sed s,^[1-9]-,, | sort -u) )
+#   for tag in ${TAGS[@]}; do
+#      ./aws-instances.sh -g $tag
+#      ./aws-instances.sh -G delete
+#   done
 
-#   ./terminate_instances.py 2>&1 > /dev/null &
+   ./terminate_instances.py 2>&1 > /dev/null &
 
    wait
    expense deinit
