@@ -2,8 +2,8 @@
   "description": "aws 1k nodes on 10 shards",
   "client": {
     "num_vm": 1,
-    "type": "t3.medium",
-    "regions": "pdx,iad"
+    "type": "t3.large",
+    "regions": "iad"
   },
   "leader": {
     "num_vm": 2,
@@ -38,6 +38,6 @@
   "parallel": 100,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
-     "wait_for_launch": 300
+     "wait_for_launch": 120
   }
 }

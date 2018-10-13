@@ -49,6 +49,11 @@ type Ami struct {
 	Al2     string `json:"al2",omitempty`
 }
 
+type Limit struct {
+	T3micro int `json:"t3.micro"`
+	T2micro int `json:"t2.micro"`
+}
+
 type Region struct {
 	Name    string `json:"name"`
 	ExtName string `json:"ext-name"`
@@ -56,6 +61,7 @@ type Region struct {
 	Ami     Ami    `json:"ami"`
 	KeyPair string `json:"keypair"`
 	Code    string `json:"code"`
+	Limit   Limit  `json:"limit"`
 }
 
 type KeyFile struct {
@@ -489,8 +495,6 @@ func main() {
 	if err != nil {
 		exitErrorf("Exiting ... : %v", err)
 	}
-
-	debugOutput(1, regions)
 
 	launches, err := parseLaunchConfig(filepath.Join(*configDir, *launchProfile))
 	if err != nil {

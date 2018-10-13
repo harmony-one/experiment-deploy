@@ -1,14 +1,14 @@
 {
-  "description": "aws 5k nodes on 12 shards",
+  "description": "aws 10k nodes on 25 shards",
   "client": {
     "num_vm": 1,
-    "type": "r5.large",
+    "type": "r5.xlarge",
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 3,
+    "num_vm": 5,
     "type": "t3.micro",
-    "regions": "pdx,iad,sin,fra"
+    "regions": "pdx,iad,sin,nrt,dub"
   },
   "azure": {
     "num_vm": 0,
@@ -19,7 +19,7 @@
     ]
   },
   "benchmark": {
-    "shards": 12,
+    "shards": 25,
     "duration": 300,
     "dashboard": true,
     "crosstx": 30,
@@ -35,9 +35,9 @@
     "server": "34.218.238.198",
     "port": 3000
   },
-  "parallel": 500,
+  "parallel": 800,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
-     "wait_for_launch": 180
+     "wait_for_launch": 360
   }
 }

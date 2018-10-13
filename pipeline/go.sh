@@ -127,12 +127,20 @@ function do_launch
       rm instance_ids_output-leader.txt instance_output-leader.txt raw_ip-leader.txt &
    fi
 
-   RETRY=8
-   r=0
+   echo sleeping ${configs[flow.wait_for_launch]} ...
+   sleep  ${configs[flow.wait_for_launch]}
 
+   RETRY=8
+   local r=0
+   local prev_total=0
+
+   local expected=$(wc -l raw_ip.txt | cut -f 1 -d ' ')
    while [ $r -le $RETRY ]; do
       local total=$(./aws-instances.sh -g $TAG | tail -n 1 | cut -f 1 -d ' ')
-      local expected=$(wc -l raw_ip.txt | cut -f 1 -d ' ')
+      if [ $prev_total -eq $total ]; then
+         echo "no change on number of running instances, breaking retry loop - $r"
+         break
+      fi
       if [ $total -ge $expected ]; then
          echo "all $expected instances are in running state"
          break
@@ -142,6 +150,7 @@ function do_launch
       echo sleeping 60s ...
       sleep 60
       (( r++ ))
+      prev_total=$total
    done
 
    expense launch
@@ -224,8 +233,10 @@ function do_deinit
 #      ./aws-instances.sh -g $tag
 #      ./aws-instances.sh -G delete
 #   done
+#   ./terminate_instances.py 2>&1 > /dev/null &
 
-   ./terminate_instances.py 2>&1 > /dev/null &
+   ./aws-instances.sh -G delete
+   rm -f *.ids
 
    wait
    expense deinit
@@ -248,8 +259,6 @@ function read_profile
 function do_all
 {
    do_launch
-   echo sleeping ${configs[flow.wait_for_launch]} ...
-   sleep  ${configs[flow.wait_for_launch]}
    do_run
    download_logs
    analyze_logs

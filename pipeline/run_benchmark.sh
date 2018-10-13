@@ -165,8 +165,6 @@ EOT
    failed=$(( $NUM_NODES - $succeeded ))
 
    echo $(date): $cmd succeeded/$succeeded, failed/$failed nodes, $(($duration / 60)) minutes and $(($duration % 60)) seconds
-
-   rm -rf $LOGDIR/$cmd
 }
 
 function do_update

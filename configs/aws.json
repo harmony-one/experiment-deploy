@@ -10,6 +10,10 @@
       "ami": {
         "default": "ami-a9d09ed1"
       },
+      "limit": {
+        "t3.micro": 3000,
+        "t2.micro": 3000
+      },
       "keypair": "oregon-key-benchmark",
       "code": "4"
     },
@@ -22,6 +26,10 @@
       },
       "ami": {
         "default": "ami-e0ba5c83"
+      },
+      "limit": {
+        "t3.micro": 1500,
+        "t2.micro": 3000
       },
       "keypair": "california-key-benchmark",
       "code": "3"
@@ -36,6 +44,10 @@
       "ami": {
         "default": "ami-466768ac"
       },
+      "limit": {
+        "t3.micro": 3000,
+        "t2.micro": 3000
+      },
       "keypair": "ireland-key-benchmark",
       "code": "8"
     },
@@ -48,6 +60,10 @@
       },
       "ami": {
         "default": "ami-e99f4896"
+      },
+      "limit": {
+        "t3.micro": 1000,
+        "t2.micro": 3000
       },
       "keypair": "tokyo-key-benchmark",
       "code": "5"
@@ -62,6 +78,10 @@
       "ami": {
         "default": "ami-7c4f7097"
       },
+      "limit": {
+        "t3.micro": 1000,
+        "t2.micro": 3000
+      },
       "keypair": "frankfurt-key-benchmark",
       "code": "7"
     },
@@ -74,6 +94,10 @@
       },
       "ami": {
         "default": "ami-8c122be9"
+      },
+      "limit": {
+        "t3.micro": 3000,
+        "t2.micro": 3000
       },
       "keypair": "ohio-key-benchmark",
       "code": "2"
@@ -88,6 +112,10 @@
       "ami": {
         "default": "ami-05868579"
       },
+      "limit": {
+        "t3.micro": 3000,
+        "t2.micro": 3000
+      },
       "keypair": "singapore-key-benchmark",
       "code": "6"
     },
@@ -100,6 +128,10 @@
       },
       "ami": {
         "default": "ami-b70554c8"
+      },
+      "limit": {
+        "t3.micro": 1000,
+        "t2.micro": 3000
       },
       "keypair": "virginia-key-benchmark",
       "code": "1"
