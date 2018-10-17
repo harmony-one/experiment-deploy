@@ -253,6 +253,8 @@ function read_profile
       configs[$k]=$($JQ .$k $BENCHMARK_FILE)
    done
 
+   echo "generating userdata file"
+   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA > $USERDATA.aws
    verbose ${configs[@]}
 }
 
@@ -275,6 +277,10 @@ CONFIG_DIR=$(realpath $ROOTDIR)/configs
 PROFILES=( $(ls $CONFIG_DIR/benchmark-*.json | sed -e "s,$CONFIG_DIR/benchmark-,,g" -e 's/.json//g') )
 CONFIG_FILE=$CONFIG_DIR/profile-${PROFILE}.json
 BENCHMARK_FILE=$CONFIG_DIR/benchmark-${PROFILE}.json
+BUCKET=unique-bucket-bin
+USERID=${WHOAMI:-$USER}
+FOLDER=$USERID
+USERDATA=$CONFIG_DIR/userdata-soldier-http.sh
 VERBOSE=
 THEPWD=$(pwd)
 KEEP=false

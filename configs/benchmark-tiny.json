@@ -6,7 +6,7 @@
     "regions": "sfo"
   },
   "leader": {
-    "num_vm": 1,
+    "num_vm": 0,
     "type": "t3.micro",
     "regions": "sfo"
   },
