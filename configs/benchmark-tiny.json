@@ -1,0 +1,43 @@
+{
+  "description": "aws 10 nodes on 1 shards",
+  "client": {
+    "num_vm": 1,
+    "type": "t3.micro",
+    "regions": "sfo"
+  },
+  "leader": {
+    "num_vm": 1,
+    "type": "t3.micro",
+    "regions": "sfo"
+  },
+  "azure": {
+    "num_vm": 0,
+    "regions": [
+      "eastus",
+      "westeurope",
+      "southeastasia"
+    ]
+  },
+  "benchmark": {
+    "shards": 1,
+    "duration": 300,
+    "dashboard": true,
+    "crosstx": 30,
+    "attacked_mode": 0
+  },
+  "logs": {
+    "leader": true,
+    "client": true,
+    "validator": false,
+    "soldier": true
+  },
+  "dashboard": {
+    "server": "34.218.238.198",
+    "port": 3000
+  },
+  "parallel": 10,
+  "userdata": "userdata-soldier-http.sh",
+  "flow": {
+     "wait_for_launch": 60
+  }
+}

@@ -1,0 +1,15 @@
+{
+   "launch": [
+      {
+         "region": "sfo",
+         "type": "t3.micro",
+         "ondemand": 0,
+         "spot": 10
+      }
+   ],
+   "userdata": {
+      "name": "http",
+      "file": "userdata-soldier-http.sh.aws"
+   },
+   "batch": 100
+}
