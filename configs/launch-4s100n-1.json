@@ -3,27 +3,27 @@
       {
          "region": "pdx",
          "type": "t3.micro",
-         "ondemand": 100,
+         "ondemand": 10,
          "ami": "default",
-         "spot": 0
+         "spot": 90
       },
       {
          "region": "iad",
          "type": "t3.micro",
-         "ondemand": 100,
-         "spot": 0
+         "ondemand": 10,
+         "spot": 90
       },
       {
          "region": "sfo",
          "type": "t3.micro",
-         "ondemand": 100,
-         "spot": 0
+         "ondemand": 10,
+         "spot": 90
       },
       {
          "region": "nrt",
          "type": "t3.micro",
-         "ondemand": 100,
-         "spot": 0
+         "ondemand": 10,
+         "spot": 90
       }
    ],
    "userdata": {
