@@ -27,7 +27,7 @@ OPTIONS:
 
                   p1: default pattern ('NET: BLOCK PROPAGATION')
                   p2: legacy pattern ('"Size":3[3|4]')
-                  p3: even older pattern ('')
+                  p3: even older pattern ('Stop encoding block')
 
 COMMAND:
    extract        extract relevant logs from all log files
@@ -74,7 +74,8 @@ function _extract_logs
       start_times=( $(grep -E "$PATTERN" $DIRROOT/leader/tmp_log/log-$SESSION/leader-$leader-*.log | grep -o '"t":".*Z"' | cut -b 5-) )
 
       rm -f $SHARD_TS_LOG/sent_*.log
-      for st in $(seq 0 $(( ${#start_times[@]} - 1 )) ); do
+      NUM_SEND=$(( ${#start_times[@]} - 1 ))
+      for st in $(seq 0 $NUM_SEND); do
          echo start_time_$st ${start_times[$st]} >> $SHARD_TS_LOG/sent_$st.log
       done
 
@@ -83,7 +84,7 @@ function _extract_logs
          ls $DIRROOT/validator/tmp_log/log-$SESSION/validator-$node-*.log  > /dev/null
          if [ $? -eq 0 ]; then
             node_times=( $(grep 'Received Announce Message' $DIRROOT/validator/tmp_log/log-$SESSION/validator-$node-*.log | grep -o '"t":".*Z"' | cut -b 5-) )
-            for nt in $(seq 0 $(( ${#node_times[@]} - 1 )) ); do
+            for nt in $(seq 0 $NUM_SEND); do
                echo "$node ${node_times[$nt]}" >> $SHARD_TS_LOG/recv_$nt.log
             done
          fi
@@ -146,7 +147,7 @@ PAT=p1
 declare -A PATTERNS
 PATTERNS[p1]='START BLOCK PROPAGATION'
 PATTERNS[p2]='"Size":3[3|4]'
-PATTERNS[p3]=''
+PATTERNS[p3]='Stop encoding block'
 
 while getopts "hnvGD:S:p:" option; do
    case $option in
