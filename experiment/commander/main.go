@@ -26,8 +26,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/simple-rules/experiment-deploy/experiment/utils"
-	globalUtils "github.com/simple-rules/harmony-benchmark/utils"
+	"github.com/harmony-one/experiment-deploy/experiment/utils"
+	globalUtils "github.com/harmony-one/harmony/utils"
 )
 
 var (
