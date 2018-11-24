@@ -1,5 +1,5 @@
 {
-  "description": "aws 1k nodes on 10 shards",
+  "description": "aws 1k nodes on 8 shards",
   "client": {
     "num_vm": 1,
     "type": "r5.large",
@@ -19,7 +19,7 @@
     ]
   },
   "benchmark": {
-    "shards": 10,
+    "shards": 8,
     "duration": 300,
     "dashboard": true,
     "crosstx": 30,
