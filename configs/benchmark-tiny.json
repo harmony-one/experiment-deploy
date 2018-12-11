@@ -10,6 +10,12 @@
     "type": "t3.micro",
     "regions": "sfo"
   },
+  "beacon": {
+     "server": "54.183.5.66",
+     "port": 9999,
+     "user": "ec2-user",
+     "key": "california-key-benchmark.pem"
+  },
   "azure": {
     "num_vm": 0,
     "regions": [
@@ -23,7 +29,8 @@
     "duration": 300,
     "dashboard": true,
     "crosstx": 30,
-    "attacked_mode": 0
+    "attacked_mode": 0,
+    "minpeer": 8
   },
   "logs": {
     "leader": true,

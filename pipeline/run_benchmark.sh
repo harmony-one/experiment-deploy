@@ -30,6 +30,10 @@ OPTIONS:
    -D dashboard_ip   enable dashboard support, specify the ip address of dashboard server (default: $DASHBOARD)
    -A attacked_mode  enable attacked mode support (default mode: $ATTACK)
    -C cross_ratio    enable cross_shard_ratio (default ratio: $CROSSTX)
+   -B beacon IP      IP address of beacon chain (default: $BEACONIP)
+   -b beacon port    port number of beacon chain (default: $BEACONPORT)
+   -P                enable peer discovery mode (default: $PEER)
+   -m minpeer        minimum number of peers required to start consensus (default: $MINPEER)
 
 ACTIONS:
    auto              automate the test execution based on test plan (TODO)
@@ -113,7 +117,7 @@ EOT
 {
    "ip":"127.0.0.1",
    "port":"9000",
-   "benchmarkArgs":"$DASHBOARD -attacked_mode $ATTACK",
+   "benchmarkArgs":"$DASHBOARD -attacked_mode $ATTACK -bc $BEACONIP -bc_port $BEACONPORT $PEER -min_peers $MINPEER",
    "txgenArgs":"-duration -1 -cross_shard_ratio $CROSSTX"
 }
 EOT
@@ -209,13 +213,17 @@ VERBOSE=
 DASHBOARD=
 ATTACK=2
 CROSSTX=30
+BEACONIP=54.183.5.66
+BEACONPORT=9999
+MINPEER=10
+PEER=-peer_discovery
 
 declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:vD:A:C:" option; do
+while getopts "hp:f:i:a:n:vD:A:C:B:b:m:P" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -230,6 +238,10 @@ while getopts "hp:f:i:a:n:vD:A:C:" option; do
       D) DASHBOARD="-metrics_report_url http://$OPTARG/report" ;;
       A) ATTACK=$OPTARG ;;
       C) CROSSTX=$OPTARG ;;
+      B) BEACONIP=$OPTARG ;;
+      b) BEACONPORT=$OPTARG ;;
+      m) MINPEER=$OPTARG ;;
+      P) PEER=$OPTARG ;;
       h|?) usage ;;
    esac
 done

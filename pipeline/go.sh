@@ -170,6 +170,9 @@ function do_run
 
    RUN_OPTS+=" -C ${configs[benchmark.crosstx]}"
    RUN_OPTS+=" -A ${configs[benchmark.attacked_mode]}"
+   RUN_OPTS+=" -B ${configs[beacon.server]}"
+   RUN_OPTS+=" -b ${configs[beacon.port]}"
+   RUN_OPTS+=" -m ${configs[benchmark.minpeer]}"
 
    ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} -p $PROFILE init
 
@@ -247,7 +250,7 @@ function read_profile
 {
    logging reading benchmark config file: $BENCHMARK_FILE
 
-   keys=( description aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port userdata flow.wait_for_launch )
+   keys=( description aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key benchmark.minpeer )
 
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_FILE)
