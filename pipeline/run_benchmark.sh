@@ -233,14 +233,14 @@ CROSSTX=30
 BEACONIP=54.183.5.66
 BEACONPORT=9999
 MINPEER=10
-PEER=-peer_discovery
+PEER=
 
 declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:vD:A:C:B:b:m:P" option; do
+while getopts "hp:f:i:a:n:vD:A:C:B:b:m:P:" option; do
    case $option in
       p)
          PROFILE=$OPTARG

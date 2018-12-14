@@ -162,12 +162,6 @@ function do_run
    logging run benchmark
    local RUN_OPTS=
 
-# no need to do config for peer discovery mode
-   if [ "$PEER" == "false" ]; then
-      ./run_benchmark.sh -n ${configs[parallel]} -p $PROFILE config
-      sleep 3
-   fi
-
    if [ "${configs[benchmark.dashboard]}" == "true" ]; then
       RUN_OPTS+=" -D ${configs[dashboard.server]}:${configs[dashboard.port]}"
    fi
@@ -177,6 +171,18 @@ function do_run
    RUN_OPTS+=" -B ${configs[beacon.server]}"
    RUN_OPTS+=" -b ${configs[beacon.port]}"
    RUN_OPTS+=" -m ${configs[benchmark.minpeer]}"
+
+# no need to do config for peer discovery mode
+   if [ "$PEER" == "false" ]; then
+      ./run_benchmark.sh -n ${configs[parallel]} -p $PROFILE config
+      sleep 3
+   else
+      RUN_OPTS+=" -P -peer_discovery"
+   fi
+
+   verbose $RUN_OPTS
+
+   [ $VERBOSE ] && RUN_OPTS+=" -v"
 
    ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} -p $PROFILE init
 
