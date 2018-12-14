@@ -180,8 +180,6 @@ function do_run
       RUN_OPTS+=" -P -peer_discovery"
    fi
 
-   verbose $RUN_OPTS
-
    [ $VERBOSE ] && RUN_OPTS+=" -v"
 
    ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} -p $PROFILE init

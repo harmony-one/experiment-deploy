@@ -8,7 +8,7 @@
   "leader": {
     "num_vm": 2,
     "type": "t3.micro",
-    "regions": "pdx,iad,sin,fra,nrt"
+    "regions": "pdx,iad,sin,fra"
   },
   "beacon": {
      "server": "54.183.5.66",
