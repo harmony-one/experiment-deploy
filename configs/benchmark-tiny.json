@@ -1,13 +1,13 @@
 {
-  "description": "aws 10 nodes on 1 shards",
+  "description": "aws 25 nodes on 2 shards",
   "client": {
     "num_vm": 1,
     "type": "t3.micro",
     "regions": "sfo"
   },
   "leader": {
-    "num_vm": 0,
-    "type": "t3.micro",
+    "num_vm": 2,
+    "type": "t3.medium",
     "regions": "sfo"
   },
   "beacon": {
@@ -25,7 +25,7 @@
     ]
   },
   "benchmark": {
-    "shards": 1,
+    "shards": 2,
     "duration": 300,
     "dashboard": true,
     "crosstx": 30,

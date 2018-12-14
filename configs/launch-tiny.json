@@ -4,7 +4,7 @@
          "region": "sfo",
          "type": "t3.micro",
          "ondemand": 1,
-         "spot": 10
+         "spot": 25
       }
    ],
    "userdata": {
