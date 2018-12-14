@@ -34,6 +34,7 @@ import (
 type initReq struct {
 	Ip            string `json:"ip"`
 	Port          string `json:"port"`
+	SessionID     string `json:"sessionId"`
 	BenchmarkArgs string `json:"benchmarkArgs"`
 	TxgenArgs     string `json:"txgenArgs"`
 }
@@ -403,7 +404,12 @@ func runInstance() error {
 func runNode() error {
 	log.Println("running instance")
 	args :=
-		append([]string{"-ip", setting.ip, "-port", setting.port, "-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder}, globalSession.nodeAdditionalArgs...)
+		append([]string{"-ip", setting.ip, "-port", setting.port, "-log_folder", globalSession.logFolder}, globalSession.nodeAdditionalArgs...)
+
+	if len(globalSession.localConfigFileName) > 0 {
+		args = append(args, "-config_file", globalSession.localConfigFileName)
+	}
+
 	return utils.RunCmd("./benchmark", args...)
 }
 
@@ -449,6 +455,8 @@ func initHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	globalSession.id = init.SessionID
+	globalSession.logFolder = fmt.Sprintf("%slog-%v", logFolderPrefix, init.SessionID)
 	globalSession.txgenAdditionalArgs = append(globalSession.txgenAdditionalArgs, strings.Split(init.TxgenArgs, " ")...)
 	globalSession.nodeAdditionalArgs = append(globalSession.nodeAdditionalArgs, strings.Split(init.BenchmarkArgs, " ")...)
 	if err := runInstance(); err == nil {
