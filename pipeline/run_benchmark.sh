@@ -139,8 +139,24 @@ EOT
    esac
  
    SECONDS=0
+
+# send commands to leaders at first
+   local num_leader=$(grep leader $DIST | wc -l)
+   for n in $(seq 1 $num_leader); do
+      local ip=${NODEIPS[$n]}
+      CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
+
+      case $cmd in
+         config|init|update)
+            CMD+=$" -d@$LOGDIR/$cmd/$cmd.json" ;;
+      esac
+
+      [ -n "$VERBOSE" ] && echo $n =\> $CMD
+      $TIMEOUT -s SIGINT 20s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log
+   done
+
    while [ $end -lt $NUM_NODES ]; do
-      start=$(( $PARALLEL * $group + 1 ))
+      start=$(( $PARALLEL * $group + $num_leader ))
       end=$(( $PARALLEL + $start - 1 ))
 
       if [ $end -ge $NUM_NODES ]; then
