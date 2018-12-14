@@ -29,7 +29,8 @@
     "duration": 300,
     "dashboard": true,
     "crosstx": 30,
-    "attacked_mode": 2
+    "attacked_mode": 2,
+    "minpeer": 8
   },
   "logs": {
     "leader": true,
