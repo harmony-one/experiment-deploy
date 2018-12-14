@@ -117,8 +117,9 @@ EOT
 {
    "ip":"127.0.0.1",
    "port":"9000",
+   "sessionID":"$SESSION",
    "benchmarkArgs":"$DASHBOARD -attacked_mode $ATTACK -bc $BEACONIP -bc_port $BEACONPORT $PEER -min_peers $MINPEER",
-   "txgenArgs":"-duration -1 -cross_shard_ratio $CROSSTX"
+   "txgenArgs":"-duration -1 -cross_shard_ratio $CROSSTX -bc $BEACONIP -bc_port $BEACONPORT $PEER"
 }
 EOT
 ;;

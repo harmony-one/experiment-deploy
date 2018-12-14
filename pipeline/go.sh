@@ -16,6 +16,7 @@ This script automates the benchmark test based on profile.
                   supported profiles (${PROFILES[@]})
    -v             verbose output
    -k             keep all the instances, skip deinit (default: $KEEP)
+   -e true/false  enable peer discovery configuration (default: $PEER)
 
 [ACTIONS]
    launch         do launch only
@@ -161,8 +162,11 @@ function do_run
    logging run benchmark
    local RUN_OPTS=
 
-   ./run_benchmark.sh -n ${configs[parallel]} -p $PROFILE config
-   sleep 3
+# no need to do config for peer discovery mode
+   if [ "$PEER" == "false" ]; then
+      ./run_benchmark.sh -n ${configs[parallel]} -p $PROFILE config
+      sleep 3
+   fi
 
    if [ "${configs[benchmark.dashboard]}" == "true" ]; then
       RUN_OPTS+=" -D ${configs[dashboard.server]}:${configs[dashboard.port]}"
@@ -287,12 +291,13 @@ USERDATA=$CONFIG_DIR/userdata-soldier-http.sh
 VERBOSE=
 THEPWD=$(pwd)
 KEEP=false
+PEER=false
 TAG=${WHOAMI:-USER}
 JQ='jq -M -r'
 
 declare -A configs
 
-while getopts "hp:vk" option; do
+while getopts "hp:vke:" option; do
    case $option in
       h) usage ;;
       p)
@@ -303,6 +308,7 @@ while getopts "hp:vk" option; do
          ;;
       v) VERBOSE=1 ;;
       k) KEEP=true ;;
+      e) PEER=$OPTARG ;;
    esac
 done
 
