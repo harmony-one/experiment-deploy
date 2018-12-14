@@ -1,0 +1,50 @@
+{
+  "description": "aws 110 nodes on 2 shards, for devnet",
+  "client": {
+    "num_vm": 0,
+    "type": "r5.large",
+    "regions": "iad"
+  },
+  "leader": {
+    "num_vm": 1,
+    "type": "t3.large",
+    "regions": "pdx,iad"
+  },
+  "beacon": {
+     "server": "54.183.5.66",
+     "port": 9999,
+     "user": "ec2-user",
+     "key": "california-key-benchmark.pem"
+  },
+  "azure": {
+    "num_vm": 0,
+    "regions": [
+      "eastus",
+      "westeurope",
+      "southeastasia"
+    ]
+  },
+  "benchmark": {
+    "shards": 2,
+    "duration": 300,
+    "dashboard": true,
+    "crosstx": 30,
+    "attacked_mode": 2,
+    "minpeer": 8
+  },
+  "logs": {
+    "leader": true,
+    "client": true,
+    "validator": false,
+    "soldier": true
+  },
+  "dashboard": {
+    "server": "54.213.59.51",
+    "port": 3000
+  },
+  "parallel": 110,
+  "userdata": "userdata-soldier-http.sh",
+  "flow": {
+     "wait_for_launch": 20
+  }
+}
