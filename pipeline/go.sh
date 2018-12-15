@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 #set -euxo pipefail
+# set -x
 
 function usage
 {
@@ -206,12 +207,14 @@ function download_logs
       ./dl-soldier-logs.sh -s $TS -g client benchmark
    fi
    if [ "${configs[logs.validator]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g validator benchmark &
+      ./dl-soldier-logs.sh -s $TS -g validator benchmark
    fi
    if [ "${configs[logs.soldier]}" == "true" ]; then
       ./dl-soldier-logs.sh -s $TS -g leader soldier &
       ./dl-soldier-logs.sh -s $TS -g client soldier &
+      ./dl-soldier-logs.sh -s $TS -g validator soldier &
    fi
+   wait
    expense download
 }
 

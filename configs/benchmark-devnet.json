@@ -35,7 +35,7 @@
   "logs": {
     "leader": true,
     "client": true,
-    "validator": false,
+    "validator": true,
     "soldier": true
   },
   "dashboard": {
