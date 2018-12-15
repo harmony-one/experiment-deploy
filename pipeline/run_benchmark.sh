@@ -118,7 +118,7 @@ EOT
    "ip":"127.0.0.1",
    "port":"9000",
    "sessionID":"$SESSION",
-   "benchmarkArgs":"$DASHBOARD -attacked_mode $ATTACK -bc $BEACONIP -bc_port $BEACONPORT $PEER -min_peers $MINPEER",
+   "benchmarkArgs":"$DASHBOARD -attacked_mode $ATTACK -bc $BEACONIP -bc_port $BEACONPORT -min_peers $MINPEER $PEER",
    "txgenArgs":"-duration -1 -cross_shard_ratio $CROSSTX -bc $BEACONIP -bc_port $BEACONPORT $PEER"
 }
 EOT
@@ -156,7 +156,7 @@ EOT
    done
 
    while [ $end -lt $NUM_NODES ]; do
-      start=$(( $PARALLEL * $group + $num_leader ))
+      start=$(( $PARALLEL * $group + $num_leader + 1))
       end=$(( $PARALLEL + $start - 1 ))
 
       if [ $end -ge $NUM_NODES ]; then
