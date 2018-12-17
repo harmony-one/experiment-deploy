@@ -24,6 +24,7 @@ This script automates the benchmark test based on profile.
    run            run benchmark
    log            download logs
    deinit         sync logs & terminate instances
+   reset          reset dashboard and explorer
    all            do everything (default)
 
 
@@ -158,6 +159,12 @@ function do_launch
    expense launch
 }
 
+function do_launch_beacon
+{
+   local URL=s3://
+   return
+}
+
 function do_run
 {
    logging run benchmark
@@ -261,7 +268,7 @@ function read_profile
 {
    logging reading benchmark config file: $BENCHMARK_FILE
 
-   keys=( description aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key benchmark.minpeer )
+   keys=( description aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key benchmark.minpeer explorer.server explorer.port explorer.reset )
 
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_FILE)
@@ -272,10 +279,23 @@ function read_profile
    verbose ${configs[@]}
 }
 
+function do_reset
+{
+   if [ "${configs[dashboard.reset]}" == "true" ]; then
+      echo "resetting dashboard ..."
+      curl -X POST http://${configs[dashboard.server]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":426669"}'
+   fi
+   if [ "${configs[explorer.reset]}" == "true" ]; then
+      echo "resetting explorer ..."
+      echo curl -X POST http://${configs[explorer.server]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":426669"}'
+   fi
+}
+
 function do_all
 {
    do_launch
    do_run
+   do_reset
    download_logs
    analyze_logs
    do_sync_logs
@@ -334,6 +354,7 @@ case $ACTION in
    launch)
          do_launch ;;
    run)  
+         do_launch_beacon
          do_run ;;
    log)  
          download_logs
@@ -341,6 +362,8 @@ case $ACTION in
          do_sync_logs ;;
    deinit)
          do_deinit ;;
+   reset)
+         do_reset ;;
 esac
 
 exit 0
