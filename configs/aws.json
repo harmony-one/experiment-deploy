@@ -187,6 +187,18 @@
       "price": 0.0104
     },
     {
+      "name": "t3.small",
+      "price": 0.0209
+    },
+    {
+      "name": "t3.medium",
+      "price": 0.0418
+    },
+    {
+      "name": "t3.large",
+      "price": 0.0835
+    },
+    {
       "name": "t2.micro",
       "price": 0.0116
     }

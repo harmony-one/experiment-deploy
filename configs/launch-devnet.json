@@ -2,16 +2,16 @@
    "launch": [
       {
          "region": "pdx",
-         "type": "t3.micro",
-         "ondemand": 5,
+         "type": "t3.medium",
+         "ondemand": 15,
          "ami": "default",
-         "spot": 20
+         "spot": 10
       },
       {
          "region": "iad",
-         "type": "t3.micro",
-         "ondemand": 5,
-         "spot": 20
+         "type": "t3.medium",
+         "ondemand": 15,
+         "spot": 10
       }
    ],
    "userdata": {
