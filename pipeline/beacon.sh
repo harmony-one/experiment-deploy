@@ -48,7 +48,7 @@ function _do_download
 
 function _do_kill
 {
-   local pids=$(${SSH} ec2-user@${JENKINS} "ps -ef | grep $PORT | beacon | grep -v grep | awk ' { print \$2 } ' | tr '\n' ' '")
+   local pids=$(${SSH} ec2-user@${JENKINS} "ps -ef | grep beacon | grep $PORT | grep -v grep | grep -v beacon.sh | awk ' { print \$2 } ' | tr '\n' ' '")
 
    if [ -n "$pids" ]; then
       $DRYRUN ${SSH} ec2-user@${JENKINS} "sudo kill -9 $pids"
@@ -63,7 +63,6 @@ function _do_launch
    local cmd="pushd $WORKDIR; nohup sudo ./beacon -ip 0.0.0.0 -port $PORT -numShards $SHARD"
    $DRYRUN ${SSH} ec2-user@${JENKINS} "$cmd > run-beacon.log 2>&1 &"
    echo "beacon node started"
-   $DRYRUN ${SSH} ec2-user@${JENKINS} "tail run-beacon.log"
 }
 
 function _do_all
