@@ -161,8 +161,9 @@ function do_launch
 
 function do_launch_beacon
 {
-   local URL=s3://
-   return
+   logging launch beacon node
+   ./beacon.sh -G -p ${configs[beacon.port]} -s ${configs[benchmark.shards]} -f ${FOLDER}
+   expense beacon
 }
 
 function do_run
@@ -192,6 +193,22 @@ function do_run
 
    ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} -p $PROFILE init
 
+   [ ! -e $CONFIG_FILE ] && errexit "can't find profile config file : $CONFIG_FILE"
+   TS=$(cat $CONFIG_FILE | $JQ .sessionID)
+
+# assuming we are running on AWS instance
+   if [ "${configs[txgen.enable]}" == "true" ]; then
+      if [ "${configs[txgen.ip]}" == "myip" ]; then
+         MYIP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
+      else
+         MYIP=${configs[txgen.ip]}
+      fi
+      aws s3 cp s3://$BUCKET/$FOLDER/txgen txgen
+      chmod +x txgen
+      echo "running txgen"
+      ./txgen -bc ${configs[beacon.server]} -bc_port ${configs[beacon.port]} -ip $MYIP -port ${configs[txgen.port]} -peer_discovery -log_folder logs/${TS} -duration ${configs[benchmark.duration]} > logs/${TS}/txgen-${TS}.log 2>&1 &
+   fi
+
    echo sleeping ${configs[benchmark.duration]} ...
    sleep ${configs[benchmark.duration]}
 
@@ -204,9 +221,6 @@ function do_run
 function download_logs
 {
    logging download logs ...
-   [ ! -e $CONFIG_FILE ] && errexit "can't find profile config file : $CONFIG_FILE"
-   TS=$(cat $CONFIG_FILE | $JQ .sessionID)
-
    if [ "${configs[logs.leader]}" == "true" ]; then
       ./dl-soldier-logs.sh -s $TS -g leader benchmark
    fi
@@ -268,7 +282,7 @@ function read_profile
 {
    logging reading benchmark config file: $BENCHMARK_FILE
 
-   keys=( description aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key benchmark.minpeer explorer.server explorer.port explorer.reset )
+   keys=( description aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key benchmark.minpeer explorer.server explorer.port explorer.reset txgen.ip txgen.port txgen.enable )
 
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_FILE)
@@ -293,6 +307,7 @@ function do_reset
 
 function do_all
 {
+   do_launch_beacon
    do_launch
    do_run
    do_reset
@@ -318,7 +333,7 @@ USERDATA=$CONFIG_DIR/userdata-soldier-http.sh
 VERBOSE=
 THEPWD=$(pwd)
 KEEP=false
-PEER=false
+PEER=true
 TAG=${WHOAMI:-USER}
 JQ='jq -M -r'
 
