@@ -309,8 +309,8 @@ function do_all
 {
    do_launch_beacon
    do_launch
-   do_run
    do_reset
+   do_run
    download_logs
    analyze_logs
    do_sync_logs
