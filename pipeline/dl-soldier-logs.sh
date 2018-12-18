@@ -6,8 +6,8 @@ GREP='grep -E'
 DIR=$(pwd)
 DC=distribution_config.txt
 CFG=configuration.txt
-SCP='scp -o StrictHostKeyChecking=no'
-SSH='ssh -o StrictHostKeyChecking=no'
+SCP='scp -o StrictHostKeyChecking=no -o LogLevel=error'
+SSH='ssh -o StrictHostKeyChecking=no -o LogLevel=error'
 UNAME=ec2-user
 
 function usage
