@@ -41,15 +41,18 @@ function _do_download
 {
    local URL="https://$BUCKET.s3.amazonaws.com/$FOLDER/beacon"
 
+   echo ${SSH} ec2-user@${JENKINS}
    $DRYRUN ${SSH} ec2-user@${JENKINS} "mkdir -p $WORKDIR; pushd $WORKDIR; curl -O $URL; chmod +x beacon; ./beacon -version"
+   echo "beacon workdir: $WORKDIR"
 }
 
 function _do_kill
 {
-   local pids=$(${SSH} ec2-user@${JENKINS} "ps -ef | grep beacon | grep -v grep | grep $PORT | awk ' { print \$2 } ' | tr '\n' ' '")
+   local pids=$(${SSH} ec2-user@${JENKINS} "ps -ef | grep $PORT | beacon | grep -v grep | awk ' { print \$2 } ' | tr '\n' ' '")
 
    if [ -n "$pids" ]; then
       $DRYRUN ${SSH} ec2-user@${JENKINS} "sudo kill -9 $pids"
+      echo "beacon node killed $pids"
    else
       echo "no beacon process to kill"
    fi
@@ -59,6 +62,8 @@ function _do_launch
 {
    local cmd="pushd $WORKDIR; nohup sudo ./beacon -ip 0.0.0.0 -port $PORT -numShards $SHARD"
    $DRYRUN ${SSH} ec2-user@${JENKINS} "$cmd > run-beacon.log 2>&1 &"
+   echo "beacon node started"
+   $DRYRUN ${SSH} ec2-user@${JENKINS} "tail run-beacon.log"
 }
 
 function _do_all
