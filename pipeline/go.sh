@@ -305,11 +305,11 @@ function do_reset
 {
    if [ "${configs[dashboard.reset]}" == "true" ]; then
       echo "resetting dashboard ..."
-      curl -X POST http://${configs[dashboard.server]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
+      curl -X POST --insecure https://${configs[dashboard.server]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
    fi
    if [ "${configs[explorer.reset]}" == "true" ]; then
       echo "resetting explorer ..."
-      echo curl -X POST http://${configs[explorer.server]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
+      curl -X POST --insecure https://${configs[explorer.server]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
    fi
 }
 
