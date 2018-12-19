@@ -220,6 +220,11 @@ function do_run
 
 function download_logs
 {
+   if [ -z $TS ]; then
+      [ ! -e $CONFIG_FILE ] && errexit "can't find profile config file : $CONFIG_FILE"
+      TS=$(cat $CONFIG_FILE | $JQ .sessionID)
+   fi
+
    logging download logs ...
    if [ "${configs[logs.leader]}" == "true" ]; then
       ./dl-soldier-logs.sh -s $TS -g leader benchmark
@@ -241,12 +246,15 @@ function download_logs
 
 function analyze_logs
 {
-   local DIR=logs/$TS/leader/tmp_log/log-$TS
+   if [ -z $TS ]; then
+      [ ! -e $CONFIG_FILE ] && errexit "can't find profile config file : $CONFIG_FILE"
+      TS=$(cat $CONFIG_FILE | $JQ .sessionID)
+   fi
 
-   logging analyzing logs in $DIR ...
-   pushd $DIR
-   ${THEPWD}/cal_tps.sh | tee ${THEPWD}/logs/$TS/tps.txt
-   popd
+   find logs/$TS -name leader-*.log > logs/$TS/all-leaders.txt
+   find logs/$TS -name validator-*.log > logs/$TS/all-validators.txt
+   logging analyzing logs in $(cat logs/$TS/all-leaders.txt)
+   ${THEPWD}/cal_tps.sh logs/$TS/all-leaders.txt logs/$TS/all-validators.txt | tee ${THEPWD}/logs/$TS/tps.txt
    expense analysis
 }
 
