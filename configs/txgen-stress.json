@@ -1,0 +1,45 @@
+{
+   "description": "generate random and parallel transactions to stress the devnet/testnet",
+   "profile": "stress",
+   "setup": {
+      "reset": "true",
+      "account_db": "account-%profile$.db"
+   },
+   "accounts": [
+      {
+         "name": "ender",
+         "address": "0xF6b57E6aaCb28abD5Bdf2ffe6f684be3DB8A6630",
+         "prikey": "a2466bae151cd504199b9d8ec98056884082f4c4ebce79434497c5dcff5013b6"
+      }
+   ],
+   "wallet": {
+      "account": 1000,
+      "faucet": "true"
+   },
+   "transactions": [
+      {
+         "from": "*",
+         "to": "ender",
+         "amount": 0.01,
+         "delay": 0.1,
+         "count": 900,
+         "parallel": 100
+      },
+      {
+         "from": "ender",
+         "to": "*",
+         "amount": 0.01,
+         "delay": 0.1,
+         "count": 800,
+         "parallel": 50
+      },
+      {
+         "from": "%",
+         "to": "%",
+         "amount": 0,
+         "delay": 0.5,
+         "count": 500,
+         "parallel": 150
+      }
+  ]
+}

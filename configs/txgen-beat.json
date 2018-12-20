@@ -1,0 +1,29 @@
+{
+   "description": "generate beat transaction to demo the liveness of devnet/testnet",
+   "profile": "beat",
+   "init": {
+      "reset": "true",
+      "account_db": "account-$profile$.db"
+   },
+   "accounts": [
+      {
+         "name": "ender",
+         "address": "0xF6b57E6aaCb28abD5Bdf2ffe6f684be3DB8A6630",
+         "prikey": "a2466bae151cd504199b9d8ec98056884082f4c4ebce79434497c5dcff5013b6"
+      }
+   ],
+   "wallet": {
+      "account": 100,
+      "faucet": "true"
+   },
+   "transactions": [
+      {
+         "from": "*",
+         "to": "ender",
+         "amount": 0.01,
+         "delay": 1,
+         "count": 900,
+         "parallel": 1
+      }
+  ]
+}
