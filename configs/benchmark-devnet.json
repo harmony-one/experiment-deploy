@@ -11,7 +11,7 @@
     "regions": "pdx,iad"
   },
   "beacon": {
-     "server": "54.183.5.66",
+     "server": "jenkins.harmony.one",
      "port": 9999,
      "user": "ec2-user",
      "key": "california-key-benchmark.pem"
@@ -39,12 +39,12 @@
     "soldier": true
   },
   "dashboard": {
-    "server": "54.213.59.51",
+    "server": "explorer.harmony.one",
     "port": 3000,
     "reset": "true"
   },
   "explorer": {
-    "server": "54.213.59.51",
+    "server": "explorer.harmony.one",
     "port": 4000,
     "reset": "true"
   },

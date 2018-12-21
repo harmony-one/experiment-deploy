@@ -11,7 +11,7 @@
     "regions": "pdx,iad,dub"
   },
   "beacon": {
-     "server": "54.183.5.66",
+     "server": "jenkins.harmony.one",
      "port": 9997,
      "user": "ec2-user",
      "key": "california-key-benchmark.pem"
@@ -27,7 +27,7 @@
   "benchmark": {
     "shards": 3,
     "duration": 600,
-    "dashboard": true,
+    "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
     "minpeer": 30
