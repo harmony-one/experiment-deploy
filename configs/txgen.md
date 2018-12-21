@@ -1,9 +1,9 @@
-#Introduction
+# Introduction
 
 This document is the detailed explanation of the txgen json file format.
 We use wallet application to emulate transactions to the blockchain.
 
-##description
+## description
 * string
 * the description of the json file, purpose of this test setup.
 
@@ -80,3 +80,6 @@ this section has a list of the transactions to be generated
 ### transaction.parallel
 * integer
 * the number of transaction can execute in parallel
+
+# Sample
+[Txgen Beat Configuration](https://github.com/harmony-one/experiment-deploy/blob/master/configs/txgen-beat.json)
