@@ -457,6 +457,9 @@ func initHandler(w http.ResponseWriter, r *http.Request) {
 
 	globalSession.id = init.SessionID
 	globalSession.logFolder = fmt.Sprintf("%slog-%v", logFolderPrefix, init.SessionID)
+	globalSession.nodeAdditionalArgs = nil
+	globalSession.txgenAdditionalArgs = nil
+
 	globalSession.txgenAdditionalArgs = append(globalSession.txgenAdditionalArgs, strings.Split(init.TxgenArgs, " ")...)
 	globalSession.nodeAdditionalArgs = append(globalSession.nodeAdditionalArgs, strings.Split(init.BenchmarkArgs, " ")...)
 	if err := runInstance(); err == nil {

@@ -3,6 +3,7 @@
 #TODO: parameter validation
 
 set -o pipefail
+set -x
 
 if [ "$(uname -s)" == "Darwin" ]; then
    TIMEOUT=gtimeout
@@ -113,13 +114,23 @@ function do_simple_cmd
 }
 EOT
 ;;
-      init) cat>$LOGDIR/$cmd/$cmd.json<<EOT
+      init)
+      benchmarkArgs="-attacked_mode $ATTACK -bc $BEACONIP -bc_port $BEACONPORT -min_peers $MINPEER"
+      txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX -bc $BEACONIP -bc_port $BEACONPORT"
+      if [ -n "$PEER" ]; then
+         benchmarkArgs+=" $PEER"
+         txgenArgs+=" $PEER"
+      fi
+      if [ -n "$DASHBOARD" ]; then
+         benchmarkArgs+=" $DASHBOARD"
+      fi
+      cat>$LOGDIR/$cmd/$cmd.json<<EOT
 {
    "ip":"127.0.0.1",
    "port":"9000",
    "sessionID":"$SESSION",
-   "benchmarkArgs":"$DASHBOARD -attacked_mode $ATTACK -bc $BEACONIP -bc_port $BEACONPORT -min_peers $MINPEER $PEER",
-   "txgenArgs":"-duration -1 -cross_shard_ratio $CROSSTX -bc $BEACONIP -bc_port $BEACONPORT $PEER"
+   "benchmarkArgs":"$benchmarkArgs",
+   "txgenArgs":"$txgenArgs"
 }
 EOT
 ;;
