@@ -1,7 +1,7 @@
 {
   "description": "aws 25 nodes on 2 shards",
   "client": {
-    "num_vm": 1,
+    "num_vm": 0,
     "type": "t3.micro",
     "regions": "sfo"
   },
@@ -11,8 +11,8 @@
     "regions": "sfo"
   },
   "beacon": {
-     "server": "54.183.5.66",
-     "port": 9999,
+     "server": "jenkins.harmony.one",
+     "port": 9997,
      "user": "ec2-user",
      "key": "california-key-benchmark.pem"
   },
@@ -27,7 +27,7 @@
   "benchmark": {
     "shards": 2,
     "duration": 120,
-    "dashboard": true,
+    "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
     "minpeer": 8
@@ -40,7 +40,18 @@
   },
   "dashboard": {
     "server": "34.218.238.198",
-    "port": 3000
+    "port": 3000,
+    "reset": "false"
+  },
+  "explorer": {
+    "server": "54.213.59.51",
+    "port": 4000,
+    "reset": "false"
+  },
+  "txgen": {
+     "enable": "true",
+     "ip": "myip",
+     "port": 8000
   },
   "parallel": 10,
   "userdata": "userdata-soldier-http.sh",
