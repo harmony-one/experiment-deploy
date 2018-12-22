@@ -1,5 +1,5 @@
 {
-  "description": "aws 110 nodes on 2 shards, for devnet",
+  "description": "aws 50 nodes on 2 shards, for devnet",
   "client": {
     "num_vm": 0,
     "type": "r5.large",
@@ -30,7 +30,7 @@
     "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 8
+    "minpeer": 20
   },
   "logs": {
     "leader": true,
