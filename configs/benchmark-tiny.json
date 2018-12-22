@@ -1,7 +1,7 @@
 {
   "description": "aws 25 nodes on 2 shards",
   "client": {
-    "num_vm": 0,
+    "num_vm": 1,
     "type": "t3.micro",
     "regions": "sfo"
   },
@@ -56,6 +56,6 @@
   "parallel": 10,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
-     "wait_for_launch": 60
+     "wait_for_launch": 30
   }
 }

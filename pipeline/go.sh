@@ -86,11 +86,6 @@ function do_launch
       -tag_file instance_output-client.txt \
       -tag ${TAG}-powerclient \
       -launch_profile launch-$PROFILE.json
-      LAUNCH_OPT+=' -i raw_ip-client.txt'
-      num_clients=$(cat raw_ip-client.txt | wc -l)
-   else
-      num_clients=1
-      logging using regular client
    fi
 
    if [ ${configs[leader.num_vm]} -gt 0 ]; then
@@ -112,14 +107,14 @@ function do_launch
    ./deploy.sh \
    -C ${configs[azure.num_vm]} \
    -s ${configs[benchmark.shards]} \
-   -t ${num_clients} \
+   -t 0 \
    -u ${configs[userdata]} \
    -P $PROFILE \
    ${LAUNCH_OPT}
 
    if [ ${configs[client.num_vm]} -gt 0 ]; then
-      cat instance_ids_output-client.txt >> instance_ids_output.txt
-      cat instance_output-client.txt >> instance_output.txt
+      ip=$(cat raw_ip-client.txt | awk '{ print $1 }')
+      echo "$ip 9000 client" > client.config.txt
       rm instance_ids_output-client.txt instance_output-client.txt raw_ip-client.txt &
    fi
 
@@ -149,8 +144,8 @@ function do_launch
       else
          echo "$total/$expected instances are in running state"
       fi
-      echo sleeping 60s ...
-      sleep 60
+      echo sleeping 30s ...
+      sleep 30
       (( r++ ))
       prev_total=$total
    done
@@ -187,17 +182,12 @@ function do_run
    [ ! -e $CONFIG_FILE ] && errexit "can't find profile config file : $CONFIG_FILE"
    TS=$(cat $CONFIG_FILE | $JQ .sessionID)
 
-# assuming we are running on AWS instance
    if [ "${configs[txgen.enable]}" == "true" ]; then
-      if [ "${configs[txgen.ip]}" == "myip" ]; then
-         MYIP=$(curl http://169.254.169.254/latest/meta-data/public-ipv4)
-      else
-         MYIP=${configs[txgen.ip]}
+      if [ ${configs[client.num_vm]} -gt 0 ]; then
+         echo "running txgen on $(cat client.config.txt)"
+         ./run_benchmark.sh -n 1 ${RUN_OPTS} -p $PROFILE -f client.config.txt -c init
+         rm -f client.config.txt
       fi
-      aws s3 cp s3://$BUCKET/$FOLDER/txgen txgen
-      chmod +x txgen
-      echo "running txgen"
-      ./txgen -bc ${configs[beacon.server]} -bc_port ${configs[beacon.port]} -ip $MYIP -port ${configs[txgen.port]} -log_folder logs/${TS} -duration ${configs[benchmark.duration]} > logs/${TS}/txgen-${TS}.log 2>&1 &
    fi
 
    echo sleeping ${configs[benchmark.duration]} ...

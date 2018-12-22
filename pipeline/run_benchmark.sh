@@ -34,6 +34,7 @@ OPTIONS:
    -B beacon IP      IP address of beacon chain (default: $BEACONIP)
    -b beacon port    port number of beacon chain (default: $BEACONPORT)
    -m minpeer        minimum number of peers required to start consensus (default: $MINPEER)
+   -c                invoke client node (default: $CLIENT)
 
 ACTIONS:
    auto              automate the test execution based on test plan (TODO)
@@ -106,18 +107,14 @@ function do_simple_cmd
    end=0
    group=0
    case $cmd in
-      config) cat>$LOGDIR/$cmd/$cmd.json<<EOT
-{
-   "sessionID":"$SESSION",
-   "configURL":"http://$BUCKET.s3.amazonaws.com/$FOLDER/distribution_config.txt"
-}
-EOT
-;;
       init)
       benchmarkArgs="-attacked_mode $ATTACK -bc $BEACONIP -bc_port $BEACONPORT -min_peers $MINPEER"
       txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX -bc $BEACONIP -bc_port $BEACONPORT"
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
+      fi
+      if [ "$CLIENT" == "true" ]; then
+         CLIENT_JSON=',"role":"client"'
       fi
       cat>$LOGDIR/$cmd/$cmd.json<<EOT
 {
@@ -126,6 +123,7 @@ EOT
    "sessionID":"$SESSION",
    "benchmarkArgs":"$benchmarkArgs",
    "txgenArgs":"$txgenArgs"
+   $CLIENT_JSON
 }
 EOT
 ;;
@@ -153,7 +151,7 @@ EOT
       CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
 
       case $cmd in
-         config|init|update)
+         init|update)
             CMD+=$" -d@$LOGDIR/$cmd/$cmd.json" ;;
       esac
 
@@ -176,7 +174,7 @@ EOT
          CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
 
          case $cmd in
-            config|init|update)
+            init|update)
                CMD+=$" -d@$LOGDIR/$cmd/$cmd.json" ;;
          esac
 
@@ -239,13 +237,14 @@ CROSSTX=30
 BEACONIP=54.183.5.66
 BEACONPORT=9999
 MINPEER=10
+CLIENT=
 
 declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:vD:A:C:B:b:m:" option; do
+while getopts "hp:f:i:a:n:vD:A:C:B:b:m:c" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -263,6 +262,7 @@ while getopts "hp:f:i:a:n:vD:A:C:B:b:m:" option; do
       B) BEACONIP=$OPTARG ;;
       b) BEACONPORT=$OPTARG ;;
       m) MINPEER=$OPTARG ;;
+      c) CLIENT=true ;;
       h|?) usage ;;
    esac
 done
@@ -274,7 +274,7 @@ ACTION=$@
 read_nodes
 
 case "$ACTION" in
-   "ping"|"kill"|"config"|"init"|"update") do_simple_cmd $ACTION ;;
+   "ping"|"kill"|"init"|"update") do_simple_cmd $ACTION ;;
    "auto") do_auto ;;
    *) usage ;;
 esac
