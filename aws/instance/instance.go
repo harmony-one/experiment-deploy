@@ -20,7 +20,6 @@ import (
 	//	"math"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"github.com/kr/pretty"
@@ -35,25 +34,32 @@ import (
 )
 
 const (
-	WAIT_COUNT   = 60
-	WAIT_RUNNING = 300 // wait for all instances report running state
+	waitCountSeconds = 30
+	waitRunning      = 300 // wait for all instances report running state
 )
 
+// Vpc is the struct containing VPC info
 type Vpc struct {
-	Id string `json:"id"`
+	ID string `json:"id"`
 	Sg string `json:"sg"`
 }
 
+// Ami is the struct containing AMI info
 type Ami struct {
 	Default string `json:"default"`
 	Al2     string `json:"al2",omitempty`
 }
 
+// Limit is the struct containing spot instance limit info
 type Limit struct {
-	T3micro int `json:"t3.micro"`
-	T2micro int `json:"t2.micro"`
+	T3micro  int `json:"t3.micro"`
+	T3small  int `json:"t3.small"`
+	T3medium int `json:"t3.medium"`
+	T3large  int `json:"t3.large"`
+	T2micro  int `json:"t2.micro"`
 }
 
+// Region is the struct containg AWS Region info
 type Region struct {
 	Name    string `json:"name"`
 	ExtName string `json:"ext-name"`
@@ -64,21 +70,25 @@ type Region struct {
 	Limit   Limit  `json:"limit"`
 }
 
+// KeyFile is the struct to hold all key file name
 type KeyFile struct {
 	KeyPair string `json:"keypair"`
 	KeyFile string `json:"keyfile"`
 }
 
+// UserDataStruct hold the userdata file info
 type UserDataStruct struct {
 	Name string `json:"name"`
 	File string `json:"file"`
 }
 
+// InstancePrice hold the price per instance type
 type InstancePrice struct {
 	Name  string  `json:"name"`
 	Price float64 `json:"price"`
 }
 
+// AWSRegions is the struct to serialize/deserialize AWS Region data
 type AWSRegions struct {
 	Regions   []*Region         `json:"regions"`
 	KeyFiles  []*KeyFile        `json:"keyfiles"`
@@ -86,6 +96,7 @@ type AWSRegions struct {
 	Instances []*InstancePrice  `json:"instance"`
 }
 
+// InstanceConfig is the instance info for launch
 type InstanceConfig struct {
 	RegionName string `json:"region"`
 	Type       string `json:"type"`
@@ -94,27 +105,28 @@ type InstanceConfig struct {
 	AmiName    string `json:"ami",omitempty`
 }
 
+// LaunchConfig is the struct having all launch configuration
 type LaunchConfig struct {
 	RegionInstances []*InstanceConfig `json:"launch"`
 	UserData        *UserDataStruct   `json:"userdata"`
 	Batch           int               `json:"batch"`
 }
 
-type InstType int
+type instType int
 
-func (i InstType) String() string {
+func (i instType) String() string {
 	switch i {
-	case OnDemand:
-		return "OnDemand"
-	case Spot:
+	case onDemand:
+		return "onDemand"
+	case spot:
 		return "Spot"
 	}
 	return "Unknown"
 }
 
 const (
-	OnDemand InstType = iota
-	Spot     InstType = iota
+	onDemand instType = iota
+	spot     instType = iota
 )
 
 var (
@@ -145,7 +157,7 @@ var (
 	userDataString string
 
 	myInstances    sync.Map
-	myInstancesId  sync.Map
+	myInstancesID  sync.Map
 	myInstancesTag sync.Map
 
 	wg sync.WaitGroup
@@ -175,14 +187,14 @@ func exitErrorf(msg string, args ...interface{}) {
 func parseAWSRegionConfig(config string) (*AWSRegions, error) {
 	data, err := ioutil.ReadFile(config)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Can't read file (%v): %v", config, err))
+		return nil, fmt.Errorf("can't read file (%v): %v", config, err)
 	}
 	if !json.Valid(data) {
-		return nil, errors.New(fmt.Sprintf("Invalid Json data %s!", data))
+		return nil, fmt.Errorf("invalid json data %s", data)
 	}
 	regionConfig := new(AWSRegions)
 	if err := json.Unmarshal(data, regionConfig); err != nil {
-		return nil, errors.New(fmt.Sprintf("Can't parse AWs regions config (%v): %v", config, err))
+		return nil, fmt.Errorf("can't parse AWs regions config (%v): %v", config, err)
 	}
 	return regionConfig, nil
 }
@@ -190,14 +202,14 @@ func parseAWSRegionConfig(config string) (*AWSRegions, error) {
 func parseLaunchConfig(config string) (*LaunchConfig, error) {
 	data, err := ioutil.ReadFile(config)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Can't read file (%v): %v", config, err))
+		return nil, fmt.Errorf("Can't read file (%v): %v", config, err)
 	}
 	if !json.Valid(data) {
-		return nil, errors.New(fmt.Sprintf("Invalid Json data %s!", data))
+		return nil, fmt.Errorf("invalid json data %s", data)
 	}
 	launchConfig := new(LaunchConfig)
 	if err := json.Unmarshal(data, launchConfig); err != nil {
-		return nil, errors.New(fmt.Sprintf("Can't Unmarshal launch config (%v): %v", config, err))
+		return nil, fmt.Errorf("can't unmarshal launch config (%v): %v", config, err)
 	}
 	return launchConfig, nil
 }
@@ -230,7 +242,7 @@ func findSubnet(svc *ec2.EC2, vpc Vpc) ([]*ec2.Subnet, error) {
 			{
 				Name: aws.String("vpc-id"),
 				Values: []*string{
-					aws.String(vpc.Id),
+					aws.String(vpc.ID),
 				},
 			},
 		},
@@ -256,9 +268,9 @@ func getPrice(aws *AWSRegions, insttype string) float64 {
 	return 0
 }
 
-func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instType InstType) (*ec2.RunInstancesInput, error) {
+func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instType instType) (*ec2.RunInstancesInput, error) {
 
-	amiId, err := findAMI(reg, i.AmiName)
+	amiID, err := findAMI(reg, i.AmiName)
 	if err != nil {
 		messages <- fmt.Sprintf("%v: findAMI Error %v", reg.Name, err)
 		return nil, fmt.Errorf("findAMI Error %v", err)
@@ -267,11 +279,11 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 	var input ec2.RunInstancesInput
 
 	switch instType {
-	case OnDemand:
+	case onDemand:
 		tagValue := fmt.Sprintf("%s-%s-od-%s", reg.Code, *tag, now)
 
 		input = ec2.RunInstancesInput{
-			ImageId:          aws.String(amiId),
+			ImageId:          aws.String(amiID),
 			InstanceType:     aws.String(i.Type),
 			MinCount:         aws.Int64(1),
 			MaxCount:         aws.Int64(int64(i.Number)),
@@ -295,11 +307,11 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 		}
 		totalInstances += i.Number
 
-	case Spot:
+	case spot:
 		tagValue := fmt.Sprintf("%s-%s-spot-%s", reg.Code, *tag, now)
 
 		input = ec2.RunInstancesInput{
-			ImageId:      aws.String(amiId),
+			ImageId:      aws.String(amiID),
 			InstanceType: aws.String(i.Type),
 
 			InstanceMarketOptions: &ec2.InstanceMarketOptionsRequest{
@@ -337,7 +349,7 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 	return &input, nil
 }
 
-func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) error {
+func launchInstances(i *InstanceConfig, regs *AWSRegions, instType instType) error {
 	defer wg.Done()
 
 	reg, err := findRegion(regs, i.RegionName)
@@ -383,16 +395,16 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 		},
 	}
 
-	messages <- fmt.Sprintf("%v/%s: sleeping for %d seconds ...", reg.Name, instType, WAIT_COUNT)
-	time.Sleep(WAIT_COUNT * time.Second)
+	messages <- fmt.Sprintf("%v/%s: sleeping for %d seconds before get IP ...", reg.Name, instType, waitCountSeconds)
+	time.Sleep(waitCountSeconds * time.Second)
 
 	num := 0
 
 	/* wait to get all the public IP address */
 	/* wait until mininum number of instance */
 
-	wait_start := time.Now()
-	for duration := 0; num < int(*input.MaxCount) && duration < WAIT_RUNNING; duration = int(time.Since(wait_start).Seconds()) {
+	waitStart := time.Now()
+	for duration := 0; num < int(*input.MaxCount) && duration < waitRunning; duration = int(time.Since(waitStart).Seconds()) {
 		result, err := svc.DescribeInstances(instanceInput)
 
 		if err != nil {
@@ -411,7 +423,7 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType InstType) err
 					if _, ok := myInstances.Load(*inst.PublicIpAddress); !ok {
 						for _, t := range inst.Tags {
 							if *t.Key == "Name" {
-								myInstancesId.Store(*inst.InstanceId, *t.Value)
+								myInstancesID.Store(*inst.InstanceId, *t.Value)
 								myInstances.Store(*inst.PublicIpAddress, *t.Value)
 								break
 							}
@@ -461,7 +473,7 @@ func saveOutput() {
 		}
 		return true
 	})
-	myInstancesId.Range(func(k, v interface{}) bool {
+	myInstancesID.Range(func(k, v interface{}) bool {
 		_, err := f.Write([]byte(fmt.Sprintf("%v %v\n", k, v)))
 		if err != nil {
 			fmt.Printf("Write to file error %v", err)
@@ -523,17 +535,17 @@ func main() {
 				AmiName:    "default",
 			}
 			wg.Add(1)
-			go launchInstances(&rc, regions, OnDemand)
+			go launchInstances(&rc, regions, onDemand)
 		}
 	} else {
 		for _, r := range launches.RegionInstances {
 			if r.Number > 0 {
 				wg.Add(1)
-				go launchInstances(r, regions, OnDemand)
+				go launchInstances(r, regions, onDemand)
 			}
 			if r.Spot > 0 {
 				wg.Add(1)
-				go launchInstances(r, regions, Spot)
+				go launchInstances(r, regions, spot)
 			}
 		}
 	}

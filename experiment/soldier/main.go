@@ -53,7 +53,6 @@ type sessionInfo struct {
 	id                  string
 	commanderIP         string
 	commanderPort       string
-	localConfigFileName string
 	logFolder           string
 	txgenAdditionalArgs []string
 	nodeAdditionalArgs  []string
@@ -68,7 +67,6 @@ var (
 	setting       soliderSetting
 	globalSession sessionInfo
 	txgenArgs     = []string{
-		"-config_file",
 		"-max_num_txs_per_batch",
 		"-log_folder",
 		"-numSubset",
@@ -106,17 +104,14 @@ func runNode() error {
 	args :=
 		append([]string{"-ip", setting.ip, "-port", setting.port, "-log_folder", globalSession.logFolder}, globalSession.nodeAdditionalArgs...)
 
-	if len(globalSession.localConfigFileName) > 0 {
-		args = append(args, "-config_file", globalSession.localConfigFileName)
-	}
-
 	return utils.RunCmd("./benchmark", args...)
 }
 
 func runClient() error {
 	log.Println("running client")
 	args :=
-		append([]string{"-config_file", globalSession.localConfigFileName, "-log_folder", globalSession.logFolder}, globalSession.txgenAdditionalArgs...)
+		append([]string{"-ip", setting.ip, "-port", setting.port, "-log_folder", globalSession.logFolder}, globalSession.txgenAdditionalArgs...)
+
 	return utils.RunCmd("./txgen", args...)
 }
 
