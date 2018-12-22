@@ -33,7 +33,6 @@ OPTIONS:
    -C cross_ratio    enable cross_shard_ratio (default ratio: $CROSSTX)
    -B beacon IP      IP address of beacon chain (default: $BEACONIP)
    -b beacon port    port number of beacon chain (default: $BEACONPORT)
-   -P                enable peer discovery mode (default: $PEER)
    -m minpeer        minimum number of peers required to start consensus (default: $MINPEER)
 
 ACTIONS:
@@ -117,10 +116,6 @@ EOT
       init)
       benchmarkArgs="-attacked_mode $ATTACK -bc $BEACONIP -bc_port $BEACONPORT -min_peers $MINPEER"
       txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX -bc $BEACONIP -bc_port $BEACONPORT"
-      if [ -n "$PEER" ]; then
-         benchmarkArgs+=" $PEER"
-         txgenArgs+=" $PEER"
-      fi
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
       fi
@@ -244,14 +239,13 @@ CROSSTX=30
 BEACONIP=54.183.5.66
 BEACONPORT=9999
 MINPEER=10
-PEER=
 
 declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:vD:A:C:B:b:m:P:" option; do
+while getopts "hp:f:i:a:n:vD:A:C:B:b:m:" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -269,7 +263,6 @@ while getopts "hp:f:i:a:n:vD:A:C:B:b:m:P:" option; do
       B) BEACONIP=$OPTARG ;;
       b) BEACONPORT=$OPTARG ;;
       m) MINPEER=$OPTARG ;;
-      P) PEER=$OPTARG ;;
       h|?) usage ;;
    esac
 done

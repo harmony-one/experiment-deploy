@@ -17,7 +17,6 @@ This script automates the benchmark test based on profile.
                   supported profiles (${PROFILES[@]})
    -v             verbose output
    -k             keep all the instances, skip deinit (default: $KEEP)
-   -e true/false  enable peer discovery configuration (default: $PEER)
 
 [ACTIONS]
    launch         do launch only
@@ -181,14 +180,6 @@ function do_run
    RUN_OPTS+=" -b ${configs[beacon.port]}"
    RUN_OPTS+=" -m ${configs[benchmark.minpeer]}"
 
-# no need to do config for peer discovery mode
-   if [ "$PEER" == "false" ]; then
-      ./run_benchmark.sh -n ${configs[parallel]} -p $PROFILE config
-      sleep 3
-   else
-      RUN_OPTS+=" -P -peer_discovery"
-   fi
-
    [ $VERBOSE ] && RUN_OPTS+=" -v"
 
    ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} -p $PROFILE init
@@ -206,7 +197,7 @@ function do_run
       aws s3 cp s3://$BUCKET/$FOLDER/txgen txgen
       chmod +x txgen
       echo "running txgen"
-      ./txgen -bc ${configs[beacon.server]} -bc_port ${configs[beacon.port]} -ip $MYIP -port ${configs[txgen.port]} -peer_discovery -log_folder logs/${TS} -duration ${configs[benchmark.duration]} > logs/${TS}/txgen-${TS}.log 2>&1 &
+      ./txgen -bc ${configs[beacon.server]} -bc_port ${configs[beacon.port]} -ip $MYIP -port ${configs[txgen.port]} -log_folder logs/${TS} -duration ${configs[benchmark.duration]} > logs/${TS}/txgen-${TS}.log 2>&1 &
    fi
 
    echo sleeping ${configs[benchmark.duration]} ...
@@ -341,13 +332,12 @@ USERDATA=$CONFIG_DIR/userdata-soldier-http.sh
 VERBOSE=
 THEPWD=$(pwd)
 KEEP=false
-PEER=true
 TAG=${WHOAMI:-USER}
 JQ='jq -M -r'
 
 declare -A configs
 
-while getopts "hp:vke:" option; do
+while getopts "hp:vk" option; do
    case $option in
       h) usage ;;
       p)
@@ -358,7 +348,6 @@ while getopts "hp:vke:" option; do
          ;;
       v) VERBOSE=1 ;;
       k) KEEP=true ;;
-      e) PEER=$OPTARG ;;
    esac
 done
 
