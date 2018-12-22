@@ -27,7 +27,7 @@
   "benchmark": {
     "shards": 3,
     "duration": 600,
-    "dashboard": false,
+    "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
     "minpeer": 30
@@ -39,14 +39,14 @@
     "soldier": true
   },
   "dashboard": {
-    "server": "54.213.59.51",
+    "server": "0.harmony.one",
     "port": 3000,
-    "reset": "false"
+    "reset": "true"
   },
   "explorer": {
-    "server": "54.213.59.51",
+    "server": "0.harmony.one",
     "port": 4000,
-    "reset": "false"
+    "reset": "true"
   },
   "txgen": {
      "enable": "true",
