@@ -51,4 +51,4 @@ fuser -k -n tcp $SOLDIER_PORT
 fuser -k -n tcp $NODE_PORT
 
 # Run soldier
-./soldier -ip $PUB_IP -port $NODE_PORT -http > soldier-${PUB_IP}.log 2>&1 &
+./soldier -ip $PUB_IP -port $NODE_PORT > soldier-${PUB_IP}.log 2>&1 &
