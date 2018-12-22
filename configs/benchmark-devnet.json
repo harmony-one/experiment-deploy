@@ -48,6 +48,11 @@
     "port": 4000,
     "reset": "true"
   },
+  "txgen": {
+     "enable": "false",
+     "ip": "myip",
+     "port": 8000
+  },
   "parallel": 110,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
