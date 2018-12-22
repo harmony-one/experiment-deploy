@@ -28,11 +28,10 @@ import (
 
 	"github.com/harmony-one/experiment-deploy/experiment/soldier/s3"
 	"github.com/harmony-one/experiment-deploy/experiment/utils"
-	globalUtils "github.com/harmony-one/harmony/utils"
 )
 
 type initReq struct {
-	Ip            string `json:"ip"`
+	IP            string `json:"ip"`
 	Port          string `json:"port"`
 	SessionID     string `json:"sessionId"`
 	BenchmarkArgs string `json:"benchmarkArgs"`
@@ -69,8 +68,8 @@ type sessionInfo struct {
 	commanderPort       string
 	localConfigFileName string
 	logFolder           string
-	config              *globalUtils.DistributionConfig
-	myConfig            globalUtils.ConfigEntry
+	config              *utils.DistributionConfig
+	myConfig            utils.ConfigEntry
 	txgenAdditionalArgs []string
 	nodeAdditionalArgs  []string
 }
@@ -214,7 +213,7 @@ func handleInitCommand(args []string, w *bufio.Writer) {
 	globalSession.id = sessionID
 	globalSession.logFolder = fmt.Sprintf("%slog-%v", logFolderPrefix, sessionID)
 
-	globalSession.config = globalUtils.NewDistributionConfig()
+	globalSession.config = utils.NewDistributionConfig()
 
 	// create local config file
 	globalSession.localConfigFileName = fmt.Sprintf("node_config_%v_%v.txt", setting.port, globalSession.id)
@@ -420,6 +419,7 @@ func runClient() error {
 	return utils.RunCmd("./txgen", args...)
 }
 
+// Index ...
 func Index(vs []string, t string) int {
 	for i, v := range vs {
 		if v == t {
@@ -429,6 +429,7 @@ func Index(vs []string, t string) int {
 	return -1
 }
 
+// Include ...
 func Include(vs []string, t string) bool {
 	return Index(vs, t) >= 0
 }
@@ -556,7 +557,7 @@ func configHandler(w http.ResponseWriter, r *http.Request) {
 
 	globalSession.id = config.SessionID
 	globalSession.logFolder = fmt.Sprintf("%slog-%v", logFolderPrefix, config.SessionID)
-	globalSession.config = globalUtils.NewDistributionConfig()
+	globalSession.config = utils.NewDistributionConfig()
 
 	// create local config file
 	globalSession.localConfigFileName = fmt.Sprintf("node_config_%v_%v.txt", setting.port, globalSession.id)

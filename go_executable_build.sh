@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# this script is used to generate the binary of commander/soldier
+# this script is used to generate the binary of soldier
 # TODO: add error and parameter checking
 
 declare -A SRC
-SRC[commander]=experiment/commander/main.go
 SRC[soldier]=experiment/soldier/main.go
 SRC[instance]=aws/instance/instance.go
 
@@ -19,7 +18,7 @@ else
    MD5=md5sum
 fi
 
-SCRIPTS=( aws/kill_node.sh aws/go-commander.sh configs/userdata-soldier.sh $BINDIR/md5sum-cs.txt )
+SCRIPTS=( aws/kill_node.sh configs/userdata-soldier.sh $BINDIR/md5sum-cs.txt )
 
 function usage
 {
