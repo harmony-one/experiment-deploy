@@ -1,0 +1,61 @@
+{
+  "description": "aws 25 nodes on 1 shard",
+  "client": {
+    "num_vm": 0,
+    "type": "t3.micro",
+    "regions": "sfo"
+  },
+  "leader": {
+    "num_vm": 1,
+    "type": "t3.medium",
+    "regions": "sfo"
+  },
+  "beacon": {
+     "server": "jenkins.harmony.one",
+     "port": 9997,
+     "user": "ec2-user",
+     "key": "california-key-benchmark.pem"
+  },
+  "azure": {
+    "num_vm": 0,
+    "regions": [
+      "eastus",
+      "westeurope",
+      "southeastasia"
+    ]
+  },
+  "benchmark": {
+    "shards": 1,
+    "duration": 120,
+    "dashboard": true,
+    "crosstx": 30,
+    "attacked_mode": 0,
+    "minpeer": 8
+  },
+  "logs": {
+    "leader": true,
+    "client": true,
+    "validator": true,
+    "soldier": true
+  },
+  "dashboard": {
+    "server": "0.harmony.one",
+    "port": 3000,
+    "reset": "true"
+  },
+  "explorer": {
+    "server": "0.harmony.one",
+    "port": 4000,
+    "reset": "true"
+  },
+  "txgen": {
+     "enable": "false",
+     "ip": "myip",
+     "port": 8000
+  },
+  "parallel": 10,
+  "userdata": "userdata-soldier-http.sh",
+  "flow": {
+     "wait_for_launch": 30
+  }
+}
