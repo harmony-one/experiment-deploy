@@ -9,6 +9,7 @@ COUNT=100
 NUM=100
 SECOND=1
 ACCOUNTS=accounts.txt
+SHARDS=2
 WALLET_URL=https://s3-us-west-1.amazonaws.com/pub.harmony.one
 
 function usage
@@ -27,6 +28,7 @@ This script generate beat transaction based on profile.
    -f address     the From address of the transaction
    -c count       run count number of times (default: $COUNT)
    -n number      new number of account (default: $NUM)
+   -s shards      number of shards (default: $SHARDS)
 
 [ACTIONS]
    download       download the latest wallet from devnet
@@ -96,10 +98,12 @@ function do_beat
    local i=0
    while [ $i -lt $COUNT ]; do
       while read acc; do
-         ${WALLET} transfer --from $acc --to $ACC --amount 0.1 --shardID 0
-         sleep $SECOND
-         ${WALLET} transfer --from $acc --to $ACC --amount 0.1 --shardID 1
-         sleep $SECOND
+         local s=0
+         while [ $s -lt $SHARDS ]; do
+            ${WALLET} transfer --from $acc --to $ACC --amount 0.001 --shardID $s
+            sleep $SECOND
+            ((s++))
+         done
       done < $ACCOUNTS
       ((i++))
    done
@@ -132,7 +136,7 @@ VERBOSE=
 THEPWD=$(pwd)
 JQ='jq -r -M'
 
-while getopts "hp:vi:t:f:c:n:" option; do
+while getopts "hp:vi:t:f:c:n:s:" option; do
    case $option in
       h) usage ;;
       p) PROFILE=$OPTARG ;;
@@ -142,6 +146,7 @@ while getopts "hp:vi:t:f:c:n:" option; do
       f) FROM=$OPTARG ;;
       c) COUNT=$OPTARG ;;
       n) NUM=$OPTARG ;;
+      s) SHARDS=$OPTARG ;;
    esac
 done
 
