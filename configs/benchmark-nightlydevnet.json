@@ -12,7 +12,7 @@
   },
   "beacon": {
      "server": "jenkins.harmony.one",
-     "port": 9997,
+     "port": 9998,
      "user": "ec2-user",
      "key": "california-key-benchmark.pem"
   },
@@ -27,7 +27,7 @@
   "benchmark": {
     "shards": 3,
     "duration": 600,
-    "dashboard": true,
+    "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
     "minpeer": 30
@@ -41,12 +41,12 @@
   "dashboard": {
     "server": "0.harmony.one",
     "port": 3000,
-    "reset": "true"
+    "reset": "false"
   },
   "explorer": {
     "server": "0.harmony.one",
     "port": 4000,
-    "reset": "true"
+    "reset": "false"
   },
   "txgen": {
      "enable": "true",
