@@ -2,13 +2,15 @@
 
 # set -x
 
+declare -A ACCOUNTS
+
 ACC=0xF6b57E6aaCb28abD5Bdf2ffe6f684be3DB8A6630
 KEY=a2466bae151cd504199b9d8ec98056884082f4c4ebce79434497c5dcff5013b6
 WALLET=./wallet
-COUNT=100
+COUNT=10000
 NUM=100
 SECOND=1
-ACCOUNTS=accounts.txt
+ACCOUNT_FILE=accounts.txt
 SHARDS=2
 WALLET_URL=https://s3-us-west-1.amazonaws.com/pub.harmony.one
 
@@ -34,8 +36,8 @@ This script generate beat transaction based on profile.
    download       download the latest wallet from devnet
    reset          remove all local accounts
    beat           do beat transaction only
-   new            create new accounts in $ACCOUNTS file
-   request        request free tokens for each account in $ACCOUNTS file
+   new            create new accounts in $ACCOUNT_FILE file
+   request        request free tokens for each account in $ACCOUNT_FILE file
    all            do reset, new account, request token, and beat (default)
 
 
@@ -77,10 +79,9 @@ function do_new_account
    local i=0
    while [ $i -lt $NUM ]; do
       new_acc=$(${WALLET} new | grep -o {0x.*} | tr -d {})
-      echo $new_acc >> $ACCOUNTS
+      echo $new_acc >> $ACCOUNT_FILE
       ((i++))
       echo new account $i: $new_acc
-      sleep $SECOND
    done
 }
 
@@ -90,21 +91,36 @@ function do_request_token
       ${WALLET} getFreeToken --address $acc
       sleep $SECOND
       echo get token $acc
-   done < $ACCOUNTS
+   done < $ACCOUNT_FILE
+}
+
+function _do_get_accounts
+{
+   local i=0
+   while read acc; do
+      ACCOUNTS[$i]=$acc
+      ((i++))
+   done < $ACCOUNT_FILE
+
+   NUM_ACCOUNTS=$i
 }
 
 function do_beat
 {
+   _do_get_accounts
+
    local i=0
    while [ $i -lt $COUNT ]; do
-      while read acc; do
-         local s=0
-         while [ $s -lt $SHARDS ]; do
-            ${WALLET} transfer --from $acc --to $ACC --amount 0.001 --shardID $s
-            sleep $SECOND
-            ((s++))
-         done
-      done < $ACCOUNTS
+      from=${ACCOUNTS[$(expr $RANDOM % $NUM_ACCOUNTS)]}
+      to=${ACCOUNTS[$(expr $RANDOM % $NUM_ACCOUNTS)]}
+
+      local s=0
+      while [ $s -lt $SHARDS ]; do
+         echo transfering from $from to $to on shard $s
+         ${WALLET} transfer --from $from --to $to --amount 0.001 --shardID $s
+         sleep $SECOND
+         ((s++))
+      done
       ((i++))
    done
 }
@@ -112,7 +128,7 @@ function do_beat
 function do_reset
 {
    ${WALLET} removeAll
-   rm -f $ACCOUNTS
+   rm -f $ACCOUNT_FILE
 
    # import a new account
    ${WALLET} import --privateKey $KEY
