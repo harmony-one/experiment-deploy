@@ -23,6 +23,7 @@ OPTIONS:
    -u user        set the user name to login to nodes (default: $UNAME)
    -p parallel    parallelize num of jobs (default: $PARALLEL)
    -g group       set group name (leader, validator, client, all)
+   -D filename    specify the distribution configuration file (default: $DC)
 
 NODES:
    benchmark      download benchmark logs
@@ -149,11 +150,12 @@ function run_cmd
 
 PARALLEL=100
 
-while getopts "hs:p:g:" option; do
+while getopts "hs:p:g:D:" option; do
    case $option in
       s) SESSION=$OPTARG ;;
       p) PARALLEL=$OPTARG ;;
       g) NODE=$OPTARG ;;
+      D) DC=$OPTARG ;;
       h|?) usage ;;
    esac
 done

@@ -208,18 +208,18 @@ function download_logs
 
    logging download logs ...
    if [ "${configs[logs.leader]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g leader benchmark
+      ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt benchmark
    fi
    if [ "${configs[logs.client]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g client benchmark
+      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/distribution_config.txt benchmark
    fi
    if [ "${configs[logs.validator]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g validator benchmark
+      ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt benchmark
    fi
    if [ "${configs[logs.soldier]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g leader soldier &
-      ./dl-soldier-logs.sh -s $TS -g client soldier &
-      ./dl-soldier-logs.sh -s $TS -g validator soldier &
+      ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt soldier &
+      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/distribution_config.txt soldier &
+      ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt soldier &
    fi
    wait
    expense download
@@ -243,6 +243,7 @@ function do_sync_logs
 {
    wait
    aws s3 sync logs/$TS s3://harmony-benchmark/logs/$TS 2>&1 > /dev/null
+   echo s3://harmony-benchmark/logs/$TS
 }
 
 function do_deinit
@@ -287,12 +288,12 @@ function do_reset
    if [ "${configs[dashboard.reset]}" == "true" ]; then
       echo "resetting dashboard ..."
       echo curl -X POST https://${configs[dashboard.server]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
-      curl -X POST https://${configs[dashboard.server]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
+      curl -X POST https://${configs[dashboard.server]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d '{"secret":"426669"}'
    fi
    if [ "${configs[explorer.reset]}" == "true" ]; then
       echo "resetting explorer ..."
       echo curl -X POST https://${configs[explorer.server]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
-      curl -X POST https://${configs[explorer.server]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
+      curl -X POST https://${configs[explorer.server]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d '{"secret":"426669"}'
    fi
 }
 
@@ -300,8 +301,8 @@ function do_all
 {
    do_launch_beacon
    do_launch
-   do_reset
    do_run
+   do_reset
    download_logs
    analyze_logs
    do_sync_logs
