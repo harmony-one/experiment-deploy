@@ -1,7 +1,7 @@
 {
   "description": "aws 150 nodes on 3 shards, for devnet nightly test",
   "client": {
-    "num_vm": 0,
+    "num_vm": 1,
     "type": "r5.large",
     "regions": "iad"
   },
