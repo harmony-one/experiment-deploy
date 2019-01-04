@@ -1,7 +1,7 @@
 {
   "description": "aws 25 nodes on 1 shard",
   "client": {
-    "num_vm": 0,
+    "num_vm": 1,
     "type": "t3.micro",
     "regions": "sfo"
   },
@@ -26,7 +26,7 @@
   },
   "benchmark": {
     "shards": 1,
-    "duration": 120,
+    "duration": 300,
     "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
@@ -49,7 +49,7 @@
     "reset": "true"
   },
   "txgen": {
-     "enable": "false",
+     "enable": "true",
      "ip": "myip",
      "port": 8000
   },
