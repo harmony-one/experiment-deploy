@@ -190,6 +190,24 @@ EOT
    failed=$(( $NUM_NODES - $succeeded ))
 
    echo $(date): $cmd succeeded/$succeeded, failed/$failed nodes, $(($duration / 60)) minutes and $(($duration % 60)) seconds
+
+   if [ $failed -gt 0 ]; then
+      echo "==== failed nodes ===="
+      find $LOGDIR/$cmd -size 0 -print | tee $LOGDIR/$cmd/failed.ips
+      echo "==== retrying ===="
+      IPs=$(cat $LOGDIR/$cmd/failed.ips | sed "s/$cmd.\(.*\).log/\1")
+      for ip in $IPs; do
+         CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
+
+         case $cmd in
+            init|update)
+               CMD+=$" -d@$LOGDIR/$cmd/$cmd.json" ;;
+         esac
+
+         [ -n "$VERBOSE" ] && echo $n =\> $CMD
+         $TIMEOUT -s SIGINT 20s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
+      done
+   fi
 }
 
 function do_update
