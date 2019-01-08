@@ -114,7 +114,8 @@ function do_launch
 
    if [ ${configs[client.num_vm]} -gt 0 ]; then
       ip=$(cat raw_ip-client.txt | awk '{ print $1 }')
-      echo "$ip 9000 client" > client.config.txt
+      region_code=$($JQ ".regions[] | select (.name | contains(\"${configs[client.regions]}\")) | .code" $CONFIG_DIR/aws.json)
+      echo "$ip 9000 client 0 $region_code-$USERID" > client.config.txt
       rm instance_ids_output-client.txt instance_output-client.txt raw_ip-client.txt &
    fi
 
@@ -186,6 +187,7 @@ function do_run
       if [ ${configs[client.num_vm]} -gt 0 ]; then
          echo "running txgen on $(cat client.config.txt)"
          ./run_benchmark.sh -n 1 ${RUN_OPTS} -p $PROFILE -f client.config.txt -c init
+         cp client.config.txt logs/$TS
          rm -f client.config.txt
       fi
    fi
@@ -211,14 +213,14 @@ function download_logs
       ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt benchmark
    fi
    if [ "${configs[logs.client]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/distribution_config.txt benchmark
+      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/client.config.txt benchmark
    fi
    if [ "${configs[logs.validator]}" == "true" ]; then
       ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt benchmark
    fi
    if [ "${configs[logs.soldier]}" == "true" ]; then
       ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt soldier &
-      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/distribution_config.txt soldier &
+      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/client.config.txt soldier &
       ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt soldier &
    fi
    wait
