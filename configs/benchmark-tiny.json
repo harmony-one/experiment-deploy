@@ -11,7 +11,7 @@
     "regions": "sfo"
   },
   "beacon": {
-     "server": "jenkins.harmony.one",
+     "server": "54.183.5.66",
      "port": 9997,
      "user": "ec2-user",
      "key": "california-key-benchmark.pem"
