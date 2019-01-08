@@ -209,6 +209,8 @@ function download_logs
    fi
 
    logging download logs ...
+   ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt version
+
    if [ "${configs[logs.leader]}" == "true" ]; then
       ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt benchmark
    fi

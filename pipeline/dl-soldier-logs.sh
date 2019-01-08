@@ -129,10 +129,10 @@ function run_cmd
       for i in $(seq $start $end); do
          r=${REGION[$i]}
          if [ "$r" == "node" ]; then
-            ${SSH} ${UNAME}@${IP[$i]} "$CMD" 2> /dev/null | tee $logdir/${IP[$i]}.log &
+            ${SSH} ${UNAME}@${IP[$i]} "$CMD" 2>&1 | tee $logdir/${IP[$i]}.log &
          else
             key=$(${GREP} ^$r ${CFG} | cut -f 3 -d ,)
-            ${SSH} -i $DIR/../keys/$key.pem ${UNAME}@${IP[$i]} "$CMD" 2> /dev/null | tee $logdir/${IP[$i]}.log &
+            ${SSH} -i $DIR/../keys/$key.pem ${UNAME}@${IP[$i]} "$CMD" 2>&1 | tee $logdir/${IP[$i]}.log &
          fi
          (( count++ ))
       done
