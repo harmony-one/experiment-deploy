@@ -213,8 +213,10 @@ function download_logs
 
    if [ "${configs[logs.leader]}" == "true" ]; then
       ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt benchmark
+      ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt soldier
    fi
-   if [ "${configs[logs.client]}" == "true" ]; then
+   if [[ "${configs[logs.client]}" == "true" && ${configs[client.num_vm]} -gt 0 ]]; then
+      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/client.config.txt soldier
       ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/client.config.txt benchmark
    fi
    if [ "${configs[logs.validator]}" == "true" ]; then
@@ -222,8 +224,6 @@ function download_logs
    fi
    if [ "${configs[logs.soldier]}" == "true" ]; then
       ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt soldier &
-      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/client.config.txt soldier &
-      ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt soldier &
    fi
    wait
    expense download
