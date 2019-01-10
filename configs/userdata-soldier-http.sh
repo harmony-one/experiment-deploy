@@ -6,7 +6,7 @@ cd /home/ec2-user
 BUCKET=unique-bucket-bin
 FOLDER=leo/
 
-TESTBIN=( txgen soldier benchmark commander go-commander.sh )
+TESTBIN=( txgen soldier harmony commander go-commander.sh )
 
 for bin in "${TESTBIN[@]}"; do
    curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}

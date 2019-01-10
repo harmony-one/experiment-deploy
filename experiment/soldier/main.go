@@ -104,7 +104,7 @@ func runNode() error {
 	args :=
 		append([]string{"-ip", setting.ip, "-port", setting.port, "-log_folder", globalSession.logFolder}, globalSession.nodeAdditionalArgs...)
 
-	return utils.RunCmd("./benchmark", args...)
+	return utils.RunCmd("./harmony", args...)
 }
 
 func runClient() error {
