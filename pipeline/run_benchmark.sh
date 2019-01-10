@@ -159,6 +159,9 @@ EOT
       $TIMEOUT -s SIGINT 20s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log
    done
 
+# wait for leaders up at first
+   sleep 5
+
    while [ $end -lt $NUM_NODES ]; do
       start=$(( $PARALLEL * $group + $num_leader + 1))
       end=$(( $PARALLEL + $start - 1 ))
