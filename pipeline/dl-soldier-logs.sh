@@ -110,7 +110,7 @@ function run_cmd
 
    case $cmd in
       version)
-         CMD='/home/ec2-user/benchmark -version'
+         CMD='/home/ec2-user/harmony -version'
          ;;
    esac
 
