@@ -198,7 +198,7 @@ EOT
       echo "==== failed nodes ===="
       find $LOGDIR/$cmd -size 0 -print | tee $LOGDIR/$cmd/failed.ips
       echo "==== retrying ===="
-      IPs=$(cat $LOGDIR/$cmd/failed.ips | sed "s/$cmd.\(.*\).log/\1")
+      IPs=$(cat $LOGDIR/$cmd/failed.ips | sed "s/$cmd.\(.*\).log/\1/")
       for ip in $IPs; do
          CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
 
