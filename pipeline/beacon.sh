@@ -61,7 +61,7 @@ function _do_kill
 
 function _do_launch
 {
-   local cmd="pushd $WORKDIR; nohup sudo ./beacon -ip 0.0.0.0 -port $PORT -numShards $SHARD"
+   local cmd="pushd $WORKDIR; nohup sudo ./beacon -ip 54.183.5.66 -port $PORT -numShards $SHARD"
    $DRYRUN ${SSH} ec2-user@${JENKINS} "$cmd > run-beacon.log 2>&1 &"
    echo "beacon node started, sleeping for 5s ..."
    sleep 5
