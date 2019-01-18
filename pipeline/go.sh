@@ -170,10 +170,16 @@ function do_run
       RUN_OPTS+=" -D ${configs[dashboard.server]}:${configs[dashboard.port]}"
    fi
 
+   BC_MA=$(cat bc-ma.txt)
+   if [ -n "$BC_MA" ]; then
+      RUN_OPTS+=" -M $BC_MA"
+   else
+      RUN_OPTS+=" -B ${configs[beacon.server]}"
+      RUN_OPTS+=" -b ${configs[beacon.port]}"
+   fi
+
    RUN_OPTS+=" -C ${configs[benchmark.crosstx]}"
    RUN_OPTS+=" -A ${configs[benchmark.attacked_mode]}"
-   RUN_OPTS+=" -B ${configs[beacon.server]}"
-   RUN_OPTS+=" -b ${configs[beacon.port]}"
    RUN_OPTS+=" -m ${configs[benchmark.minpeer]}"
 
    [ $VERBOSE ] && RUN_OPTS+=" -v"
@@ -182,6 +188,9 @@ function do_run
 
    [ ! -e $CONFIG_FILE ] && errexit "can't find profile config file : $CONFIG_FILE"
    TS=$(cat $CONFIG_FILE | $JQ .sessionID)
+
+   # save the beacon chain multiaddress
+   cp -f bc-ma.txt logs/$TS
 
    if [ "${configs[txgen.enable]}" == "true" ]; then
       if [ ${configs[client.num_vm]} -gt 0 ]; then
