@@ -10,6 +10,7 @@ set -euo pipefail
 ME=`basename $0`
 NOW=$(date +%Y%m%d.%H%M%S)
 SSH='/usr/bin/ssh -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/california-key-benchmark.pem'
+SCP='/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/california-key-benchmark.pem'
 JENKINS=jenkins.harmony.one
 
 function usage
@@ -62,7 +63,15 @@ function _do_launch
 {
    local cmd="pushd $WORKDIR; nohup sudo ./beacon -ip 0.0.0.0 -port $PORT -numShards $SHARD"
    $DRYRUN ${SSH} ec2-user@${JENKINS} "$cmd > run-beacon.log 2>&1 &"
-   echo "beacon node started"
+   echo "beacon node started, sleeping for 5s ..."
+   sleep 5
+}
+
+function _do_get_multiaddr
+{
+   local cmd="pushd $WORKDIR >/dev/null; grep 'Beacon Chain Started' run-beacon.log | awk -F: ' { print \$2 } ' | tr '\n' ' ' | tr -d ' ' "
+   MA=$($DRYRUN ${SSH} ec2-user@${JENKINS} $cmd)
+   echo $MA | tee bc-ma.txt
 }
 
 function _do_all
@@ -70,6 +79,7 @@ function _do_all
    _do_download
    _do_kill
    _do_launch
+   _do_get_multiaddr
 }
 
 #####################################################################
