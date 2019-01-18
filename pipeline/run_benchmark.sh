@@ -33,6 +33,7 @@ OPTIONS:
    -C cross_ratio    enable cross_shard_ratio (default ratio: $CROSSTX)
    -B beacon IP      IP address of beacon chain (default: $BEACONIP)
    -b beacon port    port number of beacon chain (default: $BEACONPORT)
+   -M multiaddr      the multiaddress of the beacon chain (default: $BEACONMA)
    -m minpeer        minimum number of peers required to start consensus (default: $MINPEER)
    -c                invoke client node (default: $CLIENT)
 
@@ -104,12 +105,17 @@ function do_simple_cmd
 
    mkdir -p $LOGDIR/$cmd
 
+   if [ -n "$BEACONMA" ]; then
+      BEACON="-bc_addr $BEACONMA"
+   else
+      BEACON="-bc $BEACONIP -bc_port $BEACONPORT"
+   fi
    end=0
    group=0
    case $cmd in
       init)
-      benchmarkArgs="-attacked_mode $ATTACK -bc $BEACONIP -bc_port $BEACONPORT -min_peers $MINPEER"
-      txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX -bc $BEACONIP -bc_port $BEACONPORT"
+      benchmarkArgs="-attacked_mode $ATTACK $BEACON -min_peers $MINPEER"
+      txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BEACON"
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
       fi
@@ -257,6 +263,7 @@ ATTACK=2
 CROSSTX=30
 BEACONIP=54.183.5.66
 BEACONPORT=9999
+BEACONMA=
 MINPEER=10
 CLIENT=
 
@@ -265,7 +272,7 @@ declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:vD:A:C:B:b:m:c" option; do
+while getopts "hp:f:i:a:n:vD:A:C:B:b:m:cM:" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -284,6 +291,7 @@ while getopts "hp:f:i:a:n:vD:A:C:B:b:m:c" option; do
       b) BEACONPORT=$OPTARG ;;
       m) MINPEER=$OPTARG ;;
       c) CLIENT=true ;;
+      M) BEACONMA=$OPTARG ;;
       h|?) usage ;;
    esac
 done
