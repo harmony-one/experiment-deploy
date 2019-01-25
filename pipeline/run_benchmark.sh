@@ -202,7 +202,7 @@ EOT
 
    if [ $failed -gt 0 ]; then
       echo "==== failed nodes ===="
-      find $LOGDIR/$cmd -size 0 -print | tee $LOGDIR/$cmd/failed.ips
+      find $LOGDIR/$cmd -size 0 -print | xargs basename | tee $LOGDIR/$cmd/failed.ips
       echo "==== retrying ===="
       IPs=$(cat $LOGDIR/$cmd/failed.ips | sed "s/$cmd.\(.*\).log/\1/")
       for ip in $IPs; do
