@@ -40,10 +40,21 @@ EOF
 
 function _do_download
 {
-   local URL="https://$BUCKET.s3.amazonaws.com/$FOLDER/beacon"
+   FILES=( beacon libbls384.so libmcl.so )
+	FN=go-beacon-$PORT.sh
+
+   echo "#!/bin/bash" > $FN
+   for file in "${FILES[@]}"; do
+      echo "curl -O https://$BUCKET.s3.amazonaws.com/$FOLDER/$file" >> $FN
+   done
+   echo "chmod +x beacon" >> $FN
+   echo "LD_LIBRARY_PATH=. ./beacon -version" >> $FN
+	chmod +x $FN
 
    echo ${SSH} ec2-user@${JENKINS}
-   $DRYRUN ${SSH} ec2-user@${JENKINS} "mkdir -p $WORKDIR; pushd $WORKDIR; curl -O $URL; chmod +x beacon; ./beacon -version"
+   $DRYRUN ${SSH} ec2-user@${JENKINS} "mkdir -p $WORKDIR; pushd $WORKDIR"
+   $DRYRUN ${SCP} $FN ec2-user@${JENKINS}:$WORKDIR
+   $DRYRUN ${SSH} ec2-user@${JENKINS} "pushd $WORKDIR; ./$FN"
    echo "beacon workdir: $WORKDIR"
 }
 
@@ -61,7 +72,7 @@ function _do_kill
 
 function _do_launch
 {
-   local cmd="pushd $WORKDIR; nohup sudo ./beacon -ip 54.183.5.66 -port $PORT -numShards $SHARD"
+   local cmd="pushd $WORKDIR; nohup sudo LD_LIBRARY_PATH=. ./beacon -ip 54.183.5.66 -port $PORT -numShards $SHARD"
    $DRYRUN ${SSH} ec2-user@${JENKINS} "$cmd > run-beacon.log 2>&1 &"
    echo "beacon node started, sleeping for 5s ..."
    sleep 5
