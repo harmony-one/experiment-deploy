@@ -84,10 +84,10 @@ func printVersion(me string) {
 func killPort(port string) error {
 	if runtime.GOOS == "windows" {
 		command := fmt.Sprintf("(Get-NetTCPConnection -LocalPort %s).OwningProcess -Force", port)
-		return utils.RunCmd("Stop-Process", "-Id", command)
+		return utils.RunCmd(nil, "Stop-Process", "-Id", command)
 	}
 	command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", port)
-	return utils.RunCmd("/bin/bash", "-c", command)
+	return utils.RunCmd(nil, "/bin/bash", "-c", command)
 }
 
 func runInstance(role string) error {
@@ -104,7 +104,7 @@ func runNode() error {
 	args :=
 		append([]string{"-ip", setting.ip, "-port", setting.port, "-log_folder", globalSession.logFolder}, globalSession.nodeAdditionalArgs...)
 
-	return utils.RunCmd("./harmony", args...)
+	return utils.RunCmd([]string{"LD_LIBRARY_PATH=."}, "./harmony", args...)
 }
 
 func runClient() error {
@@ -112,7 +112,7 @@ func runClient() error {
 	args :=
 		append([]string{"-ip", setting.ip, "-port", setting.port, "-log_folder", globalSession.logFolder}, globalSession.txgenAdditionalArgs...)
 
-	return utils.RunCmd("./txgen", args...)
+	return utils.RunCmd([]string{"LD_LIBRARY_PATH=."}, "./txgen", args...)
 }
 
 // Index ...

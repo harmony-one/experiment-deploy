@@ -9,6 +9,7 @@ import (
 	"os/exec"
 )
 
+// DownloadFile download files from http
 func DownloadFile(filepath string, url string) error {
 	// Create the file
 	out, err := os.Create(filepath)
@@ -32,9 +33,13 @@ func DownloadFile(filepath string, url string) error {
 	return nil
 }
 
-// RunCmd Runs command `name` with arguments `args`
-func RunCmd(name string, args ...string) error {
+// RunCmd Runs command `name` with arguments `args`, env is the environmental settings
+func RunCmd(env []string, name string, args ...string) error {
 	cmd := exec.Command(name, args...)
+	if env != nil && len(env) > 0 {
+		cmd.Env = append(os.Environ(), env...)
+	}
+
 	stderrBytes := &bytes.Buffer{}
 	cmd.Stderr = stderrBytes
 
