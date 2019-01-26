@@ -110,7 +110,7 @@ function run_cmd
 
    case $cmd in
       version)
-         CMD='/home/ec2-user/harmony -version'
+         CMD='LD_LIBRARY_PATH=. /home/ec2-user/harmony -version'
          ;;
    esac
 
