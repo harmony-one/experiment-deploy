@@ -6,12 +6,14 @@ cd /home/ec2-user
 BUCKET=unique-bucket-bin
 FOLDER=leo/
 
-TESTBIN=( txgen soldier harmony commander go-commander.sh )
+TESTBIN=( txgen soldier harmony libbls384.so libmcl.so )
 
 for bin in "${TESTBIN[@]}"; do
    curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
    chmod +x ${bin}
 done
+
+export LD_LIBRARY_PATH=/home/ec2-user
 
 sysctl -w net.core.somaxconn=1024
 sysctl -w net.core.netdev_max_backlog=65536
@@ -41,6 +43,9 @@ else
    yum -y erase ntp*
    yum -y install chrony
    service chronyd start
+
+# install dependencies of BLS
+   yum -y install libstdc++ libgcc zlib openssl gmp
 fi
 
 NODE_PORT=9000
