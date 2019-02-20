@@ -156,6 +156,11 @@ function do_launch
 
 function do_launch_beacon
 {
+   if [ "${configs[beacon.enable]}" == "false" ]; then
+      echo "skipping launch beacon node"
+      return
+   fi
+
    logging launch beacon node
    ./beacon.sh -G -p ${configs[beacon.port]} -s ${configs[benchmark.shards]} -f ${FOLDER}
    expense beacon
@@ -163,6 +168,11 @@ function do_launch_beacon
 
 function do_launch_bootnode
 {
+   if [ "${configs[bootnode.enable]}" == "false" ]; then
+      echo "skipping launch bootnode"
+      return
+   fi
+
    logging launch bootnode node
    ./bootnode.sh -G -p ${configs[bootnode.port]} -f ${FOLDER} -S ${configs[bootnode.server]}
    expense bootnode
@@ -183,6 +193,15 @@ function do_run
    else
       RUN_OPTS+=" -B ${configs[beacon.server]}"
       RUN_OPTS+=" -b ${configs[beacon.port]}"
+   fi
+
+   if [ "${configs[libp2p]}" == "true" ]; then
+      RUN_OPTS+=" -P true"
+   fi
+
+   BN_MA=$(cat bn-ma.txt)
+   if [ -n "$BN_MA" ]; then
+      RUN_OPTS+=" -N $BN_MA"
    fi
 
    RUN_OPTS+=" -C ${configs[benchmark.crosstx]}"
@@ -292,7 +311,7 @@ function read_profile
 {
    logging reading benchmark config file: $BENCHMARK_FILE
 
-   keys=( description aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key benchmark.minpeer explorer.server explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server )
+   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key beacon.enable benchmark.minpeer explorer.server explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server )
 
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_FILE)

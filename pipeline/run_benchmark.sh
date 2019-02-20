@@ -34,6 +34,8 @@ OPTIONS:
    -B beacon IP      IP address of beacon chain (default: $BEACONIP)
    -b beacon port    port number of beacon chain (default: $BEACONPORT)
    -M multiaddr      the multiaddress of the beacon chain (default: $BEACONMA)
+   -N multiaddr      the multiaddress of the boot node (default: $BNMA)
+   -P true/false     enable libp2p or not (default: $LIBP2P)
    -m minpeer        minimum number of peers required to start consensus (default: $MINPEER)
    -c                invoke client node (default: $CLIENT)
 
@@ -105,16 +107,21 @@ function do_simple_cmd
 
    mkdir -p $LOGDIR/$cmd
 
-   if [ -n "$BEACONMA" ]; then
-      BEACON="-bc_addr $BEACONMA"
+   if [ "$LIBP2P" == "true" ]; then
+      BEACON="-libp2p_pd -bootnodes $BNMA"
    else
-      BEACON="-bc $BEACONIP -bc_port $BEACONPORT"
+      if [ -n "$BEACONMA" ]; then
+         BEACON="-bc_addr $BEACONMA"
+      else
+         BEACON="-bc $BEACONIP -bc_port $BEACONPORT"
+      fi
    fi
    end=0
    group=0
    case $cmd in
       init)
-      benchmarkArgs="-attacked_mode $ATTACK $BEACON -min_peers $MINPEER"
+# FIXME: is_beacon is temporary for testing libp2p, one shard only
+      benchmarkArgs="-attacked_mode $ATTACK $BEACON -min_peers $MINPEER -is_beacon"
       txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BEACON"
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
@@ -122,6 +129,16 @@ function do_simple_cmd
       if [ "$CLIENT" == "true" ]; then
          CLIENT_JSON=',"role":"client"'
       fi
+      cat>$LOGDIR/$cmd/leader.$cmd.json<<EOT
+{
+   "ip":"127.0.0.1",
+   "port":"9000",
+   "sessionID":"$SESSION",
+   "benchmarkArgs":"$benchmarkArgs -is_leader",
+   "txgenArgs":"$txgenArgs"
+   $CLIENT_JSON
+}
+EOT
       cat>$LOGDIR/$cmd/$cmd.json<<EOT
 {
    "ip":"127.0.0.1",
@@ -158,7 +175,7 @@ EOT
 
       case $cmd in
          init|update)
-            CMD+=$" -d@$LOGDIR/$cmd/$cmd.json" ;;
+            CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd.json" ;;
       esac
 
       [ -n "$VERBOSE" ] && echo $n =\> $CMD
@@ -266,13 +283,15 @@ BEACONPORT=9999
 BEACONMA=
 MINPEER=10
 CLIENT=
+BNMA=
+LIBP2P=false
 
 declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:vD:A:C:B:b:m:cM:" option; do
+while getopts "hp:f:i:a:n:vD:A:C:B:b:m:cM:N:P:" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -292,6 +311,8 @@ while getopts "hp:f:i:a:n:vD:A:C:B:b:m:cM:" option; do
       m) MINPEER=$OPTARG ;;
       c) CLIENT=true ;;
       M) BEACONMA=$OPTARG ;;
+      N) BNMA=$OPTARG ;;
+      P) LIBP2P=$OPTARG ;;
       h|?) usage ;;
    esac
 done

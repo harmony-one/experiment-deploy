@@ -11,12 +11,14 @@
     "regions": "sfo"
   },
   "bootnode": {
+     "enable": true,
      "server": "jenkins.harmony.one",
      "port": 9874,
      "user": "ec2-user",
      "key": "california-key-benchmark.pem"
   },
   "beacon": {
+     "enable": false,
      "server": "54.183.5.66",
      "port": 9997,
      "user": "ec2-user",
@@ -47,12 +49,12 @@
   "dashboard": {
     "server": "34.222.41.95",
     "port": 3000,
-    "reset": "true"
+    "reset": "false"
   },
   "explorer": {
     "server": "34.222.41.95",
     "port": 4000,
-    "reset": "true"
+    "reset": "false"
   },
   "txgen": {
      "enable": "true",
@@ -63,5 +65,6 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 30
-  }
+  },
+  "libp2p": true
 }
