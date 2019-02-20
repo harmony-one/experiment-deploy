@@ -10,9 +10,15 @@
     "type": "t3.large",
     "regions": "pdx,iad,dub"
   },
-  "beacon": {
+  "bootnode": {
+     "server": "jenkins.harmony.one",
+     "port": 9875,
+     "user": "ec2-user",
+     "key": "california-key-benchmark.pem"
+  },
+ "beacon": {
      "server": "54.183.5.66",
-     "port": 9998,
+      "port": 9998,
      "user": "ec2-user",
      "key": "california-key-benchmark.pem"
   },

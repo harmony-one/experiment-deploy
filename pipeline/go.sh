@@ -161,6 +161,13 @@ function do_launch_beacon
    expense beacon
 }
 
+function do_launch_bootnode
+{
+   logging launch bootnode node
+   ./bootnode.sh -G -p ${configs[bootnode.port]} -f ${FOLDER} -S ${configs[bootnode.server]}
+   expense bootnode
+}
+
 function do_run
 {
    logging run benchmark
@@ -285,7 +292,7 @@ function read_profile
 {
    logging reading benchmark config file: $BENCHMARK_FILE
 
-   keys=( description aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key benchmark.minpeer explorer.server explorer.port explorer.reset txgen.ip txgen.port txgen.enable )
+   keys=( description aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key benchmark.minpeer explorer.server explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server )
 
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_FILE)
@@ -313,6 +320,7 @@ function do_reset
 function do_all
 {
    do_launch_beacon
+   do_launch_bootnode
    do_launch
    do_run
    do_reset
@@ -373,6 +381,7 @@ case $ACTION in
          do_launch ;;
    run)  
          do_launch_beacon
+         do_launch_bootnode
          do_run ;;
    log)  
          download_logs

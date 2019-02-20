@@ -10,6 +10,12 @@
     "type": "t3.medium",
     "regions": "sfo"
   },
+  "bootnode": {
+     "server": "jenkins.harmony.one",
+     "port": 9873,
+     "user": "ec2-user",
+     "key": "california-key-benchmark.pem"
+  },
   "beacon": {
      "server": "54.183.5.66",
      "port": 9997,
