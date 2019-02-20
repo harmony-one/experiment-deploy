@@ -1,0 +1,22 @@
+{
+   "launch": [
+      {
+         "region": "pdx",
+         "type": "t3.small",
+         "ondemand": 15,
+         "ami": "default",
+         "spot": 10
+      },
+      {
+         "region": "iad",
+         "type": "t3.small",
+         "ondemand": 15,
+         "spot": 10
+      }
+   ],
+   "userdata": {
+      "name": "http",
+      "file": "userdata-soldier-http.sh.aws"
+   },
+   "batch": 100
+}
