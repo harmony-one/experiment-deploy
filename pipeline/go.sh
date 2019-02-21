@@ -217,6 +217,7 @@ function do_run
 
    # save the beacon chain multiaddress
    cp -f bc-ma.txt logs/$TS
+   cp -f bn-ma.txt logs/$TS
 
    if [ "${configs[txgen.enable]}" == "true" ]; then
       if [ ${configs[client.num_vm]} -gt 0 ]; then
