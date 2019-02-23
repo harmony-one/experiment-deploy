@@ -312,7 +312,7 @@ function read_profile
 {
    logging reading benchmark config file: $BENCHMARK_FILE
 
-   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key beacon.enable benchmark.minpeer explorer.server explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server )
+   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key beacon.enable benchmark.minpeer explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server )
 
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_FILE)
@@ -327,13 +327,13 @@ function do_reset
 {
    if [ "${configs[dashboard.reset]}" == "true" ]; then
       echo "resetting dashboard ..."
-      echo curl -X POST https://${configs[dashboard.server]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
-      curl -X POST https://${configs[dashboard.server]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d '{"secret":"426669"}'
+      echo curl -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
+      curl -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d '{"secret":"426669"}'
    fi
    if [ "${configs[explorer.reset]}" == "true" ]; then
       echo "resetting explorer ..."
-      echo curl -X POST https://${configs[explorer.server]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
-      curl -X POST https://${configs[explorer.server]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d '{"secret":"426669"}'
+      echo curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
+      curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d '{"secret":"426669"}'
    fi
 }
 
