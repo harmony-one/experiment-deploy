@@ -121,7 +121,10 @@ function do_simple_cmd
    case $cmd in
       init)
 # FIXME: is_beacon is temporary for testing libp2p, one shard only
-      benchmarkArgs="-attacked_mode $ATTACK $BEACON -min_peers $MINPEER -is_beacon"
+      benchmarkArgs="-attacked_mode $ATTACK $BEACON -min_peers $MINPEER"
+      if [ "$LIBP2P" == "true" ]; then
+         benchmarkArgs+=" -is_beacon"
+      fi
       txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BEACON"
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
