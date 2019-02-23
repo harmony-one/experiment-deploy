@@ -65,5 +65,6 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 20
-  }
+  },
+  "libp2p": false
 }
