@@ -13,7 +13,7 @@
   "bootnode": {
      "enable": true,
      "server": "jenkins.harmony.one",
-     "port": 9874,
+     "port": 9873,
      "user": "ec2-user",
      "key": "california-key-benchmark.pem"
   },
