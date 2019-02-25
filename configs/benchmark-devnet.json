@@ -1,24 +1,27 @@
 {
-  "description": "aws 50 nodes on 2 shards, for devnet",
+  "description": "aws 50 nodes on 1 shards, for devnet",
   "client": {
-    "num_vm": 0,
-    "type": "r5.large",
-    "regions": "iad"
+    "num_vm": 1,
+    "type": "t3.large",
+    "regions": "pdx"
   },
   "leader": {
     "num_vm": 1,
     "type": "t3.large",
-    "regions": "pdx,iad"
+    "regions": "pdx"
   },
   "bootnode": {
-     "server": "jenkins.harmony.one",
+     "enable": true,
+     "server": "54.213.43.194",
+     "name": "b2.harmony.one",
      "port": 9872,
      "user": "ec2-user",
-     "key": "california-key-benchmark.pem"
+     "key": "oregon-key-benchmark.pem"
   },
   "beacon": {
+     "enable": false,
      "server": "54.183.5.66",
-     "port": 9999,
+     "port": 9996,
      "user": "ec2-user",
      "key": "california-key-benchmark.pem"
   },
@@ -31,8 +34,8 @@
     ]
   },
   "benchmark": {
-    "shards": 2,
-    "duration": 100,
+    "shards": 1,
+    "duration": 300,
     "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
@@ -45,19 +48,19 @@
     "soldier": true
   },
   "dashboard": {
-    "server": "54.213.59.51",
-    "name": "explorer.harmony.one",
+    "server": "34.222.41.95",
+    "name": "0.harmony.one",
     "port": 3000,
     "reset": "true"
   },
   "explorer": {
-    "server": "54.213.59.51",
-    "name": "explorer.harmony.one",
+    "server": "34.222.41.95",
+    "name": "0.harmony.one",
     "port": 4000,
     "reset": "true"
   },
   "txgen": {
-     "enable": "false",
+     "enable": "true",
      "ip": "myip",
      "port": 8000
   },
@@ -65,5 +68,6 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 20
-  }
+  },
+  "libp2p": true
 }

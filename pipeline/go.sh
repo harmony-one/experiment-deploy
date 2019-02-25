@@ -174,7 +174,7 @@ function do_launch_bootnode
    fi
 
    logging launch bootnode node
-   ./bootnode.sh -G -p ${configs[bootnode.port]} -f ${FOLDER} -S ${configs[bootnode.server]}
+   ./bootnode.sh -G -p ${configs[bootnode.port]} -f ${FOLDER} -S ${configs[bootnode.server]} -k ${configs[bootnode.key]}
    expense bootnode
 }
 
@@ -312,7 +312,7 @@ function read_profile
 {
    logging reading benchmark config file: $BENCHMARK_FILE
 
-   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key beacon.enable benchmark.minpeer explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server )
+   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key beacon.enable benchmark.minpeer explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server bootnode.key bootnode.enable )
 
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_FILE)
@@ -353,7 +353,7 @@ function do_all
 }
 
 ######### VARIABLES #########
-PROFILE=1k
+PROFILE=tiny
 ROOTDIR=$(dirname $0)/..
 CONFIG_DIR=$(realpath $ROOTDIR)/configs
 PROFILES=( $(ls $CONFIG_DIR/benchmark-*.json | sed -e "s,$CONFIG_DIR/benchmark-,,g" -e 's/.json//g') )

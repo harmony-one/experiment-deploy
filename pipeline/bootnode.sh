@@ -10,9 +10,10 @@ set -euo pipefail
 
 ME=`basename $0`
 NOW=$(date +%Y%m%d.%H%M%S)
-SSH='/usr/bin/ssh -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/california-key-benchmark.pem'
-SCP='/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/california-key-benchmark.pem'
+SSH="/usr/bin/ssh -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/california-key-benchmark.pem"
+SCP="/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/california-key-benchmark.pem"
 JENKINS=jenkins.harmony.one
+KEY=california-key-benchmark.pem
 
 function usage
 {
@@ -28,6 +29,7 @@ OPTIONS:
    -b bucket      the bucket name in the s3 (default: $BUCKET)
    -f folder      the folder name in the bucket (default: $FOLDER)
    -S server      the server used to launch bootnode (default: $SERVER)
+   -k key         the name of the key (default: $KEY)
 
 COMMANDS:
    download       download bootnode binary
@@ -73,7 +75,7 @@ function _do_kill
 
 function _do_launch
 {
-   local cmd="pushd $WORKDIR; nohup sudo LD_LIBRARY_PATH=. ./bootnode -ip 54.183.5.66 -port $PORT -key bootnode-$PORT.key"
+   local cmd="pushd $WORKDIR; nohup sudo LD_LIBRARY_PATH=. ./bootnode -ip $SERVER -port $PORT -key bootnode-$PORT.key"
    $DRYRUN ${SSH} ec2-user@${SERVER} "$cmd > run-bootnode.log 2>&1 &"
    echo "bootnode node started, sleeping for 5s ..."
    sleep 5
@@ -103,7 +105,7 @@ USERID=${WHOAMI:-$USER}
 FOLDER=$USERID
 SERVER=${JENKINS}
 
-while getopts "hvGp:b:f:S:" option; do
+while getopts "hvGp:b:f:S:k:" option; do
    case $option in
       v) VERBOSE=-v ;;
       G) DRYRUN= ;;
@@ -111,6 +113,7 @@ while getopts "hvGp:b:f:S:" option; do
       b) BUCKET=$OPTARG ;;
       f) FOLDER=$OPTARG ;;
       S) SERVER=$OPTARG ;;
+      k) KEY=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done
@@ -122,6 +125,9 @@ CMD="$@"
 if [ "$CMD" = "" ]; then
    CMD=all
 fi
+
+SSH="/usr/bin/ssh -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
+SCP="/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
 
 WORKDIR=bootnode-$FOLDER-$NOW
 
