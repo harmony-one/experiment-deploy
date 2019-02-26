@@ -7,7 +7,7 @@
   },
   "leader": {
     "num_vm": 1,
-    "type": "t3.large",
+    "type": "m5a.large",
     "regions": "pdx,iad"
   },
   "bootnode": {

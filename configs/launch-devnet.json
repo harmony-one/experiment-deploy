@@ -5,13 +5,7 @@
          "type": "t3.small",
          "ondemand": 15,
          "ami": "default",
-         "spot": 10
-      },
-      {
-         "region": "iad",
-         "type": "t3.small",
-         "ondemand": 15,
-         "spot": 10
+         "spot": 150
       }
    ],
    "userdata": {
