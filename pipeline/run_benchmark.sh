@@ -108,7 +108,7 @@ function do_simple_cmd
    mkdir -p $LOGDIR/$cmd
 
    if [ "$LIBP2P" == "true" ]; then
-      BEACON="-libp2p_pd -bootnodes $BNMA"
+      BEACON="-bootnodes $BNMA"
    else
       if [ -n "$BEACONMA" ]; then
          BEACON="-bc_addr $BEACONMA"
@@ -121,7 +121,7 @@ function do_simple_cmd
    case $cmd in
       init)
 # FIXME: is_beacon is temporary for testing libp2p, one shard only
-      benchmarkArgs="-attacked_mode $ATTACK $BEACON -min_peers $MINPEER"
+      benchmarkArgs="$BEACON -min_peers $MINPEER"
       if [ "$LIBP2P" == "true" ]; then
          benchmarkArgs+=" -is_beacon"
       fi
