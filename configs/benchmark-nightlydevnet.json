@@ -1,24 +1,27 @@
 {
-  "description": "aws 150 nodes on 3 shards, for devnet nightly test",
+  "description": "aws 150 nodes on 1 shards, for nightly test",
   "client": {
     "num_vm": 1,
-    "type": "r5.large",
-    "regions": "iad"
+    "type": "m5a.large",
+    "regions": "pdx"
   },
   "leader": {
     "num_vm": 1,
-    "type": "t3.large",
-    "regions": "pdx,iad,dub"
+    "type": "m5a.large",
+    "regions": "pdx"
   },
   "bootnode": {
-     "server": "jenkins.harmony.one",
+     "enable": true,
+     "server": "54.213.43.194",
+     "name": "b2.harmony.one",
      "port": 9875,
      "user": "ec2-user",
-     "key": "california-key-benchmark.pem"
+     "key": "oregon-key-benchmark.pem"
   },
- "beacon": {
+  "beacon": {
+     "enable": false,
      "server": "54.183.5.66",
-      "port": 9998,
+     "port": 9998,
      "user": "ec2-user",
      "key": "california-key-benchmark.pem"
   },
@@ -31,12 +34,12 @@
     ]
   },
   "benchmark": {
-    "shards": 3,
+    "shards": 1,
     "duration": 600,
-    "dashboard": false,
+    "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 30
+    "minpeer": 150
   },
   "logs": {
     "leader": true,
@@ -46,13 +49,15 @@
   },
   "dashboard": {
     "server": "34.222.41.95",
+    "name": "0.harmony.one",
     "port": 3000,
-    "reset": "false"
+    "reset": "true"
   },
   "explorer": {
     "server": "34.222.41.95",
+    "name": "0.harmony.one",
     "port": 4000,
-    "reset": "false"
+    "reset": "true"
   },
   "txgen": {
      "enable": "true",
@@ -63,5 +68,6 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 20
-  }
+  },
+  "libp2p": true
 }
