@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/kr/pretty"
 	"io/ioutil"
 	"os"
 	"path"
@@ -31,6 +30,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/kr/pretty"
 )
 
 const (
@@ -343,6 +344,8 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 		}
 		totalInstances += i.Spot
 	}
+	enableMonitoring := (&ec2.RunInstancesMonitoringEnabled{}).SetEnabled(true)
+	input.SetMonitoring(enableMonitoring)
 
 	debugOutput(1, input)
 
