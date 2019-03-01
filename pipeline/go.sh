@@ -125,7 +125,7 @@ function do_launch
       rm instance_ids_output-leader.txt instance_output-leader.txt raw_ip-leader.txt &
    fi
 
-   echo sleeping ${configs[flow.wait_for_launch]} ...
+   echo waiting for instances launch ${configs[flow.wait_for_launch]} ...
    sleep  ${configs[flow.wait_for_launch]}
 
    RETRY=8
@@ -145,8 +145,8 @@ function do_launch
       else
          echo "$total/$expected instances are in running state"
       fi
-      echo sleeping 30s ...
-      sleep 30
+      echo sleeping 10s for retry ...
+      sleep 10
       (( r++ ))
       prev_total=$total
    done
@@ -228,7 +228,7 @@ function do_run
       fi
    fi
 
-   echo sleeping ${configs[benchmark.duration]} ...
+   echo waiting for txgen benchmarking ${configs[benchmark.duration]} ...
    sleep ${configs[benchmark.duration]}
 
 #  no need to kill as we will terminate the instances

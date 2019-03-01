@@ -183,10 +183,9 @@ EOT
 
       [ -n "$VERBOSE" ] && echo $n =\> $CMD
       $TIMEOUT -s SIGINT 20s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log
-   done
-
 # wait for leaders up at first
-   sleep 5
+      sleep 3
+   done
 
    while [ $end -lt $NUM_NODES ]; do
       start=$(( $PARALLEL * $group + $num_leader + 1))
@@ -208,7 +207,7 @@ EOT
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         $TIMEOUT -s SIGINT 20s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
+         $TIMEOUT -s SIGINT 5s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
       done 
       wait
       (( group++ ))
@@ -234,7 +233,7 @@ EOT
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         $TIMEOUT -s SIGINT 20s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
+         $TIMEOUT -s SIGINT 5s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
       done
    fi
 }
