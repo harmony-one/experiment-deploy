@@ -1,5 +1,5 @@
 {
-  "description": "aws 25 nodes on 1 shard",
+  "description": "aws 50 nodes on 1 shard, run 300 seconds",
   "client": {
     "num_vm": 1,
     "type": "t3.micro",
@@ -12,10 +12,11 @@
   },
   "bootnode": {
      "enable": true,
-     "server": "jenkins.harmony.one",
+     "server": "54.213.43.194",
+     "name": "b2.harmony.one",
      "port": 9873,
      "user": "ec2-user",
-     "key": "california-key-benchmark.pem"
+     "key": "oregon-key-benchmark.pem"
   },
   "beacon": {
      "enable": false,
@@ -38,7 +39,7 @@
     "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 8
+    "minpeer": 80
   },
   "logs": {
     "leader": true,
@@ -61,7 +62,7 @@
      "ip": "myip",
      "port": 8000
   },
-  "parallel": 10,
+  "parallel": 100,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 30
