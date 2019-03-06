@@ -1,10 +1,10 @@
 {
    "launch": [
       {
-         "region": "sfo",
+         "region": "iad",
          "type": "t3.micro",
          "ondemand": 1,
-         "spot": 5
+         "spot": 25
       }
    ],
    "userdata": {

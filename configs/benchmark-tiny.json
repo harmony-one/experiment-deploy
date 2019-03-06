@@ -1,22 +1,25 @@
 {
-  "description": "aws 25 nodes on 2 shards",
+  "description": "aws 25 nodes on 1 shards, run 600 seconds",
   "client": {
     "num_vm": 1,
     "type": "t3.micro",
-    "regions": "sfo"
+    "regions": "iad"
   },
   "leader": {
     "num_vm": 1,
     "type": "t3.medium",
-    "regions": "sfo"
+    "regions": "iad"
   },
   "bootnode": {
-     "server": "jenkins.harmony.one",
-     "port": 9873,
+     "enable": true,
+     "server": "54.213.43.194",
+     "name": "b2.harmony.one",
+     "port": 9874,
      "user": "ec2-user",
-     "key": "california-key-benchmark.pem"
+     "key": "oregon-key-benchmark.pem"
   },
   "beacon": {
+     "enable": false,
      "server": "54.183.5.66",
      "port": 9997,
      "user": "ec2-user",
@@ -32,11 +35,11 @@
   },
   "benchmark": {
     "shards": 1,
-    "duration": 120,
+    "duration": 600,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 3
+    "minpeer": 20
   },
   "logs": {
     "leader": true,
@@ -63,5 +66,6 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 30
-  }
+  },
+  "libp2p": true
 }
