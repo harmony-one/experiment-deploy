@@ -2,13 +2,13 @@
   "description": "aws 50 nodes on 1 shard, run 300 seconds",
   "client": {
     "num_vm": 1,
-    "type": "t3.micro",
-    "regions": "sfo"
+    "type": "t3.large",
+    "regions": "iad"
   },
   "leader": {
     "num_vm": 1,
-    "type": "t3.medium",
-    "regions": "sfo"
+    "type": "m5a.large",
+    "regions": "iad"
   },
   "bootnode": {
      "enable": true,

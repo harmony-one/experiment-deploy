@@ -1,7 +1,7 @@
 {
    "launch": [
       {
-         "region": "sfo",
+         "region": "iad",
          "type": "t3.micro",
          "ondemand": 10,
          "spot": 100
