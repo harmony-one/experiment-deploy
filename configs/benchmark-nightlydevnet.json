@@ -36,7 +36,7 @@
   "benchmark": {
     "shards": 1,
     "duration": 600,
-    "dashboard": true,
+    "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
     "minpeer": 150
