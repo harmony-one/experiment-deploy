@@ -8,7 +8,7 @@
         "sg": "sg-020cb5729fa212d43"
       },
       "ami": {
-        "default": "ami-a9d09ed1"
+        "default": "ami-095cd038eef3e5074"
       },
       "limit": {
         "t3.micro": 3000,
@@ -25,7 +25,7 @@
         "sg": "sg-0a66ccb6ab9161a14"
       },
       "ami": {
-        "default": "ami-e0ba5c83"
+        "default": "ami-09bfcadb25ee95bec"
       },
       "limit": {
         "t3.micro": 1500,
@@ -42,7 +42,7 @@
         "sg": "sg-0aa8954acb79fdb58"
       },
       "ami": {
-        "default": "ami-466768ac"
+        "default": "ami-02a39bdb8e8ee056a"
       },
       "limit": {
         "t3.micro": 3000,
@@ -59,7 +59,7 @@
         "sg": "sg-009aeb97f675c1ad5"
       },
       "ami": {
-        "default": "ami-e99f4896"
+        "default": "ami-097473abce069b8e9"
       },
       "limit": {
         "t3.micro": 1000,
@@ -76,7 +76,7 @@
         "sg": "sg-0bb06fcd8b25b5910"
       },
       "ami": {
-        "default": "ami-7c4f7097"
+        "default": "ami-07f1fbbff759e24dd"
       },
       "limit": {
         "t3.micro": 1000,
@@ -93,7 +93,7 @@
         "sg": "sg-0789078f1c76defbe"
       },
       "ami": {
-        "default": "ami-8c122be9"
+        "default": "ami-0de7daa7385332688"
       },
       "limit": {
         "t3.micro": 3000,
@@ -110,7 +110,7 @@
         "sg": "sg-05f9b60044a19dfb2"
       },
       "ami": {
-        "default": "ami-05868579"
+        "default": "ami-00158b185c8cc09dc"
       },
       "limit": {
         "t3.micro": 3000,
@@ -127,7 +127,7 @@
         "sg": "sg-04d0b62ee08ce8800"
       },
       "ami": {
-        "default": "ami-b70554c8"
+        "default": "ami-02da3a138888ced85"
       },
       "limit": {
         "t3.micro": 1000,
