@@ -170,6 +170,9 @@ EOT
  
    SECONDS=0
 
+   WAIT_FOR_LEADER_LAUNCH=3
+   CURL_TIMEOUT=5
+
 # send commands to leaders at first
    local num_leader=$(grep leader $DIST | wc -l)
    for n in $(seq 1 $num_leader); do
@@ -184,7 +187,7 @@ EOT
       [ -n "$VERBOSE" ] && echo $n =\> $CMD
       $TIMEOUT -s SIGINT 20s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log
 # wait for leaders up at first
-      sleep 3
+      sleep $WAIT_FOR_LEADER_LAUNCH
    done
 
    while [ $end -lt $NUM_NODES ]; do
@@ -207,7 +210,7 @@ EOT
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         $TIMEOUT -s SIGINT 5s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
+         $TIMEOUT -s SIGINT ${CURL_TIMEOUT}s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
       done 
       wait
       (( group++ ))
@@ -233,7 +236,7 @@ EOT
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         $TIMEOUT -s SIGINT 5s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
+         $TIMEOUT -s SIGINT ${CURL_TIMEOUT}s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
       done
    fi
 }
