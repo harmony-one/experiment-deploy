@@ -1,0 +1,71 @@
+{
+  "description": "aws 50 nodes on 1 shard, run 300 seconds",
+  "client": {
+    "num_vm": 1,
+    "type": "t3.large",
+    "regions": "iad"
+  },
+  "leader": {
+    "num_vm": 1,
+    "type": "t3.large",
+    "regions": "iad"
+  },
+  "bootnode": {
+     "enable": true,
+     "server": "54.213.43.194",
+     "name": "b2.harmony.one",
+     "port": 9871,
+     "user": "ec2-user",
+     "key": "oregon-key-benchmark.pem"
+  },
+  "beacon": {
+     "enable": false,
+     "server": "54.183.5.66",
+     "port": 9997,
+     "user": "ec2-user",
+     "key": "california-key-benchmark.pem"
+  },
+  "azure": {
+    "num_vm": 0,
+    "regions": [
+      "eastus",
+      "westeurope",
+      "southeastasia"
+    ]
+  },
+  "benchmark": {
+    "shards": 1,
+    "duration": 300,
+    "dashboard": false,
+    "crosstx": 30,
+    "attacked_mode": 0,
+    "minpeer": 45
+  },
+  "logs": {
+    "leader": true,
+    "client": true,
+    "validator": true,
+    "soldier": true
+  },
+  "dashboard": {
+    "server": "34.222.41.95",
+    "port": 3000,
+    "reset": "false"
+  },
+  "explorer": {
+    "server": "34.222.41.95",
+    "port": 4000,
+    "reset": "false"
+  },
+  "txgen": {
+     "enable": "true",
+     "ip": "myip",
+     "port": 8000
+  },
+  "parallel": 100,
+  "userdata": "userdata-soldier-http.sh",
+  "flow": {
+     "wait_for_launch": 30
+  },
+  "libp2p": true
+}
