@@ -3,6 +3,9 @@
 #set -euxo pipefail
 # set -x
 
+RETRY_LAUNCH_TIME=10
+
+#############################
 function usage
 {
    ME=$(basename $0)
@@ -145,8 +148,8 @@ function do_launch
       else
          echo "$total/$expected instances are in running state"
       fi
-      echo sleeping 10s for retry ...
-      sleep 10
+      echo sleeping ${RETRY_LAUNCH_TIME}s for retry ...
+      sleep ${RETRY_LAUNCH_TIME}
       (( r++ ))
       prev_total=$total
    done
