@@ -43,7 +43,7 @@
   },
   "benchmark": {
     "shards": 1,
-    "duration": 300,
+    "duration": 30,
     "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
