@@ -266,6 +266,8 @@ function download_logs
    fi
    wait
    expense download
+   rm -f logs/$PROFILE
+   ln -sf $TS logs/$PROFILE
 }
 
 function analyze_logs
