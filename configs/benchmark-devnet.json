@@ -2,12 +2,12 @@
   "description": "aws 50 nodes on 1 shards, for devnet",
   "client": {
     "num_vm": 1,
-    "type": "m5a.large",
+    "type": "t3.medium",
     "regions": "pdx"
   },
   "leader": {
     "num_vm": 1,
-    "type": "m5a.large",
+    "type": "t3.medium",
     "regions": "pdx"
   },
   "bootnode": {
