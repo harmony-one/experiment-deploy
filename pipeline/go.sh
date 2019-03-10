@@ -27,16 +27,17 @@ This script automates the benchmark test based on profile.
    log            download logs
    deinit         sync logs & terminate instances
    reset          reset dashboard and explorer
+   bootnode       launch bootnode(s) only
    all            do everything (default)
 
 
 [EXAMPLES]
 
    $ME -p tiny
-   $ME -p 10k
-   $ME -p 20k
+   $ME -p debug
+   $ME -p devnet -k
 
-   $ME -p mix10k
+   $ME -p testnet log
 
 EOT
    exit 0
@@ -167,18 +168,21 @@ function do_launch_beacon
    logging launch beacon node
    ./beacon.sh -G -p ${configs[beacon.port]} -s ${configs[benchmark.shards]} -f ${FOLDER}
    expense beacon
+   BC_MA=$(cat bc-ma.txt)
 }
 
 function do_launch_bootnode
 {
-   if [ "${configs[bootnode.enable]}" == "false" ]; then
+   BN=${1:-bootnode}
+   if [ "${configs[${BN}.enable]}" == "false" ]; then
       echo "skipping launch bootnode"
       return
    fi
 
-   logging launch bootnode node
-   ./bootnode.sh -G -p ${configs[bootnode.port]} -f ${FOLDER} -S ${configs[bootnode.server]} -k ${configs[bootnode.key]}
+   logging launch $BN node - $PROFILE profile
+   ./bootnode.sh -G -p ${configs[${BN}.port]} -f ${FOLDER} -S ${configs[${BN}.server]} -k ${configs[${BN}.key]} -P $PROFILE -n $BN
    expense bootnode
+   BN_MA+="$(cat ${BN}-ma.txt),"
 }
 
 function do_run
@@ -190,7 +194,6 @@ function do_run
       RUN_OPTS+=" -D ${configs[dashboard.server]}:${configs[dashboard.port]}"
    fi
 
-   BC_MA=$(cat bc-ma.txt)
    if [ -n "$BC_MA" ]; then
       RUN_OPTS+=" -M $BC_MA"
    else
@@ -202,7 +205,7 @@ function do_run
       RUN_OPTS+=" -P true"
    fi
 
-   BN_MA=$(cat bn-ma.txt)
+   BN_MA=$(echo $BN_MA | sed s/,$//)
    if [ -n "$BN_MA" ]; then
       RUN_OPTS+=" -N $BN_MA"
    fi
@@ -219,8 +222,8 @@ function do_run
    TS=$(cat $CONFIG_FILE | $JQ .sessionID)
 
    # save the beacon chain multiaddress
-   cp -f bc-ma.txt logs/$TS
-   cp -f bn-ma.txt logs/$TS
+   mv -f bc-ma.txt logs/$TS
+   mv -f bootnode*-ma.txt logs/$TS
 
    if [ "${configs[txgen.enable]}" == "true" ]; then
       if [ ${configs[client.num_vm]} -gt 0 ]; then
@@ -317,7 +320,7 @@ function read_profile
 {
    logging reading benchmark config file: $BENCHMARK_FILE
 
-   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key beacon.enable benchmark.minpeer explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server bootnode.key bootnode.enable )
+   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key beacon.enable benchmark.minpeer explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server bootnode.key bootnode.enable bootnode1.port bootnode1.server bootnode1.key bootnode1.enable )
 
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_FILE)
@@ -346,6 +349,7 @@ function do_all
 {
    do_launch_beacon
    do_launch_bootnode
+   do_launch_bootnode bootnode1
    do_launch
    do_run
    do_reset
@@ -402,11 +406,15 @@ read_profile
 case $ACTION in
    all)  
          do_all ;;
+   bootnode)
+         do_launch_bootnode
+         do_launch_bootnode bootnode1 ;;
    launch)
          do_launch ;;
    run)  
          do_launch_beacon
          do_launch_bootnode
+         do_launch_bootnode bootnode1
          do_run ;;
    log)  
          download_logs

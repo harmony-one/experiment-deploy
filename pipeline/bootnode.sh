@@ -30,6 +30,8 @@ OPTIONS:
    -f folder      the folder name in the bucket (default: $FOLDER)
    -S server      the server used to launch bootnode (default: $SERVER)
    -k key         the name of the key (default: $KEY)
+   -P profile     the name of the test profile (default: $PROFILE)
+   -n bootnode    the name of the bootnode (default: $BN)
 
 COMMANDS:
    download       download bootnode binary
@@ -58,6 +60,7 @@ function _do_download
    $DRYRUN ${SSH} ec2-user@${SERVER} "mkdir -p $WORKDIR; pushd $WORKDIR"
    $DRYRUN ${SCP} $FN ec2-user@${SERVER}:$WORKDIR
    $DRYRUN ${SSH} ec2-user@${SERVER} "pushd $WORKDIR; ./$FN"
+   rm -f $FN
    echo "bootnode workdir: $WORKDIR"
 }
 
@@ -85,7 +88,7 @@ function _do_get_multiaddr
 {
    local cmd="pushd $WORKDIR >/dev/null; grep 'BN_MA' run-bootnode.log | awk -F\= ' { print \$2 } ' | tr '\n' ' ' | tr -d ' ' "
    MA=$($DRYRUN ${SSH} ec2-user@${SERVER} $cmd)
-   echo $MA | tee bn-ma.txt
+   echo $MA | tee ${BN}-ma.txt
 }
 
 function _do_all
@@ -104,8 +107,10 @@ BUCKET=unique-bucket-bin
 USERID=${WHOAMI:-$USER}
 FOLDER=$USERID
 SERVER=${JENKINS}
+PROFILE=
+BN=bootnode
 
-while getopts "hvGp:b:f:S:k:" option; do
+while getopts "hvGp:b:f:S:k:P:n:" option; do
    case $option in
       v) VERBOSE=-v ;;
       G) DRYRUN= ;;
@@ -114,6 +119,8 @@ while getopts "hvGp:b:f:S:k:" option; do
       f) FOLDER=$OPTARG ;;
       S) SERVER=$OPTARG ;;
       k) KEY=$OPTARG ;;
+      P) PROFILE=$OPTARG ;;
+      n) BN=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done
@@ -129,7 +136,7 @@ fi
 SSH="/usr/bin/ssh -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
 SCP="/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
 
-WORKDIR=bootnode-$FOLDER-$NOW
+WORKDIR=bootnode-$FOLDER-$PROFILE-$NOW
 
 case $CMD in
    download) _do_download ;;
