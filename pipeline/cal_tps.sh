@@ -42,6 +42,7 @@ for f in "${FILES[@]}"; do
       printf -v avg_tps_int %.0f $avg_tps
    else
       avg_tps=0
+      avg_tps_int=0
    fi
    TPS[$leader]="$num_consensus, $avg_tps"
    NUM_CONSENSUS=$(expr $NUM_CONSENSUS + $num_consensus )
