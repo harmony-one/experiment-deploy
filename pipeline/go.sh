@@ -160,7 +160,7 @@ function do_launch
 
 function do_launch_beacon
 {
-   if [ "${configs[beacon.enable]}" == "false" ]; then
+   if [ "${configs[beacon.enable]}" != "true" ]; then
       echo "skipping launch beacon node"
       return
    fi
@@ -174,8 +174,8 @@ function do_launch_beacon
 function do_launch_bootnode
 {
    BN=${1:-bootnode}
-   if [ "${configs[${BN}.enable]}" == "false" ]; then
-      echo "skipping launch bootnode"
+   if [ "${configs[${BN}.enable]}" != "true" ]; then
+      echo "skipping launch bootnode: ${BN}"
       return
    fi
 
