@@ -18,7 +18,7 @@ else
    MD5=md5sum
 fi
 
-SCRIPTS=( aws/kill_node.sh $BINDIR/md5sum-cs.txt )
+SCRIPTS=( $BINDIR/md5sum-cs.txt tools/beat_tx.sh )
 
 function usage
 {

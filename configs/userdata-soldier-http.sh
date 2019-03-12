@@ -6,7 +6,7 @@ cd /home/ec2-user
 BUCKET=unique-bucket-bin
 FOLDER=leo/
 
-TESTBIN=( txgen soldier harmony libbls384.so libmcl.so )
+TESTBIN=( txgen soldier harmony libbls384.so libmcl.so wallet beat_tx.sh )
 
 for bin in "${TESTBIN[@]}"; do
    curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}

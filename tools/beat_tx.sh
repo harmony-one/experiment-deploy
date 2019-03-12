@@ -13,6 +13,7 @@ SECOND=1
 ACCOUNT_FILE=accounts.txt
 SHARDS=2
 WALLET_URL=https://s3-us-west-1.amazonaws.com/pub.harmony.one
+export LD_LIBRARY_PATH=$(pwd)
 
 function usage
 {
@@ -136,7 +137,9 @@ function do_reset
 
 function main
 {
-   do_download_wallet
+   if [ "$SKIP_DOWNLOAD" == "false" ]; then
+      do_download_wallet
+   fi
    sleep 1
    do_reset
    sleep 1
@@ -151,8 +154,9 @@ function main
 VERBOSE=
 THEPWD=$(pwd)
 JQ='jq -r -M'
+SKIP_DOWNLOAD=false
 
-while getopts "hp:vi:t:f:c:n:s:" option; do
+while getopts "hp:vi:t:f:c:n:s:k" option; do
    case $option in
       h) usage ;;
       p) PROFILE=$OPTARG ;;
@@ -163,6 +167,7 @@ while getopts "hp:vi:t:f:c:n:s:" option; do
       c) COUNT=$OPTARG ;;
       n) NUM=$OPTARG ;;
       s) SHARDS=$OPTARG ;;
+      k) SKIP_DOWNLOAD=true ;;
    esac
 done
 

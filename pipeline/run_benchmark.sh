@@ -46,6 +46,7 @@ ACTIONS:
    init              start benchmark test, after config
    kill              kill all running benchmark/txgen 
    update            update certain/all binaries on solider(s)
+   wallet            start wallet on node
 
 EXAMPLES:
 
@@ -166,6 +167,17 @@ EOT
 }
 EOT
 ;;
+      wallet)
+### FIXME (leo) hardcode some wallet parameters here
+            cat>$LOGDIR/$cmd/$cmd.json<<EOT
+{
+   "interval":"0.001",
+   "number":"20",
+   "loop":"2000",
+   "shards":"2"
+}
+EOT
+;;
    esac
  
    SECONDS=0
@@ -180,7 +192,7 @@ EOT
       CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
 
       case $cmd in
-         init|update)
+         init|update|wallet)
             CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd.json" ;;
       esac
 
@@ -205,7 +217,7 @@ EOT
          CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
 
          case $cmd in
-            init|update)
+            init|update|wallet)
                CMD+=$" -d@$LOGDIR/$cmd/$cmd.json" ;;
          esac
 
@@ -231,7 +243,7 @@ EOT
          CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
 
          case $cmd in
-            init|update)
+            init|update|wallet)
                CMD+=$" -d@$LOGDIR/$cmd/$cmd.json" ;;
          esac
 
@@ -329,7 +341,7 @@ ACTION=$@
 read_nodes
 
 case "$ACTION" in
-   "ping"|"kill"|"init"|"update") do_simple_cmd $ACTION ;;
+   "ping"|"kill"|"init"|"update"|"wallet") do_simple_cmd $ACTION ;;
    "auto") do_auto ;;
    *) usage ;;
 esac

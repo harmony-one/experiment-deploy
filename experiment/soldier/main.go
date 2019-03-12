@@ -36,6 +36,13 @@ type configReq struct {
 	ConfigURL string `json:"configURL"`
 }
 
+type walletReq struct {
+	Interval string `json:"interval"`
+	Number   string `json:"number"`
+	Loop     string `json:"loop"`
+	Shards   string `json:"shards"`
+}
+
 var (
 	version string
 	builtBy string
@@ -113,6 +120,11 @@ func runClient() error {
 		append([]string{"-ip", setting.ip, "-port", setting.port, "-log_folder", globalSession.logFolder}, globalSession.txgenAdditionalArgs...)
 
 	return utils.RunCmd([]string{"LD_LIBRARY_PATH=."}, "./txgen", args...)
+}
+
+func startWallet(command string) error {
+	log.Println("starting wallet")
+	return utils.RunCmd(nil, "/bin/bash", "-c", command)
 }
 
 // Index ...
@@ -228,11 +240,44 @@ func killHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, res)
 }
 
+func walletHandler(w http.ResponseWriter, r *http.Request) {
+	var res string
+	if r.Method != http.MethodGet {
+		res = "Not Supported Method"
+		io.WriteString(w, res)
+		return
+	}
+	log.Println("Wallet Handler")
+
+	if r.Body == nil {
+		http.Error(w, "no data found in the update request", http.StatusBadRequest)
+		return
+	}
+
+	var wallet walletReq
+
+	err := json.NewDecoder(r.Body).Decode(&wallet)
+	if err != nil {
+		log.Printf("Json decode failed %v\n", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	cmd := fmt.Sprintf("./beat_tx.sh -i %v -n %v -c %v -s %v -k", wallet.Interval, wallet.Number, wallet.Loop, wallet.Shards)
+	if err := startWallet(cmd); err == nil {
+		res = "Succeeded"
+	} else {
+		res = "Failed"
+	}
+	io.WriteString(w, res)
+}
+
 func httpServer() {
 	http.HandleFunc("/init", initHandler)
 	http.HandleFunc("/ping", pingHandler)
 	http.HandleFunc("/update", updateHandler)
 	http.HandleFunc("/kill", killHandler)
+	http.HandleFunc("/wallet", walletHandler)
 
 	s := http.Server{
 		Addr:           fmt.Sprintf("0.0.0.0:1%v", setting.port),
@@ -248,6 +293,7 @@ func httpServer() {
 	log.Println("/init\t\t\tStart Benchmark/Txgen")
 	log.Println("/update\t\t\tDownload/Update binary")
 	log.Println("/kill\t\t\tKill Running Benchmark/Txgen")
+	log.Println("/wallet\t\t\tStart Wallet Process")
 
 	log.Fatalf(fmt.Sprintf("http server error: %v", s.ListenAndServe()))
 }
