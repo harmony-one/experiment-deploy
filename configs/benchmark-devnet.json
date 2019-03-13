@@ -53,7 +53,8 @@
     "leader": true,
     "client": true,
     "validator": true,
-    "soldier": true
+    "soldier": true,
+    "db": true
   },
   "dashboard": {
     "server": "34.222.41.95",

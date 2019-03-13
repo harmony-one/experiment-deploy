@@ -25,10 +25,11 @@ OPTIONS:
    -g group       set group name (leader, validator, client, all)
    -D filename    specify the distribution configuration file (default: $DC)
 
-NODES:
+ACTIONS:
    benchmark      download benchmark logs
    soldier        download soldier logs
    version        execute 'benchmark -version' command
+   db             download local leveldb
 EOT
    exit 1
 }
@@ -55,6 +56,9 @@ function download_logs
          ;;
       soldier)
          FILE=soldier*.log
+         ;;
+      db)
+         FILE=db*.tgz
          ;;
    esac
 
@@ -112,6 +116,10 @@ function run_cmd
       version)
          CMD='LD_LIBRARY_PATH=. /home/ec2-user/harmony -version'
          ;;
+      db)
+         CMD='tar cfz db-IP.tgz db'
+         NCMD=$CMD
+         ;;
    esac
 
    SECONDS=0
@@ -132,6 +140,9 @@ function run_cmd
             ${SSH} ${UNAME}@${IP[$i]} "$CMD" 2>&1 | tee $logdir/${IP[$i]}.log &
          else
             key=$(${GREP} ^$r ${CFG} | cut -f 3 -d ,)
+            if [ "$cmd" == "db" ]; then
+               CMD=$(echo $NCMD | sed "s/IP/${IP[$i]}/")
+            fi
             ${SSH} -i $DIR/../keys/$key.pem ${UNAME}@${IP[$i]} "$CMD" 2>&1 | tee $logdir/${IP[$i]}.log &
          fi
          (( count++ ))
@@ -180,6 +191,10 @@ case $ACTION in
       ;;
    version)
       run_cmd $ACTION $NODE
+      ;;
+   db)
+      run_cmd $ACTION $NODE
+      download_logs $ACTION $NODE
       ;;
    *) usage ;;
 esac

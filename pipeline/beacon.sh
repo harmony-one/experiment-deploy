@@ -56,6 +56,7 @@ function _do_download
    $DRYRUN ${SCP} $FN ec2-user@${JENKINS}:$WORKDIR
    $DRYRUN ${SSH} ec2-user@${JENKINS} "pushd $WORKDIR; ./$FN"
    echo "beacon workdir: $WORKDIR"
+   rm -f $FN
 }
 
 function _do_kill
