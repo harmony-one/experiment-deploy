@@ -35,7 +35,7 @@
   },
   "benchmark": {
     "shards": 1,
-    "duration": 600,
+    "duration": 30,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
@@ -58,7 +58,7 @@
     "reset": "false"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },
