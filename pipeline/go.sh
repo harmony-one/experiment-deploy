@@ -106,6 +106,7 @@ function do_launch
       -launch_profile launch-$PROFILE.json
       LAUNCH_OPT+=' -l raw_ip-leader.txt'
       num_leader=$(cat raw_ip-leader.txt | wc -l)
+      LEADER_IP=$(cat raw_ip-leader.txt)
    fi
 
    ./deploy.sh \
@@ -349,8 +350,8 @@ function do_reset
    fi
    if [ "${configs[explorer.reset]}" == "true" ]; then
       echo "resetting explorer ..."
-      echo curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
-      curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d '{"secret":"426669"}'
+      echo curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669", "leaderIp":""}'
+      curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d "{\"secret\":\"426669\", \"leaderIp\":\"$LEADER_IP\"}"
    fi
 }
 
