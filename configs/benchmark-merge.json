@@ -43,8 +43,8 @@
   },
   "benchmark": {
     "shards": 1,
-    "duration": 300,
-    "dashboard": false,
+    "duration": 600,
+    "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
     "minpeer": 45
@@ -57,16 +57,18 @@
   },
   "dashboard": {
     "server": "34.222.41.95",
+    "name": "0.harmony.one",
     "port": 3000,
     "reset": "false"
   },
   "explorer": {
     "server": "34.222.41.95",
+    "name": "0.harmony.one",
     "port": 4000,
-    "reset": "false"
+    "reset": "true"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },

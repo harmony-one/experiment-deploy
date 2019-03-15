@@ -63,6 +63,12 @@
      "ip": "myip",
      "port": 8000
   },
+  "wallet": {
+     "enable": "true",
+     "interval": "0.1",
+     "loop": "20",
+     "number": "10"
+  },
   "parallel": 110,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
