@@ -183,8 +183,8 @@ EOT
    SECONDS=0
 
    WAIT_FOR_LEADER_LAUNCH=3
-   WAIT_FOR_FAILED_NODES=20
-   CURL_TIMEOUT=10
+   WAIT_FOR_FAILED_NODES=60
+   CURL_TIMEOUT=20s
 
 # send commands to leaders at first
    local num_leader=$(grep leader $DIST | wc -l)
@@ -198,7 +198,7 @@ EOT
       esac
 
       [ -n "$VERBOSE" ] && echo $n =\> $CMD
-      $TIMEOUT -s SIGINT 20s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log
+      $TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log
 # wait for leaders up at first
       sleep $WAIT_FOR_LEADER_LAUNCH
    done
@@ -223,7 +223,7 @@ EOT
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         $TIMEOUT -s SIGINT ${CURL_TIMEOUT}s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
+         $TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
       done 
       wait
       (( group++ ))
@@ -250,9 +250,17 @@ EOT
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         $TIMEOUT -s SIGINT ${CURL_TIMEOUT}s $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
+         $TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
       done
+      wait
+
+      succeeded=$(find $LOGDIR/$cmd -name $cmd.*.log -type f -exec grep Succeeded {} \; | wc -l)
+      failed=$(( $NUM_NODES - $succeeded ))
+
+      echo $(date): $cmd succeeded/$succeeded, failed/$failed nodes, $(($duration / 60)) minutes and $(($duration % 60)) seconds
+
    fi
+
 }
 
 function do_update

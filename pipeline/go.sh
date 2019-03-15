@@ -227,8 +227,8 @@ function do_run
    TS=$(cat $CONFIG_FILE | $JQ .sessionID)
 
    # save the beacon chain multiaddress
-   mv -f bc-ma.txt logs/$TS
-   mv -f bootnode*-ma.txt logs/$TS
+   [ -e bc-ma.txt ] && mv -f bc-ma.txt logs/$TS
+   [ -e bootnode-ma.txt ] && mv -f bootnode*-ma.txt logs/$TS
 
    if [ "${configs[txgen.enable]}" == "true" ]; then
       if [ ${configs[client.num_vm]} -gt 0 ]; then
