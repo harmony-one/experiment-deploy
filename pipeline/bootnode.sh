@@ -8,10 +8,8 @@
 set -euo pipefail
 # IFS=$'\n\t'
 
-ME=`basename $0`
+ME=$(basename $0)
 NOW=$(date +%Y%m%d.%H%M%S)
-SSH="/usr/bin/ssh -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/california-key-benchmark.pem"
-SCP="/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/california-key-benchmark.pem"
 JENKINS=jenkins.harmony.one
 KEY=california-key-benchmark.pem
 
@@ -32,6 +30,7 @@ OPTIONS:
    -k key         the name of the key (default: $KEY)
    -P profile     the name of the test profile (default: $PROFILE)
    -n bootnode    the name of the bootnode (default: $BN)
+   -K p2pkey      the filename of the p2pkey (default: $P2PKEY)
 
 COMMANDS:
    download       download bootnode binary
@@ -59,6 +58,7 @@ function _do_download
    echo ${SSH} ec2-user@${SERVER}
    $DRYRUN ${SSH} ec2-user@${SERVER} "mkdir -p $WORKDIR; pushd $WORKDIR"
    $DRYRUN ${SCP} $FN ec2-user@${SERVER}:$WORKDIR
+   [ -e $P2PKEY ] && $DRYRUN ${SCP} $P2PKEY ec2-user@${SERVER}:$WORKDIR/bootnode-$PORT.key
    $DRYRUN ${SSH} ec2-user@${SERVER} "pushd $WORKDIR; ./$FN"
    rm -f $FN
    echo "bootnode workdir: $WORKDIR"
@@ -109,8 +109,9 @@ FOLDER=$USERID
 SERVER=${JENKINS}
 PROFILE=
 BN=bootnode
+P2PKEY=bootnode.key
 
-while getopts "hvGp:b:f:S:k:P:n:" option; do
+while getopts "hvGp:b:f:S:k:P:n:K:" option; do
    case $option in
       v) VERBOSE=-v ;;
       G) DRYRUN= ;;
@@ -121,6 +122,7 @@ while getopts "hvGp:b:f:S:k:P:n:" option; do
       k) KEY=$OPTARG ;;
       P) PROFILE=$OPTARG ;;
       n) BN=$OPTARG ;;
+      K) P2PKEY=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done
