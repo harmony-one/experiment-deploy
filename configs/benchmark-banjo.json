@@ -1,7 +1,7 @@
 {
-  "description": "aws 150 nodes on 1 shards, for testnet arpeggione release",
+  "description": "aws 150 nodes on 1 shards, for testnet banjo 1903 release",
   "client": {
-    "num_vm": 0,
+    "num_vm": 1,
     "type": "m5a.large",
     "regions": "pdx"
   },
@@ -44,7 +44,7 @@
   "benchmark": {
     "shards": 1,
     "duration": 30,
-    "dashboard": true,
+    "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
     "minpeer": 140
@@ -59,7 +59,7 @@
     "server": "34.222.41.95",
     "name": "0.harmony.one",
     "port": 3000,
-    "reset": "true"
+    "reset": "false"
   },
   "explorer": {
     "server": "34.222.41.95",

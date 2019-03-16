@@ -68,7 +68,7 @@
     "reset": "true"
   },
   "txgen": {
-     "enable": "false",
+     "enable": "true",
      "ip": "myip",
      "port": 8000
   },
