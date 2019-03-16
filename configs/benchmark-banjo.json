@@ -16,7 +16,8 @@
      "name": "b2.harmony.one",
      "port": 9876,
      "user": "ec2-user",
-     "key": "oregon-key-benchmark.pem"
+     "key": "oregon-key-benchmark.pem",
+     "p2pkey": "bootnode.key"
   },
   "bootnode1": {
      "enable": true,
@@ -24,7 +25,8 @@
      "name": "b1.harmony.one",
      "port": 9876,
      "user": "ec2-user",
-     "key": "virginia-key-benchmark.pem"
+     "key": "virginia-key-benchmark.pem",
+     "p2pkey": "bootnode1.key"
   },
   "beacon": {
      "enable": false,
@@ -56,14 +58,14 @@
     "soldier": true
   },
   "dashboard": {
-    "server": "34.222.41.95",
-    "name": "0.harmony.one",
+    "server": "54.213.59.51",
+    "name": "explorer.harmony.one",
     "port": 3000,
     "reset": "false"
   },
   "explorer": {
-    "server": "34.222.41.95",
-    "name": "0.harmony.one",
+    "server": "54.213.59.51",
+    "name": "explorer.harmony.one",
     "port": 4000,
     "reset": "true"
   },
