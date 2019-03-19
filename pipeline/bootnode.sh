@@ -138,7 +138,7 @@ fi
 SSH="/usr/bin/ssh -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
 SCP="/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
 
-WORKDIR=bootnode-$FOLDER-$PROFILE-$NOW
+WORKDIR=/bootnode/bootnode-$FOLDER-$PROFILE-$NOW
 
 case $CMD in
    download) _do_download ;;
