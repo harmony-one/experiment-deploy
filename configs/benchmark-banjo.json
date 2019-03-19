@@ -1,7 +1,7 @@
 {
-  "description": "aws 150 nodes on 1 shards, for testnet banjo 1903 release",
+  "description": "aws 64 nodes on 1 shards, for testnet banjo release",
   "client": {
-    "num_vm": 1,
+    "num_vm": 0,
     "type": "m5a.large",
     "regions": "pdx"
   },
@@ -45,11 +45,11 @@
   },
   "benchmark": {
     "shards": 1,
-    "duration": 300,
+    "duration": 30,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 140
+    "minpeer": 48
   },
   "logs": {
     "leader": true,
@@ -70,7 +70,7 @@
     "reset": "true"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },
