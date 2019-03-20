@@ -3,9 +3,9 @@
       {
          "region": "pdx",
          "type": "t3.small",
-         "ondemand": 25,
+         "ondemand": 5,
          "ami": "default",
-         "spot": 150
+         "spot": 43
       }
    ],
    "userdata": {
