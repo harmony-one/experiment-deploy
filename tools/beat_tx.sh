@@ -6,14 +6,14 @@ declare -A ACCOUNTS
 
 ACC=0xF6b57E6aaCb28abD5Bdf2ffe6f684be3DB8A6630
 KEY=a2466bae151cd504199b9d8ec98056884082f4c4ebce79434497c5dcff5013b6
-WALLET=./wallet
+# LD_LIBRARY_PATH=$(pwd)
+BINARY=./wallet
 COUNT=10000
 NUM=100
 SECOND=1
 ACCOUNT_FILE=accounts.txt
-SHARDS=2
+SHARDS=1
 WALLET_URL=https://s3-us-west-1.amazonaws.com/pub.harmony.one
-export LD_LIBRARY_PATH=$(pwd)
 
 function usage
 {
@@ -32,6 +32,8 @@ This script generate beat transaction based on profile.
    -c count       run count number of times (default: $COUNT)
    -n number      new number of account (default: $NUM)
    -s shards      number of shards (default: $SHARDS)
+   -k             skip download (default: $SKIP_DOWNLOAD)
+   -w binary      the name of the wallet binary (default: $BINARY)
 
 [ACTIONS]
    download       download the latest wallet from devnet
@@ -156,7 +158,7 @@ THEPWD=$(pwd)
 JQ='jq -r -M'
 SKIP_DOWNLOAD=false
 
-while getopts "hp:vi:t:f:c:n:s:k" option; do
+while getopts "hp:vi:t:f:c:n:s:kw:" option; do
    case $option in
       h) usage ;;
       p) PROFILE=$OPTARG ;;
@@ -168,6 +170,7 @@ while getopts "hp:vi:t:f:c:n:s:k" option; do
       n) NUM=$OPTARG ;;
       s) SHARDS=$OPTARG ;;
       k) SKIP_DOWNLOAD=true ;;
+      w) BINARY=$OPTARG ;;
    esac
 done
 
@@ -178,6 +181,9 @@ ACTION=$*
 if [ -z "$ACTION" ]; then
    ACTION=all
 fi
+
+# On node instance, we need to setup LD_LIBRARY_PATH
+WALLET=$BINARY
 
 case $ACTION in
    all) main ;;
