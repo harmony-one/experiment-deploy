@@ -20,6 +20,8 @@ This script automates the benchmark test based on profile.
                   supported profiles (${PROFILES[@]})
    -v             verbose output
    -k             keep all the instances, skip deinit (default: $KEEP)
+   -t             do not run txgen (default: $TXGEN), overriding profile configuration
+   -w             run wallet test (default: $WALLET)
 
 [ACTIONS]
    launch         do launch only
@@ -234,17 +236,17 @@ function do_run
    [ -e bc-ma.txt ] && mv -f bc-ma.txt logs/$TS
    [ -e bootnode-ma.txt ] && mv -f bootnode*-ma.txt logs/$TS
 
-   if [ "${configs[txgen.enable]}" == "true" ]; then
+   if [[ "$TXGEN" == "true" && "${configs[txgen.enable]}" == "true" ]]; then
       if [ ${configs[client.num_vm]} -gt 0 ]; then
          echo "running txgen on $(cat client.config.txt)"
          ./run_benchmark.sh -n 1 ${RUN_OPTS} -p $PROFILE -f client.config.txt -c init
          cp client.config.txt logs/$TS
          rm -f client.config.txt
       fi
-   fi
 
-   echo waiting for txgen benchmarking ${configs[benchmark.duration]} ...
-   sleep ${configs[benchmark.duration]}
+      echo waiting for txgen benchmarking ${configs[benchmark.duration]} ...
+      sleep ${configs[benchmark.duration]}
+   fi
 
 #  no need to kill as we will terminate the instances
 #   ./run_benchmark.sh -p $PROFILE kill &
@@ -402,10 +404,12 @@ THEPWD=$(pwd)
 KEEP=false
 TAG=${WHOAMI:-USER}
 JQ='jq -M -r'
+TXGEN=true
+WALLET=false
 
 declare -A configs
 
-while getopts "hp:vk" option; do
+while getopts "hp:vktw" option; do
    case $option in
       h) usage ;;
       p)
@@ -416,6 +420,8 @@ while getopts "hp:vk" option; do
          ;;
       v) VERBOSE=1 ;;
       k) KEEP=true ;;
+      t) TXGEN=false ;;
+      w) WALLET=true ;;
    esac
 done
 
