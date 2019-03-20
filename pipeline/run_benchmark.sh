@@ -38,6 +38,7 @@ OPTIONS:
    -P true/false     enable libp2p or not (default: $LIBP2P)
    -m minpeer        minimum number of peers required to start consensus (default: $MINPEER)
    -c                invoke client node (default: $CLIENT)
+   -s num            starting account index number (default: $ACCINDEX)
 
 ACTIONS:
    auto              automate the test execution based on test plan (TODO)
@@ -105,6 +106,7 @@ function read_nodes
 function do_simple_cmd
 {
    local cmd=$1
+   local start_index=$ACCINDEX
 
    mkdir -p $LOGDIR/$cmd
 
@@ -138,7 +140,7 @@ function do_simple_cmd
    "ip":"127.0.0.1",
    "port":"9000",
    "sessionID":"$SESSION",
-   "benchmarkArgs":"$benchmarkArgs -is_leader",
+   "benchmarkArgs":"$benchmarkArgs -is_leader -account_index ACCINDEX",
    "txgenArgs":"$txgenArgs"
    $CLIENT_JSON
 }
@@ -148,7 +150,7 @@ EOT
    "ip":"127.0.0.1",
    "port":"9000",
    "sessionID":"$SESSION",
-   "benchmarkArgs":"$benchmarkArgs",
+   "benchmarkArgs":"$benchmarkArgs -account_index ACCINDEX",
    "txgenArgs":"$txgenArgs"
    $CLIENT_JSON
 }
@@ -194,7 +196,10 @@ EOT
 
       case $cmd in
          init|update|wallet)
-            CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd.json" ;;
+            sed "s/ACCINDEX/$start_index/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
+            CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd-$ip.json"
+            (( start_index ++ ))
+            ;;
       esac
 
       [ -n "$VERBOSE" ] && echo $n =\> $CMD
@@ -219,7 +224,10 @@ EOT
 
          case $cmd in
             init|update|wallet)
-               CMD+=$" -d@$LOGDIR/$cmd/$cmd.json" ;;
+               sed "s/ACCINDEX/$start_index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+               CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
+               (( start_index ++ ))
+               ;;
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
@@ -312,13 +320,14 @@ MINPEER=10
 CLIENT=
 BNMA=
 LIBP2P=false
+ACCINDEX=0
 
 declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:vD:A:C:B:b:m:cM:N:P:" option; do
+while getopts "hp:f:i:a:n:vD:A:C:B:b:m:cM:N:P:s:" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -340,6 +349,7 @@ while getopts "hp:f:i:a:n:vD:A:C:B:b:m:cM:N:P:" option; do
       M) BEACONMA=$OPTARG ;;
       N) BNMA=$OPTARG ;;
       P) LIBP2P=$OPTARG ;;
+      s) ACCINDEX=$OPTARG ;;
       h|?) usage ;;
    esac
 done
