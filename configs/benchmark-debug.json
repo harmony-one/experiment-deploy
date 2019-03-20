@@ -47,7 +47,7 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 80
+    "minpeer": 35
   },
   "logs": {
     "leader": true,
