@@ -1,5 +1,5 @@
 {
-  "description": "aws 64 nodes on 1 shards, for testnet banjo release",
+  "description": "aws 48 nodes on 1 shards, for testnet banjo release",
   "client": {
     "num_vm": 0,
     "type": "m5a.large",
@@ -49,7 +49,7 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 48
+    "minpeer": 36
   },
   "logs": {
     "leader": true,

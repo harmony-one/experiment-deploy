@@ -3,16 +3,16 @@
       {
          "region": "pdx",
          "type": "t3.small",
-         "ondemand": 15,
+         "ondemand": 10,
          "ami": "default",
-         "spot": 15
+         "spot": 12
       },
       {
          "region": "iad",
          "type": "t3.small",
-         "ondemand": 15,
+         "ondemand": 10,
          "ami": "default",
-         "spot": 15
+         "spot": 12
       },
       {
          "region": "dub",
