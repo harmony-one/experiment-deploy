@@ -1,7 +1,7 @@
 {
   "description": "aws 50 nodes on 1 shard, run 300 seconds",
   "client": {
-    "num_vm": 1,
+    "num_vm": 0,
     "type": "t3.medium",
     "regions": "iad"
   },
@@ -16,7 +16,8 @@
      "name": "b2.harmony.one",
      "port": 9871,
      "user": "ec2-user",
-     "key": "oregon-key-benchmark.pem"
+     "key": "oregon-key-benchmark.pem",
+     "p2pkey": "b2-9871.key"
   },
   "bootnode1": {
      "enable": true,
@@ -24,7 +25,8 @@
      "name": "b1.harmony.one",
      "port": 9871,
      "user": "ec2-user",
-     "key": "virginia-key-benchmark.pem"
+     "key": "virginia-key-benchmark.pem",
+     "p2pkey": "b2-9871.key"
   },
   "beacon": {
      "enable": false,
@@ -68,7 +70,7 @@
     "reset": "true"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },
