@@ -34,6 +34,7 @@ This script generate beat transaction based on profile.
    -s shards      number of shards (default: $SHARDS)
    -k             skip download (default: $SKIP_DOWNLOAD)
    -w binary      the name of the wallet binary (default: $BINARY)
+   -p parallel    run wallet in paralle (default: $PARALLEL)
 
 [ACTIONS]
    download       download the latest wallet from devnet
@@ -92,7 +93,7 @@ function do_request_token
 {
    while read acc; do
       ${WALLET} getFreeToken --address $acc
-      sleep $SECOND
+      sleep 2
       echo get token $acc
    done < $ACCOUNT_FILE
 }
@@ -114,16 +115,20 @@ function do_beat
 
    local i=0
    while [ $i -lt $COUNT ]; do
-      from=${ACCOUNTS[$(expr $RANDOM % $NUM_ACCOUNTS)]}
-      to=${ACCOUNTS[$(expr $RANDOM % $NUM_ACCOUNTS)]}
-
-      local s=0
-      while [ $s -lt $SHARDS ]; do
-         echo transfering from $from to $to on shard $s
-         ${WALLET} transfer --from $from --to $to --amount 0.001 --shardID $s
-         sleep $SECOND
-         ((s++))
+      local p=0
+      while [ $p -lt $PARALLEL ]; do
+         local s=0
+         from=${ACCOUNTS[$(expr $RANDOM % $NUM_ACCOUNTS)]}
+         to=${ACCOUNTS[$(expr $RANDOM % $NUM_ACCOUNTS)]}
+         while [ $s -lt $SHARDS ]; do
+            echo transfering from $from to $to on shard $s
+            ${WALLET} transfer --from $from --to $to --amount 0.001234566789 --shardID $s &
+            ((s++))
+         done
+         ((p++))
       done
+      wait
+      sleep $SECOND
       ((i++))
    done
 }
@@ -157,8 +162,9 @@ VERBOSE=
 THEPWD=$(pwd)
 JQ='jq -r -M'
 SKIP_DOWNLOAD=false
+PARALLEL=20
 
-while getopts "hp:vi:t:f:c:n:s:kw:" option; do
+while getopts "hp:vi:t:f:c:n:s:kw:p:" option; do
    case $option in
       h) usage ;;
       p) PROFILE=$OPTARG ;;
@@ -171,6 +177,7 @@ while getopts "hp:vi:t:f:c:n:s:kw:" option; do
       s) SHARDS=$OPTARG ;;
       k) SKIP_DOWNLOAD=true ;;
       w) BINARY=$OPTARG ;;
+      p) PARALLEL=$OPTARG ;;
    esac
 done
 
