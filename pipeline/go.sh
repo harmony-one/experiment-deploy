@@ -316,13 +316,6 @@ function do_deinit
       ../azure/go-az.sh deinit &
    fi
 
-#   TAGS=( $(cat instance_output.txt  | cut -f1 -d' ' | sed s,^[1-9]-,, | sort -u) )
-#   for tag in ${TAGS[@]}; do
-#      ./aws-instances.sh -g $tag
-#      ./aws-instances.sh -G delete
-#   done
-#   ./terminate_instances.py 2>&1 > /dev/null &
-
    ./aws-instances.sh -G delete
    rm -f *.ids
 
