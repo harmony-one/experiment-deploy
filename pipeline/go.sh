@@ -306,6 +306,7 @@ function do_sync_logs
 {
    wait
    aws s3 sync logs/$TS s3://harmony-benchmark/logs/$TS 2>&1 > /dev/null
+   S3URL=s3://harmony-benchmark/logs/$TS
    echo s3://harmony-benchmark/logs/$TS
 }
 
@@ -379,6 +380,9 @@ function do_all
    if [ "$KEEP" == "false" ]; then
       do_deinit
    fi
+
+   echo all logs are uploaded to
+   echo $S3URL
 }
 
 ######### VARIABLES #########
