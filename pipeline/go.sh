@@ -161,19 +161,6 @@ function do_launch
    expense launch
 }
 
-function do_launch_beacon
-{
-   if [ "${configs[beacon.enable]}" != "true" ]; then
-      echo "skipping launch beacon node"
-      return
-   fi
-
-   logging launch beacon node
-   ./beacon.sh -G -p ${configs[beacon.port]} -s ${configs[benchmark.shards]} -f ${FOLDER}
-   expense beacon
-   BC_MA=$(cat bc-ma.txt)
-}
-
 function do_launch_bootnode
 {
    BN=${1:-bootnode}
@@ -198,13 +185,6 @@ function do_run
 
    if [ "${configs[benchmark.dashboard]}" == "true" ]; then
       RUN_OPTS+=" -D ${configs[dashboard.server]}:${configs[dashboard.port]}"
-   fi
-
-   if [ -n "$BC_MA" ]; then
-      RUN_OPTS+=" -M $BC_MA"
-   else
-      RUN_OPTS+=" -B ${configs[beacon.server]}"
-      RUN_OPTS+=" -b ${configs[beacon.port]}"
    fi
 
    if [ "${configs[libp2p]}" == "true" ]; then
@@ -232,8 +212,7 @@ function do_run
    [ ! -e $CONFIG_FILE ] && errexit "can't find profile config file : $CONFIG_FILE"
    TS=$(cat $CONFIG_FILE | $JQ .sessionID)
 
-   # save the beacon chain multiaddress
-   [ -e bc-ma.txt ] && mv -f bc-ma.txt logs/$TS
+   # save the bootnode multiaddress
    [ -e bootnode-ma.txt ] && mv -f bootnode*-ma.txt logs/$TS
 
    if [[ "$TXGEN" == "true" && "${configs[txgen.enable]}" == "true" ]]; then
@@ -329,7 +308,7 @@ function read_profile
 {
    logging reading benchmark config file: $BENCHMARK_FILE
 
-   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier logs.db parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch beacon.server beacon.port beacon.user beacon.key beacon.enable benchmark.minpeer explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server bootnode.key bootnode.enable bootnode.p2pkey bootnode1.port bootnode1.server bootnode1.key bootnode1.enable bootnode1.p2pkey wallet.enable )
+   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier logs.db parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch benchmark.minpeer explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server bootnode.key bootnode.enable bootnode.p2pkey bootnode1.port bootnode1.server bootnode1.key bootnode1.enable bootnode1.p2pkey wallet.enable )
 
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_FILE)
@@ -368,7 +347,6 @@ EOT
 
 function do_all
 {
-   do_launch_beacon
    do_launch_bootnode
    do_launch_bootnode bootnode1
    do_launch
@@ -440,7 +418,6 @@ case $ACTION in
    launch)
          do_launch ;;
    run)  
-         do_launch_beacon
          do_launch_bootnode
          do_launch_bootnode bootnode1
          do_run ;;

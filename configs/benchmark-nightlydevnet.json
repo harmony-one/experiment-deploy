@@ -26,13 +26,6 @@
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem"
   },
-  "beacon": {
-     "enable": false,
-     "server": "54.183.5.66",
-     "port": 9998,
-     "user": "ec2-user",
-     "key": "california-key-benchmark.pem"
-  },
   "azure": {
     "num_vm": 0,
     "regions": [

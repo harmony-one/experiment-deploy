@@ -31,9 +31,6 @@ OPTIONS:
    -D dashboard_ip   enable dashboard support, specify the ip address of dashboard server (default: $DASHBOARD)
    -A attacked_mode  enable attacked mode support (default mode: $ATTACK)
    -C cross_ratio    enable cross_shard_ratio (default ratio: $CROSSTX)
-   -B beacon IP      IP address of beacon chain (default: $BEACONIP)
-   -b beacon port    port number of beacon chain (default: $BEACONPORT)
-   -M multiaddr      the multiaddress of the beacon chain (default: $BEACONMA)
    -N multiaddr      the multiaddress of the boot node (default: $BNMA)
    -P true/false     enable libp2p or not (default: $LIBP2P)
    -m minpeer        minimum number of peers required to start consensus (default: $MINPEER)
@@ -110,25 +107,17 @@ function do_simple_cmd
 
    mkdir -p $LOGDIR/$cmd
 
-   if [ "$LIBP2P" == "true" ]; then
-      BEACON="-bootnodes $BNMA"
-   else
-      if [ -n "$BEACONMA" ]; then
-         BEACON="-bc_addr $BEACONMA"
-      else
-         BEACON="-bc $BEACONIP -bc_port $BEACONPORT"
-      fi
-   fi
+   BOOTNODES="-bootnodes $BNMA"
    end=0
    group=0
    case $cmd in
       init)
-# FIXME: is_beacon is temporary for testing libp2p, one shard only
-      benchmarkArgs="$BEACON -min_peers $MINPEER"
+# FIXME: is_beacon is temporary for one shard only test
+      benchmarkArgs="$BOOTNODES -min_peers $MINPEER"
       if [ "$LIBP2P" == "true" ]; then
          benchmarkArgs+=" -is_beacon"
       fi
-      txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BEACON"
+      txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BOOTNODES"
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
       fi
@@ -313,9 +302,6 @@ VERBOSE=
 DASHBOARD=
 ATTACK=2
 CROSSTX=30
-BEACONIP=54.183.5.66
-BEACONPORT=9999
-BEACONMA=
 MINPEER=10
 CLIENT=
 BNMA=
@@ -327,7 +313,7 @@ declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:vD:A:C:B:b:m:cM:N:P:s:" option; do
+while getopts "hp:f:i:a:n:vD:A:C:m:cN:P:s:" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -342,11 +328,8 @@ while getopts "hp:f:i:a:n:vD:A:C:B:b:m:cM:N:P:s:" option; do
       D) DASHBOARD="-metrics_report_url http://$OPTARG/report" ;;
       A) ATTACK=$OPTARG ;;
       C) CROSSTX=$OPTARG ;;
-      B) BEACONIP=$OPTARG ;;
-      b) BEACONPORT=$OPTARG ;;
       m) MINPEER=$OPTARG ;;
       c) CLIENT=true ;;
-      M) BEACONMA=$OPTARG ;;
       N) BNMA=$OPTARG ;;
       P) LIBP2P=$OPTARG ;;
       s) ACCINDEX=$OPTARG ;;
