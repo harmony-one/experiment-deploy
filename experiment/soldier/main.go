@@ -41,6 +41,7 @@ type walletReq struct {
 	Number   string `json:"number"`
 	Loop     string `json:"loop"`
 	Shards   string `json:"shards"`
+	URL      string `json:"url"`
 }
 
 var (
@@ -263,7 +264,7 @@ func walletHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cmd := fmt.Sprintf("./beat_tx.sh -i %v -n %v -c %v -s %v -k", wallet.Interval, wallet.Number, wallet.Loop, wallet.Shards)
+	cmd := fmt.Sprintf("./beat_tx_node.sh -i %v -n %v -c %v -s %v -W %v", wallet.Interval, wallet.Number, wallet.Loop, wallet.Shards, wallet.URL)
 	if err := startWallet(cmd); err == nil {
 		res = "Succeeded"
 	} else {

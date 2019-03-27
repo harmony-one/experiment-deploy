@@ -18,7 +18,7 @@ else
    MD5=md5sum
 fi
 
-SCRIPTS=( $BINDIR/md5sum-cs.txt tools/beat_tx.sh )
+SCRIPTS=( $BINDIR/md5sum-cs.txt tools/beat_tx_node.sh )
 
 function usage
 {
