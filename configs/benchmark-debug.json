@@ -50,14 +50,16 @@
     "db": true
   },
   "dashboard": {
-    "server": "34.222.41.95",
+    "server": "18.236.168.100",
+    "name": "1.harmony.one",
     "port": 3000,
     "reset": "false"
   },
   "explorer": {
-    "server": "34.222.41.95",
+    "server": "18.236.168.100",
+    "name": "1.harmony.one",
     "port": 4000,
-    "reset": "false"
+    "reset": "true"
   },
   "txgen": {
      "enable": "true",
