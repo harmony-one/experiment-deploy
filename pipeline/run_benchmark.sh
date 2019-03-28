@@ -243,7 +243,7 @@ EOT
 
          case $cmd in
             init|update|wallet)
-               CMD+=$" -d@$LOGDIR/$cmd/$cmd.json" ;;
+               CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD

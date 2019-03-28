@@ -34,7 +34,8 @@ This script generate beat transaction based on profile.
    -s shards      number of shards (default: $SHARDS)
    -k             skip download (default: $SKIP_DOWNLOAD)
    -w binary      the name of the wallet binary (default: $BINARY)
-   -p parallel    run wallet in paralle (default: $PARALLEL)
+   -P parallel    run wallet in parallel (default: $PARALLEL)
+   -D             run wallet againt devnet (default: $DEVNET)
 
 [ACTIONS]
    download       download the latest wallet from devnet
@@ -112,6 +113,14 @@ function _do_get_accounts
 function do_beat
 {
    _do_get_accounts
+   if [ "$DEVNET" == "true" ]; then
+      export RpcNodes=3.82.201.88:14555,184.73.150.187:14555,3.92.215.236:14555,54.86.53.231:14555
+      TRANSFER="--devnet"
+   else
+      export RpcNodes=
+      unset RpcNodes
+   fi
+
 
    local i=0
    while [ $i -lt $COUNT ]; do
@@ -122,7 +131,7 @@ function do_beat
          to=${ACCOUNTS[$(expr $RANDOM % $NUM_ACCOUNTS)]}
          while [ $s -lt $SHARDS ]; do
             echo transfering from $from to $to on shard $s
-            ${WALLET} transfer --from $from --to $to --amount 0.001234566789 --shardID $s &
+            ${WALLET} transfer --from $from --to $to --amount 0.001234566789 --shardID $s --inputData $(shuf -n5 /usr/share/dict/words | tr '\n' ' ' | base64) $TRANSFER &
             ((s++))
          done
          ((p++))
@@ -163,8 +172,9 @@ THEPWD=$(pwd)
 JQ='jq -r -M'
 SKIP_DOWNLOAD=false
 PARALLEL=20
+DEVNET=false
 
-while getopts "hp:vi:t:f:c:n:s:kw:p:" option; do
+while getopts "hp:vi:t:f:c:n:s:kw:P:D" option; do
    case $option in
       h) usage ;;
       p) PROFILE=$OPTARG ;;
@@ -177,7 +187,8 @@ while getopts "hp:vi:t:f:c:n:s:kw:p:" option; do
       s) SHARDS=$OPTARG ;;
       k) SKIP_DOWNLOAD=true ;;
       w) BINARY=$OPTARG ;;
-      p) PARALLEL=$OPTARG ;;
+      P) PARALLEL=$OPTARG ;;
+      D) DEVNET=true ;;
    esac
 done
 
