@@ -155,7 +155,6 @@ EOT
    SECONDS=0
 
    WAIT_FOR_LEADER_LAUNCH=3
-   WAIT_FOR_FAILED_NODES=60
    CURL_TIMEOUT=20s
 
 # send commands to leaders at first
@@ -213,9 +212,8 @@ EOT
 
    echo $(date): $cmd succeeded/$succeeded, failed/$failed nodes, $(($duration / 60)) minutes and $(($duration % 60)) seconds
 
-   if [ $failed -gt 0 ]; then
+   if [ $failed -gt 0 && "${configs[benchmark.init_try]}" == "true" ]; then
       echo "==== failed nodes, waiting for $WAIT_FOR_FAILED_NODES ===="
-      sleep $WAIT_FOR_FAILED_NODES
       find $LOGDIR/$cmd -size 0 -exec basename {} \; | tee $LOGDIR/$cmd/failed.ips
       echo "==== retrying ===="
       IPs=$(cat $LOGDIR/$cmd/failed.ips | sed "s/$cmd.\(.*\).log/\1/")
