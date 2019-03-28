@@ -3,14 +3,8 @@
 #TODO: parameter validation
 
 set -o pipefail
-set -x
-
-if [ "$(uname -s)" == "Darwin" ]; then
-   TIMEOUT=gtimeout
-else
-   TIMEOUT=timeout
-fi
-
+# set -x
+source ./common.sh
 
 function usage
 {
@@ -20,12 +14,11 @@ Usage: $ME [OPTIONS] ACTIONS
 
 OPTIONS:
    -h                print this usage
-   -p profile        name of test profile (default: $PROFILE)
    -f distribution   name of the distribution file (default: $DIST)
    -i ip_addresses   ip addresses of the soldiers to run command
                      delimited by ,
    -a application    name of the application to be updated
-   -p testplan       file name of the test plan
+   -p profile        profile of the benchmark test (default: $PROFILE)
    -n num            parallel process num in a group (default: $PARALLEL)
    -v                verbose
    -D dashboard_ip   enable dashboard support, specify the ip address of dashboard server (default: $DASHBOARD)
@@ -54,23 +47,11 @@ EOT
    exit 0
 }
 
-function logging
+function read_session
 {
-   echo $(date) : $@
-   SECONDS=0
-}
-
-function errexit
-{
-   logging "$@ . Exiting ..."
-   exit -1
-}
-
-function read_profile
-{
-   BUCKET=$($JQ .bucket $CONFIG_FILE)
-   FOLDER=$($JQ .folder $CONFIG_FILE)
-   SESSION=$($JQ .sessionID $CONFIG_FILE)
+   BUCKET=$($JQ .bucket $SESSION_FILE)
+   FOLDER=$($JQ .folder $SESSION_FILE)
+   SESSION=$($JQ .sessionID $SESSION_FILE)
 
    LOGDIR=${CACHE}logs/$SESSION
 
@@ -79,7 +60,7 @@ function read_profile
 
 function read_nodes
 {
-   read_profile
+   read_session
 
    if [ ! -f $DIST ]; then
       echo ERROR: $DIST does not exist or not readable
@@ -292,10 +273,9 @@ function do_auto
 }
 
 #################### VARS ####################
-JQ='jq -r -M'
-CONFIG_DIR=../configs
 PROFILE=tiny
-CONFIG_FILE=$CONFIG_DIR/profile-${PROFILE}.json
+SESSION_FILE=$CONFIG_DIR/profile-${PROFILE}.json
+BENCHMARK_FILE=$CONFIG_DIR/benchmark-${PROFILE}.json
 DIST=distribution_config.txt
 PARALLEL=100
 VERBOSE=
@@ -313,12 +293,14 @@ declare -A NODEIPS
 declare -A PORT
 
 #################### MAIN ####################
-while getopts "hp:f:i:a:n:vD:A:C:m:cN:P:s:" option; do
+while getopts "hf:i:a:n:vD:A:C:m:cN:P:s:p:" option; do
    case $option in
       p)
          PROFILE=$OPTARG
-         CONFIG_FILE=$CONFIG_DIR/profile-${PROFILE}.json
-         [ ! -e $CONFIG_FILE ] && errexit "can't find config file : $CONFIG_FILE"
+         SESSION_FILE=$CONFIG_DIR/profile-${PROFILE}.json
+         [ ! -e $SESSION_FILE ] && errexit "can't find session file : $SESSION_FILE"
+         BENCHMARK_FILE=$CONFIG_DIR/benchmark-${PROFILE}.json
+         [ ! -e $BENCHMARK_FILE ] && errexit "can't find benchmark config file : $BENCHMARK_FILE"
          ;;
       f) DIST=$OPTARG ;;
       i) IPS=$OPTARG ;;
@@ -342,6 +324,7 @@ shift $(($OPTIND-1))
 ACTION=$@
 
 read_nodes
+read_profile $BENCHMARK_FILE
 
 case "$ACTION" in
    "ping"|"kill"|"init"|"update"|"wallet") do_simple_cmd $ACTION ;;

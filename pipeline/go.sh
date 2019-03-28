@@ -3,6 +3,8 @@
 #set -euxo pipefail
 # set -x
 
+source ./common.sh
+
 RETRY_LAUNCH_TIME=10
 
 #############################
@@ -43,35 +45,6 @@ This script automates the benchmark test based on profile.
 
 EOT
    exit 0
-}
-
-function logging
-{
-   echo $(date) : $@
-   SECONDS=0
-}
-
-function expense
-{
-   local step=$1
-   local duration=$SECONDS
-   logging $step took $(( $duration / 60 )) minutes and $(( $duration % 60 )) seconds
-}
-
-function verbose
-{
-   [ $VERBOSE ] && echo $@
-}
-
-function errexit
-{
-   logging "$@ . Exiting ..."
-   exit -1
-}
-
-function _join
-{
-   local IFS="$1"; shift; echo "$*"; 
 }
 
 function do_launch
@@ -209,8 +182,8 @@ function do_run
 #      ./run_benchmark.sh -n ${configs[parallel]} -p $PROFILE wallet
 #   fi
 
-   [ ! -e $CONFIG_FILE ] && errexit "can't find profile config file : $CONFIG_FILE"
-   TS=$(cat $CONFIG_FILE | $JQ .sessionID)
+   [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+   TS=$(cat $SESSION_FILE | $JQ .sessionID)
 
    # save the bootnode multiaddress
    [ -e bootnode-ma.txt ] && mv -f bootnode*-ma.txt logs/$TS
@@ -236,8 +209,8 @@ function do_run
 function download_logs
 {
    if [ -z $TS ]; then
-      [ ! -e $CONFIG_FILE ] && errexit "can't find profile config file : $CONFIG_FILE"
-      TS=$(cat $CONFIG_FILE | $JQ .sessionID)
+      [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+      TS=$(cat $SESSION_FILE | $JQ .sessionID)
    fi
 
    logging download logs ...
@@ -270,8 +243,8 @@ function download_logs
 function analyze_logs
 {
    if [ -z $TS ]; then
-      [ ! -e $CONFIG_FILE ] && errexit "can't find profile config file : $CONFIG_FILE"
-      TS=$(cat $CONFIG_FILE | $JQ .sessionID)
+      [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+      TS=$(cat $SESSION_FILE | $JQ .sessionID)
    fi
 
    find logs/$TS -name leader-*.log > logs/$TS/all-leaders.txt
@@ -302,21 +275,6 @@ function do_deinit
    wait
    expense deinit
    cat ${THEPWD}/logs/$TS/tps.txt
-}
-
-function read_profile
-{
-   logging reading benchmark config file: $BENCHMARK_FILE
-
-   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode logs.leader logs.client logs.validator logs.soldier logs.db parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch benchmark.minpeer explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server bootnode.key bootnode.enable bootnode.p2pkey bootnode1.port bootnode1.server bootnode1.key bootnode1.enable bootnode1.p2pkey wallet.enable )
-
-   for k in ${keys[@]}; do
-      configs[$k]=$($JQ .$k $BENCHMARK_FILE)
-   done
-
-   echo "generating userdata file"
-   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA > $USERDATA.aws
-   verbose ${configs[@]}
 }
 
 function do_reset
@@ -365,10 +323,8 @@ function do_all
 
 ######### VARIABLES #########
 PROFILE=tiny
-ROOTDIR=$(dirname $0)/..
-CONFIG_DIR=$(realpath $ROOTDIR)/configs
 PROFILES=( $(ls $CONFIG_DIR/benchmark-*.json | sed -e "s,$CONFIG_DIR/benchmark-,,g" -e 's/.json//g') )
-CONFIG_FILE=$CONFIG_DIR/profile-${PROFILE}.json
+SESSION_FILE=$CONFIG_DIR/profile-${PROFILE}.json
 BENCHMARK_FILE=$CONFIG_DIR/benchmark-${PROFILE}.json
 BUCKET=unique-bucket-bin
 USERID=${WHOAMI:-$USER}
@@ -378,18 +334,15 @@ VERBOSE=
 THEPWD=$(pwd)
 KEEP=false
 TAG=${WHOAMI:-USER}
-JQ='jq -M -r'
 TXGEN=true
 WALLET=false
-
-declare -A configs
 
 while getopts "hp:vktw" option; do
    case $option in
       h) usage ;;
       p)
          PROFILE=$OPTARG
-         CONFIG_FILE=$CONFIG_DIR/profile-${PROFILE}.json
+         SESSION_FILE=$CONFIG_DIR/profile-${PROFILE}.json
          BENCHMARK_FILE=$CONFIG_DIR/benchmark-${PROFILE}.json
          [ ! -e $BENCHMARK_FILE ] && errexit "can't find benchmark config file : $BENCHMARK_FILE"
          ;;
@@ -408,7 +361,9 @@ if [ -z "$ACTION" ]; then
    ACTION=all
 fi
 
-read_profile
+read_profile $BENCHMARK_FILE
+gen_userdata $BUCKET $FOLDER $USERDATA
+
 case $ACTION in
    all)  
          do_all ;;
