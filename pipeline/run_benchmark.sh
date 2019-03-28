@@ -96,7 +96,7 @@ function do_simple_cmd
 # FIXME: is_beacon is temporary for one shard only test
       benchmarkArgs="$BOOTNODES -min_peers $MINPEER"
       if [ "$LIBP2P" == "true" ]; then
-         benchmarkArgs+=" -is_beacon"
+         benchmarkArgs+=" -is_genesis"
       fi
       txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BOOTNODES"
       if [ -n "$DASHBOARD" ]; then
@@ -214,7 +214,7 @@ EOT
 
    if [ $failed -gt 0 && "${configs[benchmark.init_try]}" == "true" ]; then
       echo "==== failed nodes, waiting for $WAIT_FOR_FAILED_NODES ===="
-      find $LOGDIR/$cmd -size 0 -exec basename {} \; | tee $LOGDIR/$cmd/failed.ips
+      find $LOGDIR/$cmd/\*.log -size 0 -exec basename {} \; | tee $LOGDIR/$cmd/failed.ips
       echo "==== retrying ===="
       IPs=$(cat $LOGDIR/$cmd/failed.ips | sed "s/$cmd.\(.*\).log/\1/")
       for ip in $IPs; do
@@ -222,7 +222,7 @@ EOT
 
          case $cmd in
             init|update|wallet)
-               CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
+               CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json" ;;
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
