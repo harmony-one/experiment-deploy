@@ -6,8 +6,8 @@
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 1,
-    "type": "t3.large",
+    "num_vm": 4,
+    "type": "t3.medium",
     "regions": "iad"
   },
   "bootnode": {
@@ -32,7 +32,7 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 15
+    "minpeer": 5
   },
   "logs": {
     "leader": true,

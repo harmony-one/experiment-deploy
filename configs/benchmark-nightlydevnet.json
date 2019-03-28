@@ -1,5 +1,5 @@
 {
-  "description": "aws 150 nodes on 1 shards, for nightly test",
+  "description": "aws 160 nodes on 4 shards, 4 regions, for nightly test",
   "client": {
     "num_vm": 1,
     "type": "t3.medium",
@@ -8,7 +8,7 @@
   "leader": {
     "num_vm": 1,
     "type": "t3.medium",
-    "regions": "pdx"
+    "regions": "pdx, sfo, iad, sin"
   },
   "bootnode": {
      "enable": true,
@@ -35,13 +35,13 @@
     ]
   },
   "benchmark": {
-    "shards": 1,
+    "shards": 4,
     "duration": 600,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
     "init_retry": false,
-    "minpeer": 40
+    "minpeer": 30
   },
   "logs": {
     "leader": true,

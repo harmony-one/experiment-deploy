@@ -1,12 +1,12 @@
 {
-  "description": "aws 25 nodes on 1 shards, run 600 seconds",
+  "description": "aws 28 nodes on 4 shards, 1 region, run 600 seconds",
   "client": {
     "num_vm": 1,
     "type": "t3.micro",
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 1,
+    "num_vm": 4,
     "type": "t3.medium",
     "regions": "iad"
   },
@@ -35,12 +35,12 @@
     ]
   },
   "benchmark": {
-    "shards": 1,
+    "shards": 4,
     "duration": 600,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 20
+    "minpeer": 6
   },
   "logs": {
     "leader": true,

@@ -1,14 +1,14 @@
 {
-  "description": "aws 50 nodes on 1 shards, for devnet",
+  "description": "aws 180 nodes on 4 shards, 2 regions, for devnet",
   "client": {
     "num_vm": 1,
     "type": "t3.medium",
     "regions": "pdx"
   },
   "leader": {
-    "num_vm": 1,
+    "num_vm": 2,
     "type": "t3.medium",
-    "regions": "pdx"
+    "regions": "pdx, iad"
   },
   "bootnode": {
      "enable": true,
@@ -35,12 +35,12 @@
     ]
   },
   "benchmark": {
-    "shards": 1,
+    "shards": 4,
     "duration": 300,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 150
+    "minpeer": 40
   },
   "logs": {
     "leader": true,

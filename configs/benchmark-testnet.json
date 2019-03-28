@@ -26,7 +26,7 @@
     ]
   },
   "benchmark": {
-    "shards": 2,
+    "shards": 1,
     "duration": 30,
     "dashboard": true,
     "crosstx": 30,
