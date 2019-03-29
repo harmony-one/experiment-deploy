@@ -2,13 +2,13 @@
   "description": "aws 100 nodes on 2 shards, 2 regions, run 300 seconds",
   "client": {
     "num_vm": 1,
-    "type": "t3.medium",
+    "type": "t3.large",
     "regions": "iad"
   },
   "leader": {
     "num_vm": 1,
-    "type": "t3.medium",
-    "regions": "iad, pdx"
+    "type": "t3.large",
+    "regions": "iad,pdx"
   },
   "bootnode": {
      "enable": true,
@@ -50,7 +50,7 @@
     "client": true,
     "validator": true,
     "soldier": true,
-    "db": true
+    "db": false
   },
   "dashboard": {
     "server": "18.236.168.100",

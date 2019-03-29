@@ -167,7 +167,7 @@ EOT
          init|update|wallet)
             sed "s/ACCINDEX/$start_index/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
             CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd-$ip.json"
-            (( start_index ++ ))
+            (( start_index += $PEER_PER_SHARD ))
             ;;
       esac
 
@@ -177,6 +177,7 @@ EOT
       sleep $WAIT_FOR_LEADER_LAUNCH
    done
 
+   start_index=1
    while [ $end -lt $NUM_NODES ]; do
       start=$(( $PARALLEL * $group + $num_leader + 1))
       end=$(( $PARALLEL + $start - 1 ))
@@ -196,6 +197,10 @@ EOT
                sed "s/ACCINDEX/$start_index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
                CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
                (( start_index ++ ))
+               mod=$(( $start_index % $PEER_PER_SHARD ))
+               if [ $mod == 0 ]; then
+                  (( start_index ++ ))
+               fi
                ;;
          esac
 
@@ -212,7 +217,7 @@ EOT
 
    echo $(date): $cmd succeeded/$succeeded, failed/$failed nodes, $(($duration / 60)) minutes and $(($duration % 60)) seconds
 
-   if [ $failed -gt 0 && "${configs[benchmark.init_try]}" == "true" ]; then
+   if [[ $failed -gt 0 && "${configs[benchmark.init_try]}" == "true" ]]; then
       echo "==== failed nodes, waiting for $WAIT_FOR_FAILED_NODES ===="
       find $LOGDIR/$cmd/\*.log -size 0 -exec basename {} \; | tee $LOGDIR/$cmd/failed.ips
       echo "==== retrying ===="
@@ -285,6 +290,8 @@ CLIENT=
 BNMA=
 LIBP2P=false
 ACCINDEX=0
+# FIXME: current harmony code use account index to determine if the node is a leader or not
+PEER_PER_SHARD=50
 
 declare -A NODES
 declare -A NODEIPS

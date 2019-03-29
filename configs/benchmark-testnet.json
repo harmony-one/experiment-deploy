@@ -1,7 +1,7 @@
 {
   "description": "aws 40 nodes on 1 shards, 2 regions, for devnet",
   "client": {
-    "num_vm": 0,
+    "num_vm": 1,
     "type": "r5.large",
     "regions": "iad"
   },
@@ -52,7 +52,7 @@
     "reset": "false"
   },
   "txgen": {
-     "enable": "false",
+     "enable": "true",
      "ip": "myip",
      "port": 8000
   },

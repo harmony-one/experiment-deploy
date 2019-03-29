@@ -1,14 +1,14 @@
 {
   "description": "aws 130 nodes on 3 shards, 3 region, run 600 seconds",
   "client": {
-    "num_vm": 0,
+    "num_vm": 1,
     "type": "t3.medium",
     "regions": "iad"
   },
   "leader": {
     "num_vm": 1,
     "type": "t3.medium",
-    "regions": "iad, sfo, pdx"
+    "regions": "iad,sfo,pdx"
   },
   "bootnode": {
      "enable": true,
@@ -64,7 +64,7 @@
     "reset": "true"
   },
   "txgen": {
-     "enable": "false",
+     "enable": "true",
      "ip": "myip",
      "port": 8000
   },

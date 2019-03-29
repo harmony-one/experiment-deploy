@@ -53,6 +53,8 @@ function do_launch
 
    local LAUNCH_OPT=
 
+   set -x
+
    if [ ${configs[client.num_vm]} -gt 0 ]; then
       logging launching ${configs[client.num_vm]} non-standard client: ${configs[client.type]}
       ../bin/instance \
@@ -64,7 +66,7 @@ function do_launch
       -output instance_ids_output-client.txt \
       -tag_file instance_output-client.txt \
       -tag ${TAG}-powerclient \
-      -launch_profile launch-$PROFILE.json
+      -launch_profile launch-${PROFILE}.json
    fi
 
    if [ ${configs[leader.num_vm]} -gt 0 ]; then
@@ -78,10 +80,10 @@ function do_launch
       -output instance_ids_output-leader.txt \
       -tag_file instance_output-leader.txt \
       -tag ${TAG}-leader \
-      -launch_profile launch-$PROFILE.json
+      -launch_profile launch-${PROFILE}.json
       LAUNCH_OPT+=' -l raw_ip-leader.txt'
-      num_leader=$(cat raw_ip-leader.txt | wc -l)
-      LEADER_IP=$(cat raw_ip-leader.txt | awk ' { print $1 } ')
+      num_leader=$(wc -l raw_ip-leader.txt)
+      LEADER_IP=( $(cat raw_ip-leader.txt | awk ' { print $1 } ') )
    fi
 
    ./deploy.sh \
@@ -102,7 +104,7 @@ function do_launch
    if [ ${configs[leader.num_vm]} -gt 0 ]; then
       cat instance_ids_output-leader.txt >> instance_ids_output.txt
       cat instance_output-leader.txt >> instance_output.txt
-      rm instance_ids_output-leader.txt instance_output-leader.txt raw_ip-leader.txt &
+      rm instance_ids_output-leader.txt instance_output-leader.txt &
    fi
 
    echo waiting for instances launch ${configs[flow.wait_for_launch]} ...
@@ -293,10 +295,14 @@ EOT
       echo "resetting explorer ..."
       echo curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669", "leaderIp":""}'
 # TODO (leo): support multiple leaders when multi-shards are implemented
+      for l in "${LEADER_IP[@]}"; do
+         leaders+="$l:5000",
+      done
+      leaders=$(echo $leaders | sed s/,$//)
       cat > explorer.reset.json<<EOT
 {
    "secret":"426669",
-   "leaders":["$LEADER_IP:5000"]
+   "leaders":[$leaders]
 }
 EOT
       curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
