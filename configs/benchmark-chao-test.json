@@ -6,7 +6,7 @@
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 4,
+    "num_vm": 1,
     "type": "t3.medium",
     "regions": "iad"
   },
@@ -32,7 +32,7 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 5
+    "minpeer": 15
   },
   "logs": {
     "leader": true,

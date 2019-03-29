@@ -3,8 +3,8 @@
       {
          "region": "iad",
          "type": "t3.micro",
-         "ondemand": 3,
-         "spot": 25
+         "ondemand": 1,
+         "spot": 15
       }
    ],
    "userdata": {

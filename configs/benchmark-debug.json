@@ -1,12 +1,12 @@
 {
-  "description": "aws 100 nodes on 4 shards, 2 regions, run 300 seconds",
+  "description": "aws 100 nodes on 2 shards, 2 regions, run 300 seconds",
   "client": {
     "num_vm": 1,
     "type": "t3.medium",
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 2,
+    "num_vm": 1,
     "type": "t3.medium",
     "regions": "iad, pdx"
   },
@@ -16,7 +16,8 @@
      "name": "b2.harmony.one",
      "port": 9873,
      "user": "ec2-user",
-     "key": "oregon-key-benchmark.pem"
+     "key": "oregon-key-benchmark.pem",
+     "p2pkey": "b2-9873.key"
   },
   "bootnode1": {
      "enable": true,
@@ -24,7 +25,8 @@
      "name": "b1.harmony.one",
      "port": 9873,
      "user": "ec2-user",
-     "key": "virginia-key-benchmark.pem"
+     "key": "virginia-key-benchmark.pem",
+     "p2pkey": "b1-9873.key"
   },
   "azure": {
     "num_vm": 0,
@@ -35,12 +37,13 @@
     ]
   },
   "benchmark": {
-    "shards": 4,
+    "shards": 2,
     "duration": 300,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 20
+    "minpeer": 30,
+    "init_retry": false
   },
   "logs": {
     "leader": true,
@@ -59,7 +62,7 @@
     "server": "18.236.168.100",
     "name": "1.harmony.one",
     "port": 4000,
-    "reset": "true"
+    "reset": "false"
   },
   "txgen": {
      "enable": "true",

@@ -16,7 +16,8 @@
      "name": "b2.harmony.one",
      "port": 9872,
      "user": "ec2-user",
-     "key": "oregon-key-benchmark.pem"
+     "key": "oregon-key-benchmark.pem",
+     "p2pkey", "b2-9872.key"
   },
   "bootnode1": {
      "enable": true,
@@ -24,7 +25,8 @@
      "name": "b1.harmony.one",
      "port": 9872,
      "user": "ec2-user",
-     "key": "virginia-key-benchmark.pem"
+     "key": "virginia-key-benchmark.pem",
+     "p2pkey", "b1-9872.key"
   },
   "azure": {
     "num_vm": 0,

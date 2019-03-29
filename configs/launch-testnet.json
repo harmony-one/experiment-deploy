@@ -3,14 +3,14 @@
       {
          "region": "pdx",
          "type": "t3.small",
-         "ondemand": 15,
+         "ondemand": 10,
          "ami": "default",
          "spot": 10
       },
       {
          "region": "iad",
          "type": "t3.small",
-         "ondemand": 15,
+         "ondemand": 10,
          "spot": 10
       }
    ],

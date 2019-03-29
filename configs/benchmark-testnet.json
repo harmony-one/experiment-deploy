@@ -1,5 +1,5 @@
 {
-  "description": "aws 50 nodes on 2 shards, for devnet",
+  "description": "aws 40 nodes on 1 shards, 2 regions, for devnet",
   "client": {
     "num_vm": 0,
     "type": "r5.large",
@@ -7,8 +7,8 @@
   },
   "leader": {
     "num_vm": 1,
-    "type": "m5a.large",
-    "regions": "pdx,iad"
+    "type": "t3.medium",
+    "regions": "pdx"
   },
   "bootnode": {
      "enable": false,
@@ -31,7 +31,7 @@
     "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
-    "minpeer": 20
+    "minpeer": 30
   },
   "logs": {
     "leader": true,
@@ -43,13 +43,13 @@
     "server": "54.213.59.51",
     "name": "explorer.harmony.one",
     "port": 3000,
-    "reset": "true"
+    "reset": "false"
   },
   "explorer": {
     "server": "54.213.59.51",
     "name": "explorer.harmony.one",
     "port": 4000,
-    "reset": "true"
+    "reset": "false"
   },
   "txgen": {
      "enable": "false",
