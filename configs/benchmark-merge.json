@@ -1,13 +1,13 @@
 {
   "description": "aws 130 nodes on 3 shards, 3 region, run 600 seconds",
   "client": {
-    "num_vm": 1,
+    "num_vm": 0,
     "type": "t3.medium",
     "regions": "iad"
   },
   "leader": {
     "num_vm": 1,
-    "type": "t3.medium",
+    "type": "t3.large",
     "regions": "iad,sfo,pdx"
   },
   "bootnode": {
@@ -60,11 +60,11 @@
   "explorer": {
     "server": "34.222.41.95",
     "name": "0.harmony.one",
-    "port": 4000,
+    "port": 4444,
     "reset": "true"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },

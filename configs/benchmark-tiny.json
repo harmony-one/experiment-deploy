@@ -56,7 +56,7 @@
   },
   "explorer": {
     "server": "54.213.59.51",
-    "port": 4000,
+    "port": 4444,
     "reset": "false"
   },
   "txgen": {

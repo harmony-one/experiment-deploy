@@ -61,7 +61,7 @@
   "explorer": {
     "server": "18.236.168.100",
     "name": "1.harmony.one",
-    "port": 4000,
+    "port": 4444,
     "reset": "false"
   },
   "txgen": {
