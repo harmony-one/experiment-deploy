@@ -1,5 +1,5 @@
 {
-  "description": "aws 180 nodes on 4 shards, 4 regions, for nightly test",
+  "description": "aws 200 nodes on 4 shards, 4 regions, for nightly test, 600 seconds",
   "client": {
     "num_vm": 1,
     "type": "t3.medium",
