@@ -1,14 +1,42 @@
 {
-  "description": "aws 17 nodes on 1 shards, 1 region, run 600 seconds",
+  "description": "aws 50 nodes on 1 shards, 1 region, run 600 seconds",
   "client": {
-    "num_vm": 1,
-    "type": "t3.micro",
-    "regions": "iad"
-  },
-  "leader": {
     "num_vm": 1,
     "type": "t3.medium",
     "regions": "iad"
+  },
+  "leader": {
+    "num_vm": 0,
+    "type": "t3.medium",
+    "regions": "iad"
+  },
+  "managednodes": {
+     "nodes": [
+      {
+         "role": "leader",
+         "ip": "54.213.43.194",
+         "port": 9000,
+         "key": "oregon-key-benchmark.pem"
+      },
+      {
+         "role": "leader",
+         "ip": "100.26.90.187",
+         "port": 9000,
+         "key": "virginia-key-benchmark.pem"
+      },
+      {
+         "role": "archival",
+         "ip": "54.213.43.194",
+         "port": 19000,
+         "key": "oregon-key-benchmark.pem"
+      },
+      {
+         "role": "archival",
+         "ip": "100.26.90.187",
+         "port": 19000,
+         "key": "virginia-key-benchmark.pem"
+      }
+     ]
   },
   "bootnode": {
      "enable": true,
