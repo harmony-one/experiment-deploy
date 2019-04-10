@@ -2,6 +2,7 @@
 # this script is used to generate the binary of soldier
 # TODO: add error and parameter checking
 
+export GO111MODULE=on
 declare -A SRC
 SRC[soldier]=experiment/soldier/main.go
 SRC[instance]=aws/instance/instance.go
