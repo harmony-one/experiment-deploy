@@ -6,7 +6,7 @@ cd /home/ec2-user
 BUCKET=unique-bucket-bin
 FOLDER=leo/
 
-TESTBIN=( txgen soldier harmony libbls384.so libmcl.so wallet beat_tx_node.sh )
+TESTBIN=( txgen soldier harmony libbls384.so libmcl.so wallet beat_tx_node.sh db.tgz )
 
 for bin in "${TESTBIN[@]}"; do
    curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
@@ -91,6 +91,13 @@ ENDEND
    )
 }
 
+function restore_db {
+   local dbdir=db/harmony_${PUB_IP}_${NODE_PORT}
+
+   mkdir -p $dbdir
+   [ -e db.tgz ] && tar xfz db.tgz -C $dbdir && rm -f db.tgz
+}
+
 IS_AWS=$(curl -s -I http://169.254.169.254/latest/meta-data/instance-type -o /dev/null -w "%{http_code}")
 if [ "$IS_AWS" != "200" ]; then
 # NOT AWS, Assuming Azure
@@ -115,6 +122,7 @@ ENDEND
    yum -y install libstdc++ libgcc zlib openssl gmp
 
    setup_metricbeat
+
 fi
 
 NODE_PORT=9000
@@ -123,6 +131,9 @@ SOLDIER_PORT=1$NODE_PORT
 # Kill existing soldier/node
 fuser -k -n tcp $SOLDIER_PORT
 fuser -k -n tcp $NODE_PORT
+
+# restore blockchain db
+restore_db
 
 # Run soldier
 ./soldier -ip $PUB_IP -port $NODE_PORT > soldier-${PUB_IP}.log 2>&1 &
