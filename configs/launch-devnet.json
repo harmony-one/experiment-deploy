@@ -5,14 +5,14 @@
          "type": "t3.small",
          "ondemand": 10,
          "ami": "default",
-         "spot": 80
+         "spot": 85
       },
       {
          "region": "iad",
          "type": "t3.small",
          "ondemand": 10,
          "ami": "default",
-         "spot": 80
+         "spot": 85
       }
    ],
    "userdata": {

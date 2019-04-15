@@ -1,13 +1,13 @@
 {
-  "description": "aws 180 nodes on 4 shards, 2 regions, for devnet",
+  "description": "aws 190 nodes on 4 shards, 2 regions, for devnet",
   "client": {
-    "num_vm": 1,
+    "num_vm": 0,
     "type": "t3.medium",
     "regions": "pdx"
   },
   "leader": {
     "num_vm": 2,
-    "type": "t3.medium",
+    "type": "t3.large",
     "regions": "pdx,iad"
   },
   "bootnode": {
@@ -38,7 +38,7 @@
   },
   "benchmark": {
     "shards": 4,
-    "duration": 300,
+    "duration": 30,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
@@ -61,10 +61,10 @@
     "server": "34.222.41.95",
     "name": "0.harmony.one",
     "port": 4444,
-    "reset": "false"
+    "reset": "true"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },
