@@ -14,19 +14,19 @@
      "enable": true,
      "server": "54.213.43.194",
      "name": "b2.harmony.one",
-     "port": 9874,
+     "port": 9875,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
-     "p2pkey": "b2-9874.key"
+     "p2pkey": "b2-9875.key"
   },
   "bootnode1": {
      "enable": true,
      "server": "100.26.90.187",
      "name": "b1.harmony.one",
-     "port": 9874,
+     "port": 9875,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
-     "p2pkey": "b1-9874.key"
+     "p2pkey": "b1-9875.key"
   },
   "azure": {
     "num_vm": 0,

@@ -42,7 +42,7 @@
      "enable": true,
      "server": "54.213.43.194",
      "name": "b2.harmony.one",
-     "port": 9874,
+     "port": 9873,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem"
   },
@@ -50,7 +50,7 @@
      "enable": true,
      "server": "100.26.90.187",
      "name": "b1.harmony.one",
-     "port": 9874,
+     "port": 9873,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem"
   },

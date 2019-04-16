@@ -17,7 +17,7 @@
      "port": 9876,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
-     "p2pkey": "bootnode.key"
+     "p2pkey": "b2-9876.key"
   },
   "bootnode1": {
      "enable": true,
@@ -26,7 +26,7 @@
      "port": 9876,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
-     "p2pkey": "bootnode1.key"
+     "p2pkey": "b1-9876.key"
   },
   "azure": {
     "num_vm": 0,
