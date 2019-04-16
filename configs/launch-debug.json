@@ -5,14 +5,7 @@
          "type": "t3.micro",
          "ondemand": 5,
          "spot": 40
-      },
-      {
-         "region": "pdx",
-         "type": "t3.micro",
-         "ondemand": 5,
-         "spot": 40
       }
-
    ],
    "userdata": {
       "name": "http",

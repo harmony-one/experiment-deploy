@@ -1,14 +1,14 @@
 {
   "description": "aws 100 nodes on 2 shards, 2 regions, run 300 seconds",
   "client": {
-    "num_vm": 1,
+    "num_vm": 0,
     "type": "t3.large",
     "regions": "iad"
   },
   "leader": {
     "num_vm": 1,
     "type": "t3.large",
-    "regions": "iad,pdx"
+    "regions": "iad"
   },
   "bootnode": {
      "enable": true,
@@ -37,8 +37,8 @@
     ]
   },
   "benchmark": {
-    "shards": 2,
-    "duration": 300,
+    "shards": 1,
+    "duration": 30,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
@@ -62,10 +62,10 @@
     "server": "18.236.168.100",
     "name": "1.harmony.one",
     "port": 4444,
-    "reset": "false"
+    "reset": "true"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },
