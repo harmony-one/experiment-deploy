@@ -1,5 +1,5 @@
 {
-  "description": "aws 195 nodes on 4 shard in 2 region",
+  "description": "aws 184 nodes on 4 shard in 2 region, reserve 16 account index for external node runners",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
@@ -58,8 +58,8 @@
     "reset": "false"
   },
   "explorer": {
-    "server": "34.222.41.95",
-    "name": "0.harmony.one",
+    "server": "54.213.59.51",
+    "name": "explorer.harmony.one",
     "port": 4444,
     "reset": "true"
   },
@@ -71,7 +71,8 @@
   "parallel": 100,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
-     "wait_for_launch": 30
+     "wait_for_launch": 30,
+     "reserved_account": ",46,47,48,49,96,97,98,99,146,147,148,149,196,197,198,199,"
   },
   "libp2p": true
 }
