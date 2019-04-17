@@ -261,9 +261,14 @@ function do_sync_logs
 {
    wait
    logging sync log to s3
-   aws s3 sync logs/$TS s3://harmony-benchmark/logs/$TS 2>&1 > /dev/null
-   S3URL=s3://harmony-benchmark/logs/$TS
-   echo s3://harmony-benchmark/logs/$TS
+   # optimize S3 log folder path such that all logs for the same day are stored in a signle folder
+   YEAR=${TS:0:4}
+   MONTH=${TS:4:2}
+   DAY=${TS:6:2}
+   TIME=${TS:9:6}
+   aws s3 sync logs/$TS s3://harmony-benchmark/logs/$YEAR/$MONTH/$DAY/$TIME 2>&1 > /dev/null
+   S3URL=s3://harmony-benchmark/logs/$YEAR/$MONTH/$DAY/$TIME
+   echo s3://harmony-benchmark/logs/$YEAR/$MONTH/$DAY/$TIME
    expense s3_sync
 }
 
