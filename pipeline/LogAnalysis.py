@@ -4,12 +4,32 @@ Harmony S3 log Analysis
 Author: Andy Bo Wu
 Date: Apr 9, 2019
 
-VERSION:
+
+
+==== USAGE ====
+
+Finding `panic` ERROR entry on a DAY 
+$python3 LogAnalysis.py 2019/04/17
+
+Finding `panic` ERROR entry on a month
+$python3 LogAnalysis.py 2019/04
+
+Fing `panic` ERROR entry on a year 
+(Ideally we should not do so, cuz the total size of the log files will be HUGE!!)
+$python3 LogAnalysis.py 2019
+
+==== VERSION ====
+
 1. APR 9, 2019     
     * Created the script
+
 2. APR 16, 2019    
     * Added an argument parameter such that this script can be invoked in cmd
     * Re-defined the S3 output folder such that all test results are stored in the
+
+
+
+
 """
 
 # !/usr/bin/env python3
@@ -38,12 +58,12 @@ def run_query(query, database, s3_output):
 #s3_input = 's3://harmony-benchmark/logs/20190402.042758/validator/ForAndyTest/'
 #s3_input = 's3://harmony-benchmark/logs/20190417.030315/validator/'
 s3_input = 's3://harmony-benchmark/logs/' + sys.argv[1]
-print(s3_input)
+print("s3_input path: ", s3_input)
 
 # https://stackoverflow.com/questions/45313763/athena-query-fails-with-boto3-s3-location-invalid?rq=1
 s3_output = 's3://athena-harmony-benchmark/logs/' + sys.argv[1]
 #s3_output = 's3://athena-harmony-benchmark/logs/2019/04/17'
-print(s3_output)
+print("s3_output path:", s3_output)
 
 
 database = 'harmony'
