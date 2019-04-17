@@ -12,6 +12,9 @@ ROOTDIR=${PROGDIR}/..
 CONFIG_DIR=$(realpath $ROOTDIR)/configs
 JQ='jq -M -r'
 
+# FIXME: current harmony code use account index to determine if the node is a leader or not
+PEER_PER_SHARD=50
+
 declare -A configs
 declare -A managednodes
 
@@ -51,7 +54,7 @@ function read_profile
 
    logging reading benchmark config file: $BENCHMARK_PROFILE
 
-   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode benchmark.init_retry logs.leader logs.client logs.validator logs.soldier logs.db parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch benchmark.minpeer explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server bootnode.key bootnode.enable bootnode.p2pkey bootnode1.port bootnode1.server bootnode1.key bootnode1.enable bootnode1.p2pkey wallet.enable )
+   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode benchmark.init_retry logs.leader logs.client logs.validator logs.soldier logs.db parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch flow.reserved_account benchmark.minpeer explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server bootnode.key bootnode.enable bootnode.p2pkey bootnode1.port bootnode1.server bootnode1.key bootnode1.enable bootnode1.p2pkey wallet.enable )
    
    managednodekey=.managednodes.nodes
    nodekeys=( role ip port key )
@@ -83,6 +86,28 @@ function gen_userdata
    sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA > $USERDATA.aws
    verbose ${configs[@]}
 }
+
+# _find_available_node_index return an available node index after skipping the reserved account index
+# the reserved account index is for external node runners
+# due to the current limitation of only genesis nodes can join the consensus and get rewards
+function _find_available_node_index
+{
+   local i=$1
+   local found=false
+
+   while [ "$found" != "true" ]; do
+      i=$((i+1))
+      mod=$(( $i % $PEER_PER_SHARD ))
+      if [[ "${configs[flow.reserved_account]}" =~ ",$i," || $mod == 0 ]]; then
+         continue
+      else
+         found=true
+      fi
+   done
+   echo $i
+}
+
+##########
 
 if [ "$(uname -s)" == "Darwin" ]; then
    TIMEOUT=gtimeout

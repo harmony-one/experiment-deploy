@@ -93,7 +93,6 @@ function do_simple_cmd
    group=0
    case $cmd in
       init)
-# FIXME: is_beacon is temporary for one shard only test
       benchmarkArgs="$BOOTNODES -min_peers $MINPEER"
       if [ "$LIBP2P" == "true" ]; then
          benchmarkArgs+=" -is_genesis"
@@ -110,7 +109,7 @@ function do_simple_cmd
    "ip":"127.0.0.1",
    "port":"9000",
    "sessionID":"$SESSION",
-   "benchmarkArgs":"$benchmarkArgs -is_leader -account_index ACCINDEX",
+   "benchmarkArgs":"$benchmarkArgs -account_index ACCINDEX",
    "txgenArgs":"$txgenArgs"
    $CLIENT_JSON
 }
@@ -177,7 +176,7 @@ EOT
       sleep $WAIT_FOR_LEADER_LAUNCH
    done
 
-   start_index=1
+   start_index=0
    while [ $end -lt $NUM_NODES ]; do
       start=$(( $PARALLEL * $group + $num_leader + 1))
       end=$(( $PARALLEL + $start - 1 ))
@@ -194,13 +193,10 @@ EOT
 
          case $cmd in
             init|update|wallet)
-               sed "s/ACCINDEX/$start_index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+               index=$(_find_available_node_index $start_index)
+               sed "s/ACCINDEX/$index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
                CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
-               (( start_index ++ ))
-               mod=$(( $start_index % $PEER_PER_SHARD ))
-               if [ $mod == 0 ]; then
-                  (( start_index ++ ))
-               fi
+               start_index=$index
                ;;
          esac
 
@@ -290,8 +286,6 @@ CLIENT=
 BNMA=
 LIBP2P=false
 ACCINDEX=0
-# FIXME: current harmony code use account index to determine if the node is a leader or not
-PEER_PER_SHARD=50
 
 declare -A NODES
 declare -A NODEIPS
