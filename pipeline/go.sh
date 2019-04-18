@@ -315,6 +315,7 @@ EOT
 EOT
       curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
    fi
+   mv -f explorer.reset.json logs/$TS
 }
 
 # TODO: get it working for multiple shards
