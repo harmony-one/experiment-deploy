@@ -8,7 +8,8 @@
   "leader": {
     "num_vm": 0,
     "type": "t3.medium",
-    "regions": "iad"
+    "regions": "iad",
+    "root": 8
   },
   "managednodes": {
      "nodes": [

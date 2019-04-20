@@ -8,7 +8,8 @@
   "leader": {
     "num_vm": 4,
     "type": "t3.medium",
-    "regions": "iad"
+    "regions": "iad",
+    "root": 10
   },
   "bootnode": {
      "enable": true,

@@ -5,28 +5,32 @@
          "type": "t3.small",
          "ondemand": 10,
          "ami": "default",
-         "spot": 12
+         "spot": 12,
+         "root": 20
       },
       {
          "region": "iad",
          "type": "t3.small",
          "ondemand": 10,
          "ami": "default",
-         "spot": 12
+         "spot": 12,
+         "root": 20
       },
       {
          "region": "dub",
          "type": "t3.small",
          "ondemand": 2,
          "ami": "default",
-         "spot": 0
+         "spot": 0,
+         "root": 20
       },
       {
          "region": "sin",
          "type": "t3.small",
          "ondemand": 2,
          "ami": "default",
-         "spot": 0
+         "spot": 0,
+         "root": 20
       }
    ],
    "userdata": {

@@ -8,7 +8,8 @@
   "leader": {
     "num_vm": 1,
     "type": "t3.large",
-    "regions": "iad,sfo,pdx"
+    "regions": "iad,sfo,pdx",
+    "root": 8
   },
   "bootnode": {
      "enable": true,

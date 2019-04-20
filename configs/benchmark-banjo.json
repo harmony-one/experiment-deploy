@@ -8,7 +8,8 @@
   "leader": {
     "num_vm": 1,
     "type": "m5a.large",
-    "regions": "pdx"
+    "regions": "pdx",
+    "root": 20
   },
   "bootnode": {
      "enable": true,
