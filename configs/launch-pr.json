@@ -5,7 +5,7 @@
          "type": "t3.micro",
          "ondemand": 30,
          "spot": 18,
-         "root": 7
+         "root": 8
       }
    ],
    "userdata": {
