@@ -35,8 +35,9 @@ import (
 )
 
 const (
-	waitCountSeconds = 30
-	waitRunning      = 300 // wait for all instances report running state
+	waitCountSeconds      = 30
+	waitRunning           = 300 // wait for all instances report running state
+	defaultRootVolumeSize = 8   // default root volume size in GiB => 8G
 )
 
 // Vpc is the struct containing VPC info
@@ -104,6 +105,7 @@ type InstanceConfig struct {
 	Number     int    `json:"ondemand"`
 	Spot       int    `json:"spot"`
 	AmiName    string `json:"ami",omitempty`
+	Root       int64  `json:"root",omitempty`
 }
 
 // LaunchConfig is the struct having all launch configuration
@@ -154,6 +156,7 @@ var (
 	instanceType  = flag.String("instance_type", "t3.micro", "type of the instance, will override profile")
 	instanceCount = flag.Int("instance_count", 0, "number of instance to be launched in each region, will override profile")
 	launchRegion  = flag.String("launch_region", "pdx", "list of regions, separated by ',', will override profile")
+	rootVolume    = flag.Int64("root_volume", 0, "the size of the root volume in GB, will override profile")
 
 	userDataString string
 
@@ -278,6 +281,16 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 	}
 
 	var input ec2.RunInstancesInput
+	if i.Root == 0 {
+		i.Root = defaultRootVolumeSize
+	}
+	if *rootVolume != 0 {
+		i.Root = *rootVolume
+	}
+
+	root := ec2.EbsBlockDevice{
+		VolumeSize: aws.Int64(i.Root),
+	}
 
 	switch instType {
 	case onDemand:
@@ -302,6 +315,12 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 				},
 			},
 			UserData: &userDataString,
+			BlockDeviceMappings: []*ec2.BlockDeviceMapping{
+				{
+					DeviceName: aws.String("/dev/xvda"),
+					Ebs:        &root,
+				},
+			},
 		}
 		if _, ok := myInstancesTag.Load(tagValue); !ok {
 			myInstancesTag.Store(tagValue, reg.Code)
@@ -338,6 +357,12 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 				},
 			},
 			UserData: &userDataString,
+			BlockDeviceMappings: []*ec2.BlockDeviceMapping{
+				{
+					DeviceName: aws.String("/dev/xvda"),
+					Ebs:        &root,
+				},
+			},
 		}
 		if _, ok := myInstancesTag.Load(tagValue); !ok {
 			myInstancesTag.Store(tagValue, reg.Code)
@@ -385,6 +410,7 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType instType) err
 	reservation, err := svc.RunInstances(input)
 
 	if err != nil {
+		messages <- fmt.Sprintf("%v: run instance error: %v", reg.Name, err)
 		return err
 	}
 
@@ -414,7 +440,7 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType instType) err
 		result, err := svc.DescribeInstances(instanceInput)
 
 		if err != nil {
-			fmt.Errorf("DescribeInstances Error: %v", err)
+			messages <- fmt.Sprintf("DescribeInstances Error: %v", err)
 		}
 
 		/*

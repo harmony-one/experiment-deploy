@@ -81,6 +81,7 @@ function do_launch
       -output instance_ids_output-leader.txt \
       -tag_file instance_output-leader.txt \
       -tag ${TAG}-leader \
+      -root_volume ${configs[leader.root]} \
       -launch_profile launch-${PROFILE}.json
       LAUNCH_OPT+=' -l raw_ip-leader.txt'
       num_leader=$(wc -l raw_ip-leader.txt)
@@ -315,6 +316,7 @@ EOT
 EOT
       curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
    fi
+   mv -f explorer.reset.json logs/$TS
 }
 
 # TODO: get it working for multiple shards
