@@ -40,7 +40,7 @@ import sys
 # Function for executing athena queries
 
 def run_query(query, database, s3_output):
-    client = boto3.client('athena')
+    client = boto3.client('athena', region_name='us-west-2')
     response = client.start_query_execution(
         QueryString=query,
         QueryExecutionContext={
