@@ -322,7 +322,7 @@ EOT
 function do_wallet_ini
 {
    SECTION=default
-   loal NUM_RPC=5
+   local NUM_RPC=5
    local RPC_PORT=14555
 
    [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
