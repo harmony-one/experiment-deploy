@@ -1,33 +1,33 @@
 {
-  "description": "aws 195 nodes on 4 shard in 1 region, run 600 seconds",
+  "description": "aws 184 nodes on 4 shard in 2 region, reserve 16 account index for external node runners",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 4,
-    "type": "t3.medium",
-    "regions": "iad",
-    "root": 10
+    "num_vm": 2,
+    "type": "t3.large",
+    "regions": "iad,pdx",
+    "root": 20
   },
   "bootnode": {
      "enable": true,
      "server": "54.213.43.194",
      "name": "b2.harmony.one",
-     "port": 9875,
+     "port": 9872,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
-     "p2pkey": "b2-9875.key"
+     "p2pkey": "b2-9872.key"
   },
   "bootnode1": {
      "enable": true,
      "server": "100.26.90.187",
      "name": "b1.harmony.one",
-     "port": 9875,
+     "port": 9872,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
-     "p2pkey": "b1-9875.key"
+     "p2pkey": "b1-9872.key"
   },
   "azure": {
     "num_vm": 0,
@@ -39,7 +39,7 @@
   },
   "benchmark": {
     "shards": 4,
-    "duration": 600,
+    "duration": 60,
     "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
@@ -59,8 +59,8 @@
     "reset": "false"
   },
   "explorer": {
-    "server": "18.236.168.100",
-    "name": "1.harmony.one",
+    "server": "34.222.41.95",
+    "name": "0.harmony.one",
     "port": 4444,
     "reset": "true"
   },
@@ -72,7 +72,8 @@
   "parallel": 100,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
-     "wait_for_launch": 30
+     "wait_for_launch": 90,
+     "reserved_account": ",46,47,48,49,96,97,98,99,146,147,148,149,196,197,198,199,"
   },
   "libp2p": true
 }

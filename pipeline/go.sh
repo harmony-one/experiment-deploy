@@ -319,10 +319,11 @@ EOT
    mv -f explorer.reset.json logs/$TS
 }
 
-# TODO: get it working for multiple shards
 function do_wallet_ini
 {
    SECTION=default
+   local NUM_RPC=5
+   local RPC_PORT=14555
 
    [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
    TS=$(cat $SESSION_FILE | $JQ .sessionID)
@@ -340,9 +341,12 @@ function do_wallet_ini
    echo >> $INI
    echo "[$SECTION.shard0.rpc]" >> $INI
    leader=$(grep leader ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' | head -n 1)
-   echo "rpc = $leader:14555" >> $INI
-   for ip in $(grep -l node/beacon ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log |  awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' | sort -R | head -n 5); do 
-      echo "rpc = $ip:14555" >> $INI
+   echo "rpc = $leader:$RPC_PORT" >> $INI
+   # randomly choose some validators
+   # TODO: choose the running nodes
+   grep -l node/beacon ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log | awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' > ${THEPWD}/logs/$TS/validator/shard0.txt
+   for ip in $(sort -R ${THEPWD}/logs/$TS/validator/shard0.txt | head -n $NUM_RPC); do
+      echo "rpc = $ip:$RPC_PORT" >> $INI
    done
 
    while [ $n -lt $shards ]; do
@@ -350,9 +354,12 @@ function do_wallet_ini
       echo "[$SECTION.shard$n.rpc]" >> $INI
       t=$(( n + 1 ))
       leader=$(grep leader ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' | head -n $t | tail -n 1)
-      echo "rpc = $leader:14555" >> $INI
-      for ip in $(grep -l node/shard/$n ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log |  awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' | sort -R | head -n 5); do 
-         echo "rpc = $ip:14555" >> $INI
+      echo "rpc = $leader:$RPC_PORT" >> $INI
+      grep -l node/shard/$n ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log | awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' > ${THEPWD}/logs/$TS/validator/shard$n.txt
+      # randomly choose some validators
+      # TODO: choose the running nodes
+      for ip in $(sort -R ${THEPWD}/logs/$TS/validator/shard$n.txt | head -n $NUM_RPC); do
+         echo "rpc = $ip:$RPC_PORT" >> $INI
       done
       (( n++ ))
    done
