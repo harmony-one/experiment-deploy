@@ -20,6 +20,11 @@ instances.
 1. APR 21, 2019
     * Created the script
 
+2. APR 23, 2019
+	* Cleaned up some junk code
+	* Added some comments
+	* Tested the workflow, all good. Will have another technical discussion with Leo C later today
+
 
 https://docs.aws.amazon.com/systems-manager/latest/userguide/integration-remote-scripts.html
 aws ssm send-command --document-name "AWS-RunRemoteScript" --instance-ids "i-abcd1234" --parameters
@@ -59,14 +64,11 @@ import pprint
 client = boto3.client('ssm', region_name='us-west-1')
 # response = client.send_command(InstanceIds = ['i-05af5341989f098d7'], DocumentName = "AWS-RunShellScript", Parameters = {'commands' : ['date']})
 # response = client.send_command(Targets = [{"Key" : "tag:type", "Values" : ["testnode",]},], DocumentName = "AWS-RunShellScript", Parameters = {'commands' : ['mkdir /home/ec2-user/ssm_test_Andy']})
-# response = client.send_command(Targets = [{"Key" : "tag:type", "Values" : ["testnode",]},], DocumentName = "AWS-RunShellScript", Parameters = {'commands' : ['mkdir /home/ec2-user/ssm_test_Andy']})
-# Parameters = '{"sourceType" : ["GitHub"], "sourceInfo" : [{\"owner\" : \"bwu2sfu\", \"repository\":\"harmony-ops\", \"path\":\"https://github.com/harmony-one/harmony-ops/blob/master/aws/ssm\"}],"commandLine" : ["nanny.sh"]}')
 
-
+# AWS did a lousy job to document how to invoke a script from Github on multiple EC2 instances, the following command finally worked after hours of troubleshooting
 response = client.send_command(Targets = [{"Key" : "tag:type", "Values" : ["testnode",]},],
                                DocumentName = "AWS-RunRemoteScript",
                                Parameters = {"sourceType" : ["GitHub"], "sourceInfo" : ["{\"owner\" : \"bwu2sfu\", \"repository\":\"harmony-ops\", \"path\":\"aws/ssm\", \"getOptions\":\"branch:master\"}"],"commandLine" : ["nanny.sh"]})
-
 
 
 # command_id = response['Command']['CommandId']
