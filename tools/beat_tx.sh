@@ -93,7 +93,7 @@ function do_request_token
 {
    while read acc; do
       ${WALLET} getFreeToken --address $acc
-      sleep 2
+      sleep 5
       echo get token $acc
    done < $ACCOUNT_FILE
 }
