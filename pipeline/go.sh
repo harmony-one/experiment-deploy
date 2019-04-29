@@ -17,23 +17,24 @@ Usage: $ME [OPTIONS] ACTIONS
 This script automates the benchmark test based on profile.
 
 [OPTIONS]
-   -h             print this help message
-   -p profile     specify the benchmark profile in $CONFIG_DIR directory (default: $PROFILE)
-                  supported profiles (${PROFILES[@]})
-   -v             verbose output
-   -k             keep all the instances, skip deinit (default: $KEEP)
-   -t             do not run txgen (default: $TXGEN), overriding profile configuration
-   -w             run wallet test (default: $WALLET)
+   -h                print this help message
+   -p profile        specify the benchmark profile in $CONFIG_DIR directory (default: $PROFILE)
+                     supported profiles (${PROFILES[@]})
+   -v                verbose output
+   -k                keep all the instances, skip deinit (default: $KEEP)
+   -t                do not run txgen (default: $TXGEN), overriding profile configuration
+   -w                run wallet test (default: $WALLET)
 
 [ACTIONS]
-   launch         do launch only
-   run            run benchmark
-   log            download logs
-   deinit         sync logs & terminate instances
-   reset          reset dashboard and explorer
-   bootnode       launch bootnode(s) only
-   wallet         generate wallet.ini file
-   all            do everything (default)
+   launch            do launch only
+   run               run benchmark
+   log               download logs
+   deinit            sync logs & terminate instances
+   reset             reset dashboard and explorer
+   bootnode          launch bootnode(s) only
+   wallet            generate wallet.ini file
+   reinit <ip>       re-run init command on hosts (list of ips)
+   all               do everything (default)
 
 
 [EXAMPLES]
@@ -43,6 +44,8 @@ This script automates the benchmark test based on profile.
    $ME -p devnet -k
 
    $ME -p testnet log
+
+   $ME -p banjo reinit 1.2.3.4 2.3.4.5
 
 EOT
    exit 0
@@ -366,6 +369,20 @@ function do_wallet_ini
    echo Please use $INI for your wallet to access the blockchain!
 }
 
+# re-run init command on some soldiers
+function do_reinit
+{
+   soldiers=$*
+
+   [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+   TS=$(cat $SESSION_FILE | $JQ .sessionID)
+
+   for s in $soldiers; do
+      echo curl -X GET -s http://$s:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$s.json
+      curl -X GET -s http://$s:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$s.json
+   done
+}
+
 function do_all
 {
    do_launch_bootnode
@@ -418,7 +435,8 @@ done
 
 shift $(($OPTIND-1))
 
-ACTION=$*
+ACTION=$1
+shift
 
 if [ -z "$ACTION" ]; then
    ACTION=all
@@ -449,6 +467,8 @@ case $ACTION in
          do_reset ;;
    wallet)
          do_wallet_ini ;;
+   reinit)
+         do_reinit $* ;;
 esac
 
 exit 0
