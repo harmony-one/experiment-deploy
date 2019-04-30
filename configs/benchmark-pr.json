@@ -34,7 +34,8 @@
     "crosstx": 30,
     "attacked_mode": 0,
     "init_retry": false,
-    "minpeer": 30
+    "minpeer": 30,
+    "archival": 1
   },
   "logs": {
     "leader": true,

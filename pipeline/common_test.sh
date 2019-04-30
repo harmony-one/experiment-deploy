@@ -34,4 +34,19 @@ function test_find_available_node_index
    echo $d
 }
 
-test_find_available_node_index
+function test_is_archival
+{
+   num=( 3 11 15 22 29 30 33 40 45 46 50 60 66 67 75 77 88 89 90 121 )
+
+   for n in ${num[@]}; do
+#      _is_archival $n
+      if $(_is_archival $n);  then
+         echo $n is archival node
+      else
+         echo $n is not archival node
+      fi
+   done
+}
+
+# test_find_available_node_index
+test_is_archival
