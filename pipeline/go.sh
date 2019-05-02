@@ -57,8 +57,6 @@ function do_launch
 
    local LAUNCH_OPT=
 
-   set -x
-
    if [ ${configs[client.num_vm]} -gt 0 ]; then
       logging launching ${configs[client.num_vm]} non-standard client: ${configs[client.type]}
       ../bin/instance \
