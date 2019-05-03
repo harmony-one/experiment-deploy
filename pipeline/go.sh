@@ -304,7 +304,6 @@ EOT
    if [ "${configs[explorer.reset]}" == "true" ]; then
       echo "resetting explorer ..."
       echo curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669", "leaderIp":""}'
-# TODO (leo): support multiple leaders when multi-shards are implemented
       for l in "${LEADER_IP[@]}"; do
          leaders+="\"$l:5000\"",
       done

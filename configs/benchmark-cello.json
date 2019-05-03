@@ -52,7 +52,7 @@
     "client": false,
     "validator": false,
     "soldier": true,
-    "db": true
+    "db": false
   },
   "dashboard": {
     "server": "18.236.168.100",

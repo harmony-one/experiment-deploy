@@ -3,15 +3,15 @@
       {
          "region": "iad",
          "type": "t3.micro",
-         "ondemand": 5,
-         "spot": 80,
+         "ondemand": 75,
+         "spot": 15,
          "root": 20
       },
       {
          "region": "pdx",
          "type": "t3.micro",
-         "ondemand": 5,
-         "spot": 80,
+         "ondemand": 75,
+         "spot": 15,
          "root": 20
       }
 
