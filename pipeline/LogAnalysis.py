@@ -100,18 +100,18 @@ def parse_logs(database, table, keywords, pvar, s3_input, s3_output):
 
     for i in range(len(keywords)):
     # Query definitions
-        query = "SELECT %s, * FROM %s.%s where col_string LIKE %s;" % (pvar, database, table, keyword)
+        query = "SELECT %s, * FROM %s.%s where col_string LIKE %s;" % (pvar, database, table, keywords[i])
         (response, results) =  run_query(query, database, s3_output, True)
 
         #ret = 0
-        with open('result.txt', 'w') as f:
+        with open('result.txt', 'a') as f:
             if results and len(results['ResultSet']['Rows']) > 1:
                 ret = len(results['ResultSet']['Rows']) - 1
-                print("%d match found for keyword %s on %s" % (len(results['ResultSet']['Rows'])-1, keyword, sys.argv[1]), file=f)
+                print("%d match found for keyword %s on %s" % (len(results['ResultSet']['Rows'])-1, keywords[i], sys.argv[1]), file=f)
                 for r in results['ResultSet']['Rows'][1:]:
-                    print("%s in log: %s" % (keyword, r['Data'][0]['VarCharValue']), file=f)
+                    print("%s in log: %s" % (keywords[i], r['Data'][0]['VarCharValue']), file=f)
             else:
-                print("no match found for keyword %s on %s" % (keyword, sys.argv[1]), file=f)
+                print("no match found for keyword %s on %s" % (keywords[i], sys.argv[1]), file=f)
         #return ret
 
 def main():
