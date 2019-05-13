@@ -35,6 +35,13 @@ $python3 LogAnalysis.py 2019
     * Get query results if needed.
     * Output query results to local file so it can be used for notification.
 
+4. MAY 12, 2019 by Andy Wu
+    * Added another ERROR keyword: keyword2 = `fatal`
+    * Revised parse_log function: 
+        * added one more parameter for keyword2
+        * added one more (OR) condition to catch any `filename` like fatal
+        * modified the ERROR notificaiton message
+
 """
 from __future__ import print_function
 
@@ -68,7 +75,7 @@ def run_query(query, database, s3_output, need_results=False):
 
     return (response, results)
 
-def parse_logs(database, table, keyword, pvar, s3_input, s3_output):
+def parse_logs(database, table, keyword, keyword2, pvar, s3_input, s3_output):
     drop_table = "DROP TABLE IF EXISTS %s.%s;" %(database, table)
     create_table = \
         """
@@ -95,18 +102,18 @@ def parse_logs(database, table, keyword, pvar, s3_input, s3_output):
         run_query(q, database, s3_output)
 
     # Query definitions
-    query = "SELECT %s, * FROM %s.%s where FileName LIKE %s;" % (pvar, database, table, keyword)
+    query = "SELECT %s, * FROM %s.%s where FileName LIKE %s OR FileName LIKE %s;" % (pvar, database, table, keyword, keyword2)
     (response, results) =  run_query(query, database, s3_output, True)
 
     ret = 0
     with open('result.txt', 'w') as f:
         if results and len(results['ResultSet']['Rows']) > 1:
             ret = len(results['ResultSet']['Rows']) - 1
-            print("%d match found for keyword %s on %s" % (len(results['ResultSet']['Rows'])-1, keyword, sys.argv[1]), file=f)
+            print("%d match found for keyword %s or %s on %s" % (len(results['ResultSet']['Rows'])-1, keyword, keyword2, sys.argv[1]), file=f)
             for r in results['ResultSet']['Rows'][1:]:
-                print("%s in log: %s" % (keyword, r['Data'][0]['VarCharValue']), file=f)
+                print("%s, or %s in log: %s" % (keyword, keyword2, r['Data'][0]['VarCharValue']), file=f)
         else:
-            print("no match found for keyword %s on %s" % (keyword, sys.argv[1]), file=f)
+            print("no match found for keyword %s, or %s on %s" % (keyword, keyword2, sys.argv[1]), file=f)
     return ret
 
 def main():
@@ -129,8 +136,9 @@ def main():
     # run queries: find panic
     table = 'FindingPanic4'
     keyword = "'panic%'"
+    keyword2 = "'fatal%"
     pvar = '"$path"'
-    ret += parse_logs(database, table, keyword, pvar, s3_input, s3_output)
+    ret += parse_logs(database, table, keyword, keyword2, pvar, s3_input, s3_output)
 
     sys.exit(ret)
 
