@@ -44,13 +44,15 @@
     "crosstx": 30,
     "attacked_mode": 0,
     "minpeer": 35,
-    "init_retry": false
+    "init_retry": false,
+    "archival": 3
   },
   "logs": {
     "leader": true,
-    "client": true,
-    "validator": true,
-    "soldier": true
+    "client": false,
+    "validator": false,
+    "soldier": true,
+    "db": false
   },
   "dashboard": {
     "server": "18.236.168.100",
@@ -73,7 +75,7 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 30,
-     "reserved_account": ",46,47,48,49,96,97,98,99,146,147,148,149,196,197,198,199,"
+     "reserved_account": ",44,45,46,47,48,49,94,95,96,97,98,99,144,145,146,147,148,149,194,195,196,197,198,199,"
   },
   "libp2p": true
 }

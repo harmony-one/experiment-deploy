@@ -17,23 +17,24 @@ Usage: $ME [OPTIONS] ACTIONS
 This script automates the benchmark test based on profile.
 
 [OPTIONS]
-   -h             print this help message
-   -p profile     specify the benchmark profile in $CONFIG_DIR directory (default: $PROFILE)
-                  supported profiles (${PROFILES[@]})
-   -v             verbose output
-   -k             keep all the instances, skip deinit (default: $KEEP)
-   -t             do not run txgen (default: $TXGEN), overriding profile configuration
-   -w             run wallet test (default: $WALLET)
+   -h                print this help message
+   -p profile        specify the benchmark profile in $CONFIG_DIR directory (default: $PROFILE)
+                     supported profiles (${PROFILES[@]})
+   -v                verbose output
+   -k                keep all the instances, skip deinit (default: $KEEP)
+   -t                do not run txgen (default: $TXGEN), overriding profile configuration
+   -w                run wallet test (default: $WALLET)
 
 [ACTIONS]
-   launch         do launch only
-   run            run benchmark
-   log            download logs
-   deinit         sync logs & terminate instances
-   reset          reset dashboard and explorer
-   bootnode       launch bootnode(s) only
-   wallet         generate wallet.ini file
-   all            do everything (default)
+   launch            do launch only
+   run               run benchmark
+   log               download logs
+   deinit            sync logs & terminate instances
+   reset             reset dashboard and explorer
+   bootnode          launch bootnode(s) only
+   wallet            generate wallet.ini file
+   reinit <ip>       re-run init command on hosts (list of ips)
+   all               do everything (default)
 
 
 [EXAMPLES]
@@ -44,6 +45,8 @@ This script automates the benchmark test based on profile.
 
    $ME -p testnet log
 
+   $ME -p banjo reinit 1.2.3.4 2.3.4.5
+
 EOT
    exit 0
 }
@@ -53,8 +56,6 @@ function do_launch
    logging launching instances ...
 
    local LAUNCH_OPT=
-
-   set -x
 
    if [ ${configs[client.num_vm]} -gt 0 ]; then
       logging launching ${configs[client.num_vm]} non-standard client: ${configs[client.type]}
@@ -303,7 +304,6 @@ EOT
    if [ "${configs[explorer.reset]}" == "true" ]; then
       echo "resetting explorer ..."
       echo curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669", "leaderIp":""}'
-# TODO (leo): support multiple leaders when multi-shards are implemented
       for l in "${LEADER_IP[@]}"; do
          leaders+="\"$l:5000\"",
       done
@@ -319,10 +319,11 @@ EOT
    mv -f explorer.reset.json logs/$TS
 }
 
-# TODO: get it working for multiple shards
 function do_wallet_ini
 {
    SECTION=default
+   local NUM_RPC=5
+   local RPC_PORT=14555
 
    [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
    TS=$(cat $SESSION_FILE | $JQ .sessionID)
@@ -340,9 +341,12 @@ function do_wallet_ini
    echo >> $INI
    echo "[$SECTION.shard0.rpc]" >> $INI
    leader=$(grep leader ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' | head -n 1)
-   echo "rpc = $leader:14555" >> $INI
-   for ip in $(grep -l node/beacon ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log |  awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' | sort -R | head -n 5); do 
-      echo "rpc = $ip:14555" >> $INI
+   echo "rpc = $leader:$RPC_PORT" >> $INI
+   # randomly choose some validators
+   # TODO: choose the running nodes
+   grep -l node/beacon ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log | awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' > ${THEPWD}/logs/$TS/validator/shard0.txt
+   for ip in $(sort -R ${THEPWD}/logs/$TS/validator/shard0.txt | head -n $NUM_RPC); do
+      echo "rpc = $ip:$RPC_PORT" >> $INI
    done
 
    while [ $n -lt $shards ]; do
@@ -350,13 +354,30 @@ function do_wallet_ini
       echo "[$SECTION.shard$n.rpc]" >> $INI
       t=$(( n + 1 ))
       leader=$(grep leader ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' | head -n $t | tail -n 1)
-      echo "rpc = $leader:14555" >> $INI
-      for ip in $(grep -l node/shard/$n ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log |  awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' | sort -R | head -n 5); do 
-         echo "rpc = $ip:14555" >> $INI
+      echo "rpc = $leader:$RPC_PORT" >> $INI
+      grep -l node/shard/$n ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log | awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' > ${THEPWD}/logs/$TS/validator/shard$n.txt
+      # randomly choose some validators
+      # TODO: choose the running nodes
+      for ip in $(sort -R ${THEPWD}/logs/$TS/validator/shard$n.txt | head -n $NUM_RPC); do
+         echo "rpc = $ip:$RPC_PORT" >> $INI
       done
       (( n++ ))
    done
    echo Please use $INI for your wallet to access the blockchain!
+}
+
+# re-run init command on some soldiers
+function do_reinit
+{
+   soldiers=$*
+
+   [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+   TS=$(cat $SESSION_FILE | $JQ .sessionID)
+
+   for s in $soldiers; do
+      echo curl -X GET -s http://$s:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$s.json
+      curl -X GET -s http://$s:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$s.json
+   done
 }
 
 function do_all
@@ -411,7 +432,8 @@ done
 
 shift $(($OPTIND-1))
 
-ACTION=$*
+ACTION=$1
+shift
 
 if [ -z "$ACTION" ]; then
    ACTION=all
@@ -442,6 +464,8 @@ case $ACTION in
          do_reset ;;
    wallet)
          do_wallet_ini ;;
+   reinit)
+         do_reinit $* ;;
 esac
 
 exit 0
