@@ -50,7 +50,7 @@
   "logs": {
     "leader": true,
     "client": false,
-    "validator": false,
+    "validator": true,
     "soldier": true,
     "db": false
   },
@@ -74,7 +74,7 @@
   "parallel": 100,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
-     "wait_for_launch": 30,
+     "wait_for_launch": 90,
      "reserved_account": ",44,45,46,47,48,49,94,95,96,97,98,99,144,145,146,147,148,149,194,195,196,197,198,199,"
   },
   "libp2p": true
