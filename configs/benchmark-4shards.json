@@ -54,14 +54,14 @@
     "soldier": true
   },
   "dashboard": {
-    "server": "18.236.168.100",
-    "name": "1.harmony.one",
+    "server": "34.222.41.95",
+    "name": "explorer2.harmony.one",
     "port": 3000,
     "reset": "false"
   },
   "explorer": {
     "server": "34.222.41.95",
-    "name": "0.harmony.one",
+    "name": "explorer2.harmony.one",
     "port": 4444,
     "reset": "true"
   },
