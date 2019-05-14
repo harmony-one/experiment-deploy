@@ -36,18 +36,15 @@ $python3 LogAnalysis.py 2019
     * Output query results to local file so it can be used for notification.
 
 4. MAY 12, 2019 by Andy Wu
-    * Added another ERROR keyword: keyword2 = `fatal`
-    * Revised parse_log function: 
-        * added one more parameter for keyword2
-        * added one more (OR) condition to catch any `filename` like fatal
-        * modified the ERROR notificaiton message
+    * change the column name from 'FileName' to 'col_string', the previous name is confusing indeed
+    * use a string array (name: keywords) to store ERROR keywords
 
 """
 from __future__ import print_function
 
-import boto3
 import sys
 import time
+import boto3
 
 # Function for executing athena queries
 def run_query(query, database, s3_output, need_results=False):
@@ -75,12 +72,12 @@ def run_query(query, database, s3_output, need_results=False):
 
     return (response, results)
 
-def parse_logs(database, table, keyword, keyword2, pvar, s3_input, s3_output):
+def parse_logs(database, table, keywords, pvar, s3_input, s3_output):
     drop_table = "DROP TABLE IF EXISTS %s.%s;" %(database, table)
     create_table = \
         """
         CREATE EXTERNAL TABLE IF NOT EXISTS %s.%s (
-        `FileName` string,
+        `col_string` string,
         `col2` string,
         `col3` string,
         `col4` string,
@@ -101,23 +98,27 @@ def parse_logs(database, table, keyword, keyword2, pvar, s3_input, s3_output):
     for q in queries:
         run_query(q, database, s3_output)
 
-    # Query definitions
-    query = "SELECT %s, * FROM %s.%s where FileName LIKE %s OR FileName LIKE %s;" % (pvar, database, table, keyword, keyword2)
-    (response, results) =  run_query(query, database, s3_output, True)
-
     ret = 0
-    with open('result.txt', 'w') as f:
-        if results and len(results['ResultSet']['Rows']) > 1:
-            ret = len(results['ResultSet']['Rows']) - 1
-            print("%d match found for keyword %s or %s on %s" % (len(results['ResultSet']['Rows'])-1, keyword, keyword2, sys.argv[1]), file=f)
-            for r in results['ResultSet']['Rows'][1:]:
-                print("%s, or %s in log: %s" % (keyword, keyword2, r['Data'][0]['VarCharValue']), file=f)
-        else:
-            print("no match found for keyword %s, or %s on %s" % (keyword, keyword2, sys.argv[1]), file=f)
+    for keyword in keywords:
+    # Query definitions
+        query = "SELECT %s, * FROM %s.%s where col_string LIKE %s;" % (pvar, database, table, keyword)
+        (response, results) = run_query(query, database, s3_output, True)
+
+        with open('result.txt', 'a') as f:
+            if results and len(results['ResultSet']['Rows']) > 1:
+                ret += len(results['ResultSet']['Rows']) - 1
+                print("%d match found for keyword %s on %s" % (len(results['ResultSet']['Rows'])-1, keyword, sys.argv[1]), file=f)
+                for r in results['ResultSet']['Rows'][1:]:
+                    print("%s in log: %s" % (keyword, r['Data'][0]['VarCharValue']), file=f)
+            else:
+                print("no match found for keyword %s on %s" % (keyword, sys.argv[1]), file=f)
     return ret
 
 def main():
     # Athena configuration
+
+    if len(sys.argv) < 2:
+        sys.exit("Need to input a valid timestampe argument \nusage: python3 LogAnalysis.py YYYY/MM/DD")
 
     s3_input = 's3://harmony-benchmark/logs/' + sys.argv[1]
     print("s3_input path: " + s3_input)
@@ -135,10 +136,9 @@ def main():
     ret = 0
     # run queries: find panic
     table = 'FindingPanic4'
-    keyword = "'panic%'"
-    keyword2 = "'fatal%"
+    keywords = ["'panic%'", "'fatal%'"]
     pvar = '"$path"'
-    ret += parse_logs(database, table, keyword, keyword2, pvar, s3_input, s3_output)
+    ret += parse_logs(database, table, keywords, pvar, s3_input, s3_output)
 
     sys.exit(ret)
 
