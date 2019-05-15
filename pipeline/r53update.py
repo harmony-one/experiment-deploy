@@ -127,6 +127,8 @@ def main():
     parser.add_argument('--leader-format', metavar='F',
                         help=f"""leader DNS name format in zone
                                  (default: {DEFAULT_LEADER_FORMAT})""")
+    parser.add_argument('--aws-profile', metavar='NAME',
+                        help=f"""AWS config/credential profile name""")
     parser.add_argument('network', metavar='NETWORK',
                         help="network ID (example: t0)")
     parser.add_argument('shard', type=int, metavar='SHARD',
@@ -165,7 +167,11 @@ def main():
                          "add --confirm-remove to confirm this")
 
     logger.debug("creating Route 53 client")
-    r53 = boto3.client('route53')
+    session_kwargs = dict()
+    if args.aws_profile:
+        session_kwargs.update(profile_name=args.aws_profile)
+    session = boto3.Session(**session_kwargs)
+    r53 = session.client('route53')
 
     logger.debug(f"retrieving zone ID for zone {zone_name!r}")
     zones = {zone['Name']: zone for zone in list_hosted_zones(r53)}
