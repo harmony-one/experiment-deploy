@@ -19,7 +19,7 @@ else
    MD5=md5sum
 fi
 
-SCRIPTS=( $BINDIR/md5sum-cs.txt tools/beat_tx_node.sh configs/db.tgz )
+SCRIPTS=( $BINDIR/md5sum-cs.txt tools/beat_tx_node.sh configs/db.tgz configs/.hmy )
 
 function usage
 {
@@ -85,7 +85,11 @@ function upload
    done
 
    for s in "${SCRIPTS[@]}"; do
-      [ -e $s ] && $AWSCLI s3 cp $s s3://${BUCKET}$FOLDER/$(basename $s) --acl public-read
+      if [ -d $s ]; then
+         $AWSCLI s3 sync $s s3://${BUCKET}$FOLDER/$(basename $s) --acl public-read
+      elif [ -e $s ]; then
+         $AWSCLI s3 cp $s s3://${BUCKET}$FOLDER/$(basename $s) --acl public-read
+      fi
    done
 }
 
