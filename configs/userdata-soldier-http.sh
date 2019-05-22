@@ -6,7 +6,7 @@ cd /home/ec2-user
 BUCKET=unique-bucket-bin
 FOLDER=leo/
 
-TESTBIN=( txgen soldier harmony libbls384.so libmcl.so wallet beat_tx_node.sh db.tgz )
+TESTBIN=( txgen soldier harmony libbls384.so libmcl.so wallet beat_tx_node.sh db.tgz hmykey.tgz )
 
 for bin in "${TESTBIN[@]}"; do
    curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
@@ -98,6 +98,10 @@ function restore_db {
    [ -e db.tgz ] && tar xfz db.tgz -C $dbdir && rm -f db.tgz
 }
 
+function restore_key {
+   [ -e hmykey.tgz ] && tar xfz hmykey.tgz && rm -f hmykey.tgz
+}
+
 IS_AWS=$(curl -s -I http://169.254.169.254/latest/meta-data/instance-type -o /dev/null -w "%{http_code}")
 if [ "$IS_AWS" != "200" ]; then
 # NOT AWS, Assuming Azure
@@ -134,6 +138,9 @@ fuser -k -n tcp $NODE_PORT
 
 # restore blockchain db
 restore_db
+
+# restore key of hmy test node
+restore_key
 
 # Run soldier
 ./soldier -ip $PUB_IP -port $NODE_PORT > soldier-${PUB_IP}.log 2>&1 &
