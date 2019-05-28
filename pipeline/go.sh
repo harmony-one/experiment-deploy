@@ -373,7 +373,7 @@ function do_wallet_ini
    n=0
    while [ $n -lt $shards ]; do
       echo
-      echo python3 r53update.py $configs[flow.rpczone] $n ${RPCS[$n]}
+      echo python3 r53update.py ${configs[flow.rpczone]} $n ${RPCS[$n]}
       (( n++ ))
    done
 }
