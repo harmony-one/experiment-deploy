@@ -372,7 +372,8 @@ function do_wallet_ini
    echo Please use $INI for your wallet to access the blockchain!
    n=0
    while [ $n -lt $shards ]; do
-      echo python3 r53update.py $configs[flow.rpczone] $n $RPCS[$n]
+      echo
+      echo python3 r53update.py $configs[flow.rpczone] $n ${RPCS[$n]}
       (( n++ ))
    done
 }

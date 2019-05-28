@@ -109,7 +109,7 @@ function do_simple_cmd
    "ip":"127.0.0.1",
    "port":"9000",
    "sessionID":"$SESSION",
-   "benchmarkArgs":"$benchmarkArgs -account_index ACCINDEX",
+   "benchmarkArgs":"$benchmarkArgs -account_index ACCINDEX -nopass",
    "txgenArgs":"$txgenArgs"
    $CLIENT_JSON
 }
@@ -119,7 +119,7 @@ EOT
    "ip":"127.0.0.1",
    "port":"9000",
    "sessionID":"$SESSION",
-   "benchmarkArgs":"$benchmarkArgs -account_index ACCINDEX",
+   "benchmarkArgs":"$benchmarkArgs -account_index ACCINDEX -nopass",
    "txgenArgs":"$txgenArgs"
    $CLIENT_JSON
 }
