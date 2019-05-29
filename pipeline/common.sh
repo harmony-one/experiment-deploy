@@ -113,20 +113,11 @@ function _find_available_node_index
 function _is_archival
 {
    local i=$1
-   local is_archival=1
 
-   if [[ "${configs[benchmark.archival]}" == "" || "${configs[benchmark.archival]}" == "0" ]]; then
-      return $is_archival
+   if [[ "${configs[benchmark.archival]}" =~ ",$i," ]]; then
+      return 0
    fi
-
-   local mod=$(( ($PEER_PER_SHARD - 5) / ${configs[benchmark.archival]} ))
-   local remainder=$(( $i % $mod ))
-
-   if [ "$remainder" == "0" ]; then
-      is_archival=0
-   fi
-
-   return $is_archival
+   return 1
 }
 
 ##########

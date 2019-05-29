@@ -45,7 +45,7 @@
     "attacked_mode": 0,
     "minpeer": 35,
     "init_retry": false,
-    "archival": 3
+    "archival": ",3,10,22,51,79,81,113,122,131,159,168,188,"
   },
   "logs": {
     "leader": true,
@@ -75,7 +75,7 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 90,
-     "reserved_account": ",40,41,42,43,44,88,90,91,92,93,140,141,142,143,190,199,",
+     "reserved_account": ",40,41,42,43,44,45,46,88,90,91,92,93,94,95,140,141,142,143,144,190,191,199,",
      "rpczone": "t"
   },
   "libp2p": true
