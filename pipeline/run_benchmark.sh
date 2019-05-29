@@ -194,7 +194,13 @@ EOT
          case $cmd in
             init|update|wallet)
                index=$(_find_available_node_index $start_index)
-               sed "s/ACCINDEX/$index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+
+               if $(_is_archival $index); then
+                  sed "s/ACCINDEX/$index -is_archival/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+               else
+                  sed "s/ACCINDEX/$index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+               fi
+
                CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
                start_index=$index
                ;;
