@@ -6,10 +6,10 @@
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 2,
+    "num_vm": 1,
     "type": "t3.large",
-    "regions": "iad,pdx",
-    "root": 20
+    "regions": "iad,pdx,sin,fra",
+    "root": 30
   },
   "bootnode": {
      "enable": true,
@@ -75,7 +75,7 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 90,
-     "reserved_account": ",40,41,42,43,44,45,46,88,90,91,92,93,94,95,140,141,142,143,144,190,191,199,",
+     "reserved_account": ",40,41,42,43,44,45,46,88,90,91,92,93,94,95,140,141,142,143,144,190,191,192,193,199,",
      "rpczone": "t"
   },
   "libp2p": true
