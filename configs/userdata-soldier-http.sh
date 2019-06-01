@@ -7,6 +7,9 @@
 # 		* created the initial script 
 # [2] Modified by Andy Wu, Date: May 27, 2019
 #		* created function setup_node_exporter
+# [3] Modified by Andy Wu, Date: Jun 1, 2019
+#   * removed mac implementation for node exporter deployment, plus
+# 
 # ------------------------------------------------------------------
 
 
