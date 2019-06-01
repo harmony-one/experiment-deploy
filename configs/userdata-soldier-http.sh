@@ -194,5 +194,8 @@ fuser -k -n tcp $NODE_PORT
 # restore blockchain db
 restore_db
 
+# deploy node exporter
+setup_node_exporter
+
 # Run soldier
 ./soldier -ip $PUB_IP -port $NODE_PORT > soldier-${PUB_IP}.log 2>&1 &
