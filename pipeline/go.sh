@@ -322,6 +322,8 @@ EOT
 function do_wallet_ini
 {
    SECTION=default
+   declare -A RPCS
+
    local NUM_RPC=5
    local RPC_PORT=14555
 
@@ -342,11 +344,13 @@ function do_wallet_ini
    echo "[$SECTION.shard0.rpc]" >> $INI
    leader=$(grep leader ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' | head -n 1)
    echo "rpc = $leader:$RPC_PORT" >> $INI
+   RPCS[0]="$leader"
    # randomly choose some validators
    # TODO: choose the running nodes
    grep -l node/beacon ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log | awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' > ${THEPWD}/logs/$TS/validator/shard0.txt
    for ip in $(sort -R ${THEPWD}/logs/$TS/validator/shard0.txt | head -n $NUM_RPC); do
       echo "rpc = $ip:$RPC_PORT" >> $INI
+      RPCS[0]+=" $ip"
    done
 
    while [ $n -lt $shards ]; do
@@ -355,15 +359,23 @@ function do_wallet_ini
       t=$(( n + 1 ))
       leader=$(grep leader ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' | head -n $t | tail -n 1)
       echo "rpc = $leader:$RPC_PORT" >> $INI
+      RPCS[$n]="$leader"
       grep -l node/shard/$n ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log | awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' > ${THEPWD}/logs/$TS/validator/shard$n.txt
       # randomly choose some validators
       # TODO: choose the running nodes
       for ip in $(sort -R ${THEPWD}/logs/$TS/validator/shard$n.txt | head -n $NUM_RPC); do
          echo "rpc = $ip:$RPC_PORT" >> $INI
+         RPCS[$n]+=" $ip"
       done
       (( n++ ))
    done
    echo Please use $INI for your wallet to access the blockchain!
+   n=0
+   while [ $n -lt $shards ]; do
+      echo
+      echo python3 r53update.py ${configs[flow.rpczone]} $n ${RPCS[$n]}
+      (( n++ ))
+   done
 }
 
 # re-run init command on some soldiers

@@ -6,28 +6,28 @@
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 2,
+    "num_vm": 1,
     "type": "t3.large",
-    "regions": "iad,pdx",
-    "root": 20
+    "regions": "iad,pdx,sin,fra",
+    "root": 30
   },
   "bootnode": {
      "enable": true,
      "server": "54.213.43.194",
      "name": "b2.harmony.one",
-     "port": 9872,
+     "port": 9874,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
-     "p2pkey": "b2-9872.key"
+     "p2pkey": "b2-9874.key"
   },
   "bootnode1": {
      "enable": true,
      "server": "100.26.90.187",
      "name": "b1.harmony.one",
-     "port": 9872,
+     "port": 9874,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
-     "p2pkey": "b1-9872.key"
+     "p2pkey": "b1-9874.key"
   },
   "azure": {
     "num_vm": 0,
@@ -45,23 +45,24 @@
     "attacked_mode": 0,
     "minpeer": 35,
     "init_retry": false,
-    "archival": 3
+    "archival": ",3,10,22,51,79,81,113,122,131,159,168,188,"
   },
   "logs": {
     "leader": true,
-    "client": true,
+    "client": false,
     "validator": true,
-    "soldier": true
+    "soldier": true,
+    "db": false
   },
   "dashboard": {
-    "server": "34.222.41.95",
-    "name": "explorer2.harmony.one",
+    "server": "18.236.168.100",
+    "name": "1.harmony.one",
     "port": 3000,
     "reset": "false"
   },
   "explorer": {
-    "server": "34.222.41.95",
-    "name": "explorer2.harmony.one",
+    "server": "54.213.59.51",
+    "name": "explorer.harmony.one",
     "port": 4444,
     "reset": "true"
   },
@@ -74,7 +75,8 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 90,
-     "reserved_account": ",46,47,48,49,96,97,98,99,146,147,148,149,196,197,198,199,"
+     "reserved_account": ",40,41,42,43,44,45,46,88,90,91,92,93,94,95,140,141,142,143,144,190,191,192,193,199,",
+     "rpczone": "t"
   },
   "libp2p": true
 }

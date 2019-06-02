@@ -20,7 +20,6 @@ OPTIONS:
    -C instances         number of instances in 3 Azure regions (default: $AZ_VM)
    -s shards            number of shards (default: $SHARD_NUM)
    -t clients           number of clients (default: $CLIENT_NUM)
-   -p profile           aws profile (default: $AWS_PROFILE)
    -P launch_profile    launch profile (default: $LAUNCH_PROFILE)
    -i ip_file           file containing ip address of pre-launched VMs
    -l leaders           file containing ip addresses of leader VMs
@@ -139,7 +138,7 @@ EOT
 
 function upload_to_s3
 {
-   aws --profile ${AWS_PROFILE}-s3 s3 cp distribution_config.txt s3://${BUCKET}/${FOLDER}/distribution_config.txt --acl public-read
+   aws s3 cp distribution_config.txt s3://${BUCKET}/${FOLDER}/distribution_config.txt --acl public-read
 }
 
 ################### VARIABLES ###################
@@ -149,7 +148,6 @@ SHARD_NUM=2
 CLIENT_NUM=1
 COMMANDER_NUM=0
 SLEEP_TIME=10
-AWS_PROFILE=harmony
 RUN_PROFILE=tiny
 LEADERS=
 IP_FILE=
@@ -162,14 +160,13 @@ TS=$(date +%Y%m%d.%H%M%S)
 USERDATA=$CONFIGDIR/userdata-soldier-http.sh
 PYTHON=python
 
-while getopts "hnc:C:s:t:p:P:f:b:i:r:u:l:" option; do
+while getopts "hnc:C:s:t:P:f:b:i:r:u:l:" option; do
    case $option in
       n) DRYRUN=--dry-run ;;
       c) AWS_VM=$OPTARG ;;
       C) AZ_VM=$OPTARG ;;
       s) SHARD_NUM=$OPTARG ;;
       t) CLIENT_NUM=$OPTARG ;;
-      p) AWS_PROFILE=$OPTARG ;;
       P) LAUNCH_PROFILE=$OPTARG ;;
       i) IP_FILE=$OPTARG ;;
       b) BUCKET=$OPTARG ;;

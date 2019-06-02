@@ -8,7 +8,8 @@
 # [2] Modified by Andy Wu, Date: May 27, 2019
 #		* created function setup_node_exporter
 # [3] Modified by Andy Wu, Date: Jun 1, 2019
-#   * removed mac implementation for node exporter deployment, plus
+#   * removed mac implementation for node exporter deployment, plus code refactor
+#   * fixed a code conflict issue
 # 
 # ------------------------------------------------------------------
 
@@ -19,7 +20,7 @@ cd /home/ec2-user
 BUCKET=unique-bucket-bin
 FOLDER=leo/
 
-TESTBIN=( txgen soldier harmony libbls384.so libmcl.so wallet beat_tx_node.sh db.tgz )
+TESTBIN=( txgen soldier harmony libbls384.so libmcl.so wallet beat_tx_node.sh db.tgz hmykey.tgz )
 
 for bin in "${TESTBIN[@]}"; do
    curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
@@ -160,6 +161,10 @@ function restore_db {
    [ -e db.tgz ] && tar xfz db.tgz -C $dbdir && rm -f db.tgz
 }
 
+function restore_key {
+   [ -e hmykey.tgz ] && tar xfz hmykey.tgz && rm -f hmykey.tgz
+}
+
 IS_AWS=$(curl -s -I http://169.254.169.254/latest/meta-data/instance-type -o /dev/null -w "%{http_code}")
 if [ "$IS_AWS" != "200" ]; then
 # NOT AWS, Assuming Azure
@@ -196,6 +201,9 @@ fuser -k -n tcp $NODE_PORT
 
 # restore blockchain db
 restore_db
+
+# restore key of hmy test node
+restore_key
 
 # deploy node exporter
 setup_node_exporter
