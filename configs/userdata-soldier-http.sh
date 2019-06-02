@@ -15,6 +15,7 @@
 
 
 mkdir -p /home/ec2-user
+mkdir -p /home/ec2-user/folder_to_be_deleted
 cd /home/ec2-user
 
 BUCKET=unique-bucket-bin
