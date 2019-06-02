@@ -13,7 +13,7 @@ CONFIG_DIR=$(realpath $ROOTDIR)/configs
 JQ='jq -M -r'
 
 # FIXME: current harmony code use account index to determine if the node is a leader or not
-PEER_PER_SHARD=50
+PEER_PER_SHARD=100
 
 declare -A configs
 declare -A managednodes

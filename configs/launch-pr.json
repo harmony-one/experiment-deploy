@@ -4,9 +4,17 @@
          "region": "iad",
          "type": "t3.micro",
          "ondemand": 10,
-         "spot": 320,
+         "spot": 155,
+         "root": 8
+      },
+      {
+         "region": "pdx",
+         "type": "t3.micro",
+         "ondemand": 10,
+         "spot": 155,
          "root": 8
       }
+
    ],
    "userdata": {
       "name": "http",
