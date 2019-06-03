@@ -157,8 +157,7 @@ EOT
    CURL_TIMEOUT=20s
 
 # send commands to leaders at first
-   local num_leader=$(grep leader $DIST | wc -l)
-   for n in $(seq 1 $num_leader); do
+   for n in $(seq 1 ${configs[benchmark.shards]}); do
       local ip=${NODEIPS[$n]}
       CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
 
@@ -166,7 +165,7 @@ EOT
          init|update|wallet)
             sed "s/ACCINDEX/$start_index/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
             CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd-$ip.json"
-            (( start_index += $PEER_PER_SHARD ))
+            (( start_index ++ ))
             ;;
       esac
 
@@ -176,9 +175,9 @@ EOT
       sleep $WAIT_FOR_LEADER_LAUNCH
    done
 
-   start_index=0
+   start_index=${configs[benchmark.shards]}
    while [ $end -lt $NUM_NODES ]; do
-      start=$(( $PARALLEL * $group + $num_leader + 1))
+      start=$(( $PARALLEL * $group + ${configs[benchmark.shards]} + 1))
       end=$(( $PARALLEL + $start - 1 ))
 
       if [ $end -ge $NUM_NODES ]; then

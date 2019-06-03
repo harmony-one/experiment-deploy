@@ -97,8 +97,7 @@ function _find_available_node_index
 
    while [ "$found" != "true" ]; do
       i=$((i+1))
-      mod=$(( $i % $PEER_PER_SHARD ))
-      if [[ "${configs[flow.reserved_account]}" =~ ",$i," || $mod == 0 ]]; then
+      if [[ "${configs[flow.reserved_account]}" =~ ",$i," ]]; then
          continue
       else
          found=true
