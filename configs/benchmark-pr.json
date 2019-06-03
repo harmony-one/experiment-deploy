@@ -17,7 +17,17 @@
      "name": "b2.harmony.one",
      "port": 9870,
      "user": "ec2-user",
-     "key": "oregon-key-benchmark.pem"
+     "key": "oregon-key-benchmark.pem",
+     "p2pkey": "b2-9870.key"
+  },
+  "bootnode1": {
+     "enable": true,
+     "server": "100.26.90.187",
+     "name": "b1.harmony.one",
+     "port": 9870,
+     "user": "ec2-user",
+     "key": "virginia-key-benchmark.pem",
+     "p2pkey": "b1-9870.key"
   },
   "azure": {
     "num_vm": 0,
@@ -63,7 +73,7 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 60,
-     "reserved_account": ",29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,49,80,81,82,83,84,85,87,88,89,90,91,92,93,94,95,98,99,128,129,130,131,132,133,134,135,138,139,140,141,142,143,144,148,179,180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,197,198,199,"
+     "reserved_account": ",40,41,42,90,91,140,190,92,141,88,199,142,93,43,143,44,94,95,191,45,46,192,193,47,48,96,97,145,146,147,194,195,196,"
   },
   "libp2p": true
 }
