@@ -1,6 +1,21 @@
 #!/bin/bash
 
+# ------------------------------------------------------------------
+# 
+# VERSION:
+# [1] Created by Leo Chen, Date: Unknown
+# 		* created the initial script 
+# [2] Modified by Andy Wu, Date: May 27, 2019
+#		* created function setup_node_exporter
+# [3] Modified by Andy Wu, Date: Jun 1, 2019
+#   * removed mac implementation for node exporter deployment, plus code refactor
+#   * fixed a code conflict issue
+# 
+# ------------------------------------------------------------------
+
+
 mkdir -p /home/ec2-user
+mkdir -p /home/ec2-user/folder_to_be_deleted
 cd /home/ec2-user
 
 BUCKET=unique-bucket-bin
@@ -91,6 +106,55 @@ ENDEND
    )
 }
 
+setup_node_exporter() {
+
+	set -eu
+	OS=$(uname -s)
+	os=$(echo "$OS" | awk '{print tolower($0)}')
+
+
+	# node_exporter version: 0.18.0/2019-05-09
+	URL_node_exporter_linux=https://github.com/prometheus/node_exporter/releases/download/v0.18.0/node_exporter-0.18.0.linux-amd64.tar.gz
+
+  # download and decompress the node exporter in the tmp folder
+	cd /tmp 
+	curl -LO $URL_node_exporter_linux
+  tar -xvf /tmp/node_exporter-0.18.0.$os-amd64.tar.gz
+  # add a servcie account for node_exporter
+	useradd -rs /bin/false node_exporter
+	
+
+	# move the node export binary to /usr/local/bin
+	mv /tmp/node_exporter-0.18.0.$os-amd64/node_exporter /usr/local/bin/
+
+	# create a node_exporter service file under systemd
+	node_exporter_service=/etc/systemd/system/node_exporter.service # Linux only
+	if [ -f "$node_exporter_service" ]; then
+		rm $node_exporter_service
+	else 
+		touch $node_exporter_service
+		echo "[Unit]
+		Description=Node Exporter
+		After=network.target
+		 
+		[Service]
+		User=node_exporter
+		Group=node_exporter
+		Type=simple
+		ExecStart=/usr/local/bin/node_exporter
+		 
+		[Install]
+		WantedBy=multi-user.target" >> $node_exporter_service 
+	fi
+
+	systemctl daemon-reload
+	systemctl start node_exporter
+
+	#enable the node exporter servie to the system startup
+	systemctl enable node_exporter
+
+}
+
 function restore_db {
    local dbdir=db/harmony_${PUB_IP}_${NODE_PORT}
 
@@ -141,6 +205,9 @@ restore_db
 
 # restore key of hmy test node
 restore_key
+
+# deploy node exporter
+setup_node_exporter
 
 # Run soldier
 ./soldier -ip $PUB_IP -port $NODE_PORT > soldier-${PUB_IP}.log 2>&1 &
