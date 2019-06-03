@@ -107,45 +107,37 @@ ENDEND
 }
 
 setup_node_exporter() {
-
 	set -eu
 	OS=$(uname -s)
 	os=$(echo "$OS" | awk '{print tolower($0)}')
 
-
 	# node_exporter version: 0.18.0/2019-05-09
 	URL_node_exporter_linux=https://github.com/prometheus/node_exporter/releases/download/v0.18.0/node_exporter-0.18.0.linux-amd64.tar.gz
 
-  # download and decompress the node exporter in the tmp folder
-	cd /tmp 
+   # download and decompress the node exporter in the tmp folder
+	pushd /tmp
 	curl -LO $URL_node_exporter_linux
-  tar -xvf /tmp/node_exporter-0.18.0.$os-amd64.tar.gz
-  # add a servcie account for node_exporter
+   tar -xvf /tmp/node_exporter-0.18.0.$os-amd64.tar.gz
+   # add a servcie account for node_exporter
 	useradd -rs /bin/false node_exporter
-	
 
 	# move the node export binary to /usr/local/bin
-	mv /tmp/node_exporter-0.18.0.$os-amd64/node_exporter /usr/local/bin/
+	mv -f /tmp/node_exporter-0.18.0.$os-amd64/node_exporter /usr/local/bin/
 
 	# create a node_exporter service file under systemd
 	node_exporter_service=/etc/systemd/system/node_exporter.service # Linux only
-	if [ -f "$node_exporter_service" ]; then
-		rm $node_exporter_service
-	else 
-		touch $node_exporter_service
-		echo "[Unit]
-		Description=Node Exporter
-		After=network.target
-		 
-		[Service]
-		User=node_exporter
-		Group=node_exporter
-		Type=simple
-		ExecStart=/usr/local/bin/node_exporter
-		 
-		[Install]
-		WantedBy=multi-user.target" >> $node_exporter_service 
-	fi
+   echo "[Unit]
+   Description=Node Exporter
+   After=network.target
+
+   [Service]
+   User=node_exporter
+   Group=node_exporter
+   Type=simple
+   ExecStart=/usr/local/bin/node_exporter
+
+   [Install]
+   WantedBy=multi-user.target" > $node_exporter_service
 
 	systemctl daemon-reload
 	systemctl start node_exporter
@@ -153,17 +145,26 @@ setup_node_exporter() {
 	#enable the node exporter servie to the system startup
 	systemctl enable node_exporter
 
+   popd
 }
 
 function restore_db {
    local dbdir=db/harmony_${PUB_IP}_${NODE_PORT}
 
    mkdir -p $dbdir
-   [ -e db.tgz ] && tar xfz db.tgz -C $dbdir && rm -f db.tgz
+   if [ -e db.tgz ]; then
+      if file db.tgz | grep gzip ; then
+         tar xfz db.tgz -C $dbdir && rm -f db.tgz
+      fi
+   fi
 }
 
 function restore_key {
-   [ -e hmykey.tgz ] && tar xfz hmykey.tgz && rm -f hmykey.tgz
+   if [ -e hmykey.tgz ]; then
+      if file hmykey.tgz | grep gzip ; then
+         tar xfz hmykey.tgz && rm -f hmykey.tgz
+      fi
+   fi
 }
 
 IS_AWS=$(curl -s -I http://169.254.169.254/latest/meta-data/instance-type -o /dev/null -w "%{http_code}")
