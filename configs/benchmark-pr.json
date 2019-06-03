@@ -6,9 +6,9 @@
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 2,
+    "num_vm": 1,
     "type": "t3.medium",
-    "regions": "iad,pdx",
+    "regions": "iad",
     "root": 8
   },
   "bootnode": {
@@ -38,7 +38,7 @@
     ]
   },
   "benchmark": {
-    "shards": 4,
+    "shards": 1,
     "duration": 300,
     "dashboard": false,
     "crosstx": 30,
