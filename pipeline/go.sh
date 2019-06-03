@@ -329,13 +329,15 @@ function do_wallet_ini
    SECTION=default
    declare -A RPCS
 
-   local NUM_RPC=5
+   local NUM_RPC=15
    local RPC_PORT=14555
 
    [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
    TS=$(cat $SESSION_FILE | $JQ .sessionID)
 
    INI=${THEPWD}/logs/$TS/wallet.ini
+   R53=${THEPWD}/updater53.sh
+
    echo "[$SECTION]" > $INI
    for bnf in $(ls ${THEPWD}/logs/$TS/bootnode*-ma.txt); do
       bn=$(cat $bnf)
@@ -376,11 +378,13 @@ function do_wallet_ini
    done
    echo Please use $INI for your wallet to access the blockchain!
    n=0
+   rm -f $R53
    while [ $n -lt $shards ]; do
-      echo
-      echo python3 r53update.py ${configs[flow.rpczone]} $n ${RPCS[$n]}
+      echo python3 r53update.py ${configs[flow.rpczone]} $n ${RPCS[$n]} | tee -a $R53
       (( n++ ))
    done
+   chmod +x $R53
+   cp -f $R53 ${THEPWD}/logs/${TS}/
 }
 
 # re-run init command on some soldiers
