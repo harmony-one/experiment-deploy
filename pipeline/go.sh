@@ -276,6 +276,11 @@ function do_sync_logs
 
 function do_deinit
 {
+   if [ -z $TS ]; then
+      [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+      TS=$(cat $SESSION_FILE | $JQ .sessionID)
+   fi
+
    logging deinit ...
    if [ ${configs[azure.num_vm]} -gt 0 ]; then
       ../azure/go-az.sh deinit &
@@ -286,7 +291,7 @@ function do_deinit
 
    wait
    expense deinit
-   cat ${THEPWD}/logs/$TS/tps.txt
+   [ -e ${THEPWD}/logs/$TS/tps.txt ] && cat ${THEPWD}/logs/$TS/tps.txt
 }
 
 function do_reset
