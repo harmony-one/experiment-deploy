@@ -243,6 +243,8 @@ function download_logs
    expense download
    rm -f logs/$PROFILE
    ln -sf $TS logs/$PROFILE
+
+   cp -f $SESSION_FILE logs/$PROFILE
 }
 
 function analyze_logs
