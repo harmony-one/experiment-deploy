@@ -117,7 +117,7 @@ function run_cmd
          CMD='LD_LIBRARY_PATH=. /home/ec2-user/harmony -version'
          ;;
       db)
-         CMD='tar cfz db-IP.tgz db'
+         CMD='tar cfz db-IP.tgz harmony_db_*'
          NCMD=$CMD
          ;;
    esac
