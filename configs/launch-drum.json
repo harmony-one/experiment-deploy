@@ -11,7 +11,7 @@
          "region": "pdx",
          "type": "t3.micro",
          "ondemand": 2,
-         "spot": 87,
+         "spot": 86,
          "root": 20
       },
       {
