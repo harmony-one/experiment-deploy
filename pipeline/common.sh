@@ -12,9 +12,6 @@ ROOTDIR=${PROGDIR}/..
 CONFIG_DIR=$(realpath $ROOTDIR)/configs
 JQ='jq -M -r'
 
-# FIXME: current harmony code use account index to determine if the node is a leader or not
-PEER_PER_SHARD=100
-
 declare -A configs
 declare -A managednodes
 
@@ -54,7 +51,7 @@ function read_profile
 
    logging reading benchmark config file: $BENCHMARK_PROFILE
 
-   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type leader.root client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode benchmark.init_retry benchmark.archival logs.leader logs.client logs.validator logs.soldier logs.db parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch flow.reserved_account flow.rpczone benchmark.minpeer explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server bootnode.key bootnode.enable bootnode.p2pkey bootnode1.port bootnode1.server bootnode1.key bootnode1.enable bootnode1.p2pkey wallet.enable )
+   keys=( description libp2p aws.profile azure.num_vm azure.regions leader.regions leader.num_vm leader.type leader.root client.regions client.num_vm client.type benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx benchmark.attacked_mode benchmark.init_retry benchmark.archival logs.leader logs.client logs.validator logs.soldier logs.db parallel dashboard.server dashboard.name dashboard.port dashboard.reset userdata flow.wait_for_launch flow.reserved_account flow.rpczone benchmark.minpeer benchmark.even_shard benchmark.peer_per_shard explorer.server explorer.name explorer.port explorer.reset txgen.ip txgen.port txgen.enable bootnode.port bootnode.server bootnode.key bootnode.enable bootnode.p2pkey bootnode1.port bootnode1.server bootnode1.key bootnode1.enable bootnode1.p2pkey wallet.enable )
    
    managednodekey=.managednodes.nodes
    nodekeys=( role ip port key )

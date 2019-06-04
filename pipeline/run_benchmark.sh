@@ -165,7 +165,11 @@ EOT
          init|update|wallet)
             sed "s/ACCINDEX/$start_index/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
             CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd-$ip.json"
-            (( start_index ++ ))
+            if [ "${configs[benchmark.even_shard]}" == "true" ]; then
+               (( start_index ++ ))
+            else
+               (( start_index += ${configs[benchmark.peer_per_shard]} ))
+            fi
             ;;
       esac
 

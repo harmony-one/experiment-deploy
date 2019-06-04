@@ -43,6 +43,7 @@
     "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
+    "peer_per_shard": 50,
     "minpeer": 35,
     "init_retry": false,
     "archival": ",3,10,22,51,79,81,113,122,131,159,168,188,"

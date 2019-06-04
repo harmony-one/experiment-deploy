@@ -44,8 +44,9 @@
     "crosstx": 30,
     "attacked_mode": 0,
     "init_retry": false,
+    "peer_per_shard": 100,
     "minpeer": 60,
-    "archival": ",3,"
+    "archival": ",9,"
   },
   "logs": {
     "leader": true,

@@ -43,6 +43,7 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
+    "peer_per_shard": 50,
     "minpeer": 36
   },
   "logs": {
