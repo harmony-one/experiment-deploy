@@ -94,6 +94,12 @@ function _find_available_node_index
 
    while [ "$found" != "true" ]; do
       i=$((i+1))
+      if [ "${configs[benchmark.even_shard]}" != "true" ]; then
+         mod=$(( $i % ${configs[benchmark.peer_per_shard]} ))
+         if [ $mod == 0 ]; then
+            continue
+         fi
+      fi
       if [[ "${configs[flow.reserved_account]}" =~ ",$i," ]]; then
          continue
       else

@@ -17,6 +17,8 @@ function test_find_available_node_index
 {
    d=$(_find_available_node_index 1)
    echo $d
+   d=$(_find_available_node_index 2)
+   echo $d
    d=$(_find_available_node_index 45)
    echo $d
    d=$(_find_available_node_index 46)
@@ -27,11 +29,13 @@ function test_find_available_node_index
    echo $d
    d=$(_find_available_node_index 51)
    echo $d
+   d=$(_find_available_node_index 92)
+   echo $d
    d=$(_find_available_node_index 98)
    echo $d
    d=$(_find_available_node_index 99)
    echo $d
-   d=$(_find_available_node_index 100)
+   d=$(_find_available_node_index 190)
    echo $d
 }
 
@@ -48,5 +52,5 @@ function test_is_archival
    done
 }
 
-# test_find_available_node_index
-test_is_archival
+test_find_available_node_index
+# test_is_archival
