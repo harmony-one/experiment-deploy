@@ -1,18 +1,28 @@
 {
    "launch": [
       {
-         "region": "pdx",
-         "type": "t3.small",
-         "ondemand": 10,
-         "ami": "default",
+         "region": "iad",
+         "type": "t3.micro",
+         "ondemand": 2,
          "spot": 85
       },
       {
-         "region": "iad",
-         "type": "t3.small",
-         "ondemand": 10,
-         "ami": "default",
-         "spot": 85
+         "region": "pdx",
+         "type": "t3.micro",
+         "ondemand": 2,
+         "spot": 84
+      },
+      {
+         "region": "sin",
+         "type": "t3.micro",
+         "ondemand": 2,
+         "spot": 84
+      },
+      {
+         "region": "fra",
+         "type": "t3.micro",
+         "ondemand": 2,
+         "spot": 84
       }
    ],
    "userdata": {
