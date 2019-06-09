@@ -201,6 +201,10 @@
     {
       "name": "t2.micro",
       "price": 0.0116
+    },
+    {
+      "name": "m5a.large",
+      "price": 0.086
     }
   ]
 }
