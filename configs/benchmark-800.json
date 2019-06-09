@@ -1,0 +1,84 @@
+{
+  "description": "aws 800 nodes on 4 shard in 4 region",
+  "client": {
+    "num_vm": 0,
+    "type": "t3.medium",
+    "regions": "iad"
+  },
+  "leader": {
+    "num_vm": 1,
+    "type": "t3.large",
+    "regions": "iad,pdx,sin,fra",
+    "root": 30
+  },
+  "bootnode": {
+     "enable": true,
+     "server": "54.213.43.194",
+     "name": "b2.harmony.one",
+     "port": 9873,
+     "user": "ec2-user",
+     "key": "oregon-key-benchmark.pem",
+     "p2pkey": "b2-9873.key"
+  },
+  "bootnode1": {
+     "enable": true,
+     "server": "100.26.90.187",
+     "name": "b1.harmony.one",
+     "port": 9873,
+     "user": "ec2-user",
+     "key": "virginia-key-benchmark.pem",
+     "p2pkey": "b1-9873.key"
+  },
+  "azure": {
+    "num_vm": 0,
+    "regions": [
+      "eastus",
+      "westeurope",
+      "southeastasia"
+    ]
+  },
+  "benchmark": {
+    "shards": 4,
+    "duration": 60,
+    "dashboard": true,
+    "crosstx": 30,
+    "attacked_mode": 0,
+    "peer_per_shard": 200,
+    "minpeer": 140,
+    "even_shard": true,
+    "init_retry": false,
+    "archival": ",3,10,22,51,79,81,113,122,131,159,168,288,"
+  },
+  "logs": {
+    "leader": true,
+    "client": false,
+    "validator": true,
+    "soldier": true,
+    "db": false
+  },
+  "dashboard": {
+    "server": "18.236.168.100",
+    "name": "1.harmony.one",
+    "port": 3000,
+    "reset": "false"
+  },
+  "explorer": {
+    "server": "18.236.168.100",
+    "name": "1.harmony.one",
+    "port": 4444,
+    "reset": "true"
+  },
+  "txgen": {
+     "enable": "false",
+     "ip": "myip",
+     "port": 8000
+  },
+  "parallel": 100,
+  "userdata": "userdata-soldier-http.sh",
+  "flow": {
+     "wait_for_launch": 90,
+     "reserved_account": ",29,30,31,32,33,34,40,41,42,43,44,45,46,47,48,49,88,90,91,92,93,94,95,96,97,137,138,139,140,141,142,143,144,145,146,147,179,180,181,182,185,186,188,190,191,192,193,194,195,196,198,199,",
+     "rpczone": "t"
+  },
+  "libp2p": true
+}
