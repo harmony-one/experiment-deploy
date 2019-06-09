@@ -1,0 +1,82 @@
+{
+  "description": "aws 312 nodes on 4 shards, 2 region, run 300 seconds",
+  "client": {
+    "num_vm": 1,
+    "type": "t3.medium",
+    "regions": "iad"
+  },
+  "leader": {
+    "num_vm": 2,
+    "type": "t3.medium",
+    "regions": "iad,pdx",
+    "root": 8
+  },
+  "bootnode": {
+     "enable": true,
+     "server": "54.213.43.194",
+     "name": "b2.harmony.one",
+     "port": 9870,
+     "user": "ec2-user",
+     "key": "oregon-key-benchmark.pem",
+     "p2pkey": "b2-9870.key"
+  },
+  "bootnode1": {
+     "enable": true,
+     "server": "100.26.90.187",
+     "name": "b1.harmony.one",
+     "port": 9870,
+     "user": "ec2-user",
+     "key": "virginia-key-benchmark.pem",
+     "p2pkey": "b1-9870.key"
+  },
+  "azure": {
+    "num_vm": 0,
+    "regions": [
+      "eastus",
+      "westeurope",
+      "southeastasia"
+    ]
+  },
+  "benchmark": {
+    "shards": 4,
+    "duration": 300,
+    "dashboard": false,
+    "crosstx": 30,
+    "attacked_mode": 0,
+    "init_retry": false,
+    "peer_per_shard": 100,
+    "even_shard": true,
+    "minpeer": 60,
+    "archival": ",9,"
+  },
+  "logs": {
+    "leader": true,
+    "client": true,
+    "validator": true,
+    "soldier": true,
+    "db": false
+  },
+  "dashboard": {
+    "server": "34.222.41.95",
+    "port": 3000,
+    "reset": "false"
+  },
+  "explorer": {
+    "server": "34.222.41.95",
+    "port": 4444,
+    "reset": "false"
+  },
+  "txgen": {
+     "enable": "true",
+     "ip": "myip",
+     "port": 8000
+  },
+  "parallel": 100,
+  "userdata": "userdata-soldier-http.sh",
+  "flow": {
+     "wait_for_launch": 90,
+     "reserved_account": ""
+  },
+  "genesis": "genesis.txt",
+  "libp2p": true
+}

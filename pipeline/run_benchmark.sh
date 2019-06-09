@@ -109,7 +109,7 @@ function do_simple_cmd
    "ip":"127.0.0.1",
    "port":"9000",
    "sessionID":"$SESSION",
-   "benchmarkArgs":"$benchmarkArgs -account_index ACCINDEX -nopass",
+   "benchmarkArgs":"$benchmarkArgs ACCINDEX -nopass",
    "txgenArgs":"$txgenArgs"
    $CLIENT_JSON
 }
@@ -119,7 +119,7 @@ EOT
    "ip":"127.0.0.1",
    "port":"9000",
    "sessionID":"$SESSION",
-   "benchmarkArgs":"$benchmarkArgs -account_index ACCINDEX -nopass",
+   "benchmarkArgs":"$benchmarkArgs ACCINDEX -nopass",
    "txgenArgs":"$txgenArgs"
    $CLIENT_JSON
 }
@@ -163,7 +163,14 @@ EOT
 
       case $cmd in
          init|update|wallet)
-            sed "s/ACCINDEX/$start_index/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
+            if [ "${configs[genesis]}" != "" ]; then
+               # the new way of using account address directly
+               account=${genesis[$start_index]}
+               sed "s/ACCINDEX/-accounts $account/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
+            else
+               # the old way of using account_index
+               sed "s/ACCINDEX/-account_index $start_index/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
+            fi
             CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd-$ip.json"
             if [ "${configs[benchmark.even_shard]}" == "true" ]; then
                (( start_index ++ ))
@@ -198,10 +205,21 @@ EOT
             init|update|wallet)
                index=$(_find_available_node_index $start_index)
 
-               if $(_is_archival $index); then
-                  sed "s/ACCINDEX/$index -is_archival/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+               if [ "${configs[genesis]}" != "" ]; then
+               # the new way of using account address directly
+                  account=${genesis[$start_index]}
+                  if $(_is_archival $index); then
+                     sed "s/ACCINDEX/-accounts $account -is_archival/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
+                  else
+                     sed "s/ACCINDEX/-accounts $account/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+                  fi
                else
-                  sed "s/ACCINDEX/$index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+               # the old way of using account_index
+                  if $(_is_archival $index); then
+                     sed "s/ACCINDEX/-account_index $index -is_archival/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+                  else
+                     sed "s/ACCINDEX/-account_index $index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+                  fi
                fi
 
                CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
