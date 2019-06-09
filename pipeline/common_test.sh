@@ -11,6 +11,10 @@ function test_read_profile
    for k in ${!configs[@]}; do
       echo $k == ${configs[$k]}
    done
+
+   for i in ${genesis[@]}; do
+      echo $i
+   done
 }
 
 function test_find_available_node_index
@@ -52,5 +56,6 @@ function test_is_archival
    done
 }
 
-test_find_available_node_index
+test_read_profile
+# test_find_available_node_index
 # test_is_archival
