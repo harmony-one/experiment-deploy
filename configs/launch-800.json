@@ -18,14 +18,14 @@
          "region": "sin",
          "type": "t3.micro",
          "ondemand": 2,
-         "spot": 184,
+         "spot": 183,
          "root": 20
       },
       {
          "region": "fra",
          "type": "t3.micro",
          "ondemand": 2,
-         "spot": 184,
+         "spot": 183,
          "root": 20
       }
    ],

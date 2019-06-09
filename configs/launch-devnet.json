@@ -16,13 +16,13 @@
          "region": "sin",
          "type": "t3.micro",
          "ondemand": 2,
-         "spot": 84
+         "spot": 83
       },
       {
          "region": "fra",
          "type": "t3.micro",
          "ondemand": 2,
-         "spot": 84
+         "spot": 83
       }
    ],
    "userdata": {
