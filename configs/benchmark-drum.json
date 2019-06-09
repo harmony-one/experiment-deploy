@@ -6,9 +6,9 @@
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 1,
+    "num_vm": 2,
     "type": "m5a.large",
-    "regions": "iad,pdx,sin,fra",
+    "regions": "iad,pdx",
     "root": 30
   },
   "bootnode": {
@@ -76,7 +76,7 @@
   "parallel": 100,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
-     "wait_for_launch": 90,
+     "wait_for_launch": 120,
      "reserved_account": "",
      "rpczone": "t"
   },
