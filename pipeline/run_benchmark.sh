@@ -180,7 +180,7 @@ EOT
             ;;
       esac
 
-      [ -n "$VERBOSE" ] && echo $n =\> $CMD
+      echo $n =\> $CMD
       $TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log
 # wait for leaders up at first
       sleep $WAIT_FOR_LEADER_LAUNCH
@@ -209,7 +209,7 @@ EOT
                # the new way of using account address directly
                   account=${genesis[$start_index]}
                   if $(_is_archival $index); then
-                     sed "s/ACCINDEX/-accounts $account -is_archival/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
+                     sed "s/ACCINDEX/-accounts $account -is_archival/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
                   else
                      sed "s/ACCINDEX/-accounts $account/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
                   fi

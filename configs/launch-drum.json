@@ -2,14 +2,14 @@
    "launch": [
       {
          "region": "iad",
-         "type": "t3.medium",
+         "type": "m5a.large",
          "ondemand": 2,
          "spot": 156,
          "root": 20
       },
       {
          "region": "pdx",
-         "type": "t3.medium",
+         "type": "m5a.large",
          "ondemand": 2,
          "spot": 156,
          "root": 20
