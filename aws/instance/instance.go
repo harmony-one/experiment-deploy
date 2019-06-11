@@ -369,7 +369,7 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 		}
 		totalInstances += i.Spot
 	}
-	enableMonitoring := (&ec2.RunInstancesMonitoringEnabled{}).SetEnabled(true)
+	enableMonitoring := (&ec2.RunInstancesMonitoringEnabled{}).SetEnabled(false)
 	input.SetMonitoring(enableMonitoring)
 	iamProfile := (&ec2.IamInstanceProfileSpecification{})
 	iamProfile.SetName("harmony-node-instance")
