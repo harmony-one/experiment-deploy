@@ -54,7 +54,7 @@
     "client": false,
     "validator": true,
     "soldier": true,
-    "db": false
+    "db": true
   },
   "dashboard": {
     "server": "18.236.168.100",
