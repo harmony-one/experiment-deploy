@@ -397,10 +397,20 @@ function do_reinit
    [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
    TS=$(cat $SESSION_FILE | $JQ .sessionID)
 
-   for s in $soldiers; do
-      echo curl -X GET -s http://$s:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$s.json
-      curl -X GET -s http://$s:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$s.json
-   done
+   if [ "$soldiers" == "all" ]; then
+      pushd $logs/$TS/init
+      declare -a IP
+      IP=( $(find . -size 0 | sed 's/.*init.\(.*\).log/\1/' | awk -F. ' {print $1,$2,$3,$4} ' | tr ' ' . | tr '\n' ' ') )
+      for ip in ${IP[@]}; do
+         echo curl -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$ip.json
+         curl -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$ip.json
+      done
+   else
+      for s in $soldiers; do
+         echo curl -X GET -s http://$s:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$s.json
+         curl -X GET -s http://$s:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$s.json
+      done
+   fi
 }
 
 function do_all
