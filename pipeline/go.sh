@@ -389,6 +389,21 @@ function do_wallet_ini
    cp -f $R53 ${THEPWD}/logs/${TS}/
 }
 
+reinit_ip() {
+   local ip pfx f ok
+   ip="${1}"
+   ok=false
+   for pfx in init leader.init
+   do
+      f="logs/${TS}/init/${pfx}-${ip}.json"
+      [ -f "${f}" ] || continue
+      ok=true
+      echo curl -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
+      curl -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
+   done
+   ${ok} || echo "WARNING: could not find init JSON file for ${ip}; skipped it" >&2
+}
+
 # re-run init command on some soldiers
 function do_reinit
 {
@@ -402,13 +417,11 @@ function do_reinit
       declare -a IP
       IP=( $(find . -size 0 | sed 's/.*init.\(.*\).log/\1/' | awk -F. ' {print $1,$2,$3,$4} ' | tr ' ' . | tr '\n' ' ') )
       for ip in ${IP[@]}; do
-         echo curl -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$ip.json
-         curl -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$ip.json
+         reinit_ip "${ip}"
       done
    else
       for s in $soldiers; do
-         echo curl -X GET -s http://$s:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$s.json
-         curl -X GET -s http://$s:19000/init -H "Content-Type: application/json" -d@logs/$TS/init/init-$s.json
+         reinit_ip "${s}"
       done
    fi
 }
