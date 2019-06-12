@@ -12,20 +12,16 @@
     "root": 8
   },
   "bootnode": {
-     "enable": true,
-     "server": "54.213.43.194",
-     "name": "b2.harmony.one",
-     "port": 9877,
-     "user": "ec2-user",
-     "key": "oregon-key-benchmark.pem"
+    "enable": true,
+    "server": "54.213.43.194",
+    "name": "b2.harmony.one",
+    "port": 9877,
+    "user": "ec2-user",
+    "key": "oregon-key-benchmark.pem"
   },
   "azure": {
     "num_vm": 0,
-    "regions": [
-      "eastus",
-      "westeurope",
-      "southeastasia"
-    ]
+    "regions": ["eastus", "westeurope", "southeastasia"]
   },
   "benchmark": {
     "shards": 1,
@@ -53,14 +49,14 @@
     "reset": "false"
   },
   "txgen": {
-     "enable": "false",
-     "ip": "myip",
-     "port": 8000
+    "enable": "false",
+    "ip": "myip",
+    "port": 8000
   },
   "parallel": 10,
-  "userdata": "userdata-soldier-http.sh",
+  "userdata": "userdata-soldier-http_chao_test.sh",
   "flow": {
-     "wait_for_launch": 30
+    "wait_for_launch": 30
   },
   "libp2p": true
 }
