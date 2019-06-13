@@ -160,6 +160,7 @@ function do_run
 {
    logging run benchmark
    local RUN_OPTS=
+   local -a NODE_OPTS
 
    if [ "${configs[benchmark.dashboard]}" == "true" ]; then
       RUN_OPTS+=" -D ${configs[dashboard.server]}:${configs[dashboard.port]}"
@@ -177,10 +178,14 @@ function do_run
    RUN_OPTS+=" -C ${configs[benchmark.crosstx]}"
    RUN_OPTS+=" -A ${configs[benchmark.attacked_mode]}"
    RUN_OPTS+=" -m ${configs[benchmark.minpeer]}"
+   local commit_delay="${configs[benchmark.commit_delay]:-}"
+   case "${commit_delay}" in
+   ?*) NODE_OPTS+=(-d "${commit_delay}");;
+   esac
 
    [ $VERBOSE ] && RUN_OPTS+=" -v"
 
-   ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} -p $PROFILE init
+   ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} "${NODE_OPTS[@]}" -p $PROFILE init
 
 # An example on how to call wallet on each node to generate transactions
 #   if [ "${configs[wallet.enable]}" == "true" ]; then
