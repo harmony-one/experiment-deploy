@@ -47,6 +47,7 @@
     "minpeer": 67,
     "even_shard": true,
     "init_retry": false,
+    "commit_delay": "1s",
     "archival": ",3,10,22,51,79,81,113,122,131,159,168,288,"
   },
   "logs": {
