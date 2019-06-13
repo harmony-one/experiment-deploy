@@ -180,7 +180,8 @@ function do_run
    RUN_OPTS+=" -m ${configs[benchmark.minpeer]}"
    local commit_delay="${configs[benchmark.commit_delay]:-}"
    case "${commit_delay}" in
-   ?*) NODE_OPTS+=(-d "${commit_delay}");;
+   ""|"null") ;;
+   *) NODE_OPTS+=(-d "${commit_delay}");;
    esac
 
    [ $VERBOSE ] && RUN_OPTS+=" -v"
