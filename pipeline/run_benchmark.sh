@@ -29,6 +29,7 @@ OPTIONS:
    -m minpeer        minimum number of peers required to start consensus (default: $MINPEER)
    -c                invoke client node (default: $CLIENT)
    -s num            starting account index number (default: $ACCINDEX)
+   -d duration       when running validators tell them to delay commit messages (default: use Harmony binary default)
 
 ACTIONS:
    auto              automate the test execution based on test plan (TODO)
@@ -42,7 +43,7 @@ ACTIONS:
 EXAMPLES:
 
    $ME -i 10.10.1.1,10.10.1,2 -a benchmark update
-   $ME -f dist1.txt -d myjason-format config
+   $ME -f dist1.txt config
 EOT
    exit 0
 }
@@ -97,6 +98,11 @@ function do_simple_cmd
       if [ "$LIBP2P" == "true" ]; then
          benchmarkArgs+=" -is_genesis"
       fi
+      case "${commit_delay+set}" in
+      set)
+         benchmarkArgs+=" -delay_commit ${commit_delay}"
+         ;;
+      esac
       txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BOOTNODES"
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
@@ -318,8 +324,10 @@ declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
+unset -v commit_delay
+
 #################### MAIN ####################
-while getopts "hf:i:a:n:vD:A:C:m:cN:P:s:p:" option; do
+while getopts "hf:i:a:n:vD:A:C:m:cN:P:s:p:d:" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -341,6 +349,7 @@ while getopts "hf:i:a:n:vD:A:C:m:cN:P:s:p:" option; do
       N) BNMA=$OPTARG ;;
       P) LIBP2P=$OPTARG ;;
       s) ACCINDEX=$OPTARG ;;
+      d) commit_delay="${OPTARG}";;
       h|?) usage ;;
    esac
 done
