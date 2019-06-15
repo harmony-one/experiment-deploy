@@ -107,7 +107,8 @@ set -- \
 	-o GlobalKnownHostsFile=/dev/null \
 	-o UserKnownHostsFile="${known_hosts_file}" \
 	-o StrictHostKeyChecking=no \
-	-o ServerAliveInterval=60
+	-o ServerAliveInterval=60 \
+	-o ConnectTimeout=10
 
 if ${use_ssh_mux}
 then
