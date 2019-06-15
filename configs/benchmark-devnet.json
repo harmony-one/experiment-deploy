@@ -3,13 +3,13 @@
   "client": {
     "num_vm": 1,
     "type": "t3.medium",
-    "regions": "pdx"
+    "regions": "iad"
   },
   "leader": {
-    "num_vm": 1,
-    "type": "t3.medium",
-    "regions": "pdx,iad,sin,fra",
-    "root": 8
+    "num_vm": 2,
+    "type": "m5a.large",
+    "regions": "iad,pdx",
+    "root": 30
   },
   "bootnode": {
      "enable": true,
@@ -43,11 +43,12 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "init_retry": false,
     "peer_per_shard": 100,
+    "minpeer": 67,
     "even_shard": true,
-    "minpeer": 65,
-    "archival":",9,"
+    "init_retry": false,
+    "commit_delay": "2s",
+    "archival": ",3,10,22,51,79,81,113,122,131,159,168,288,"
   },
   "logs": {
     "leader": true,
@@ -73,10 +74,10 @@
      "ip": "myip",
      "port": 8000
   },
-  "parallel": 110,
+  "parallel": 100,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
-     "wait_for_launch": 90,
+     "wait_for_launch": 120,
      "reserved_account": ""
   },
   "genesis": "genesis.txt",
