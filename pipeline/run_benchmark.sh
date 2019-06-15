@@ -103,6 +103,10 @@ function do_simple_cmd
          benchmarkArgs+=" -delay_commit ${commit_delay}"
          ;;
       esac
+      if ${log_conn}
+      then
+	      benchmarkArgs+=" -log_conn"
+      fi
       txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BOOTNODES"
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
@@ -324,10 +328,11 @@ declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
-unset -v commit_delay
+unset -v commit_delay log_conn
+log_conn=false
 
 #################### MAIN ####################
-while getopts "hf:i:a:n:vD:A:C:m:cN:P:s:p:d:" option; do
+while getopts "hf:i:a:n:vD:A:C:m:cN:P:s:p:d:L" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -350,6 +355,7 @@ while getopts "hf:i:a:n:vD:A:C:m:cN:P:s:p:d:" option; do
       P) LIBP2P=$OPTARG ;;
       s) ACCINDEX=$OPTARG ;;
       d) commit_delay="${OPTARG}";;
+      L) log_conn=true;;
       h|?) usage ;;
    esac
 done
