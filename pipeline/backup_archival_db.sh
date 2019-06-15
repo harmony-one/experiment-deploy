@@ -72,3 +72,4 @@ do
 		wait
 	)
 done
+msg "backup finished and can be found in: ${backup_dir}"
