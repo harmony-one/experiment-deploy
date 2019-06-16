@@ -62,12 +62,13 @@ function read_profile
       parallel dashboard.server dashboard.name dashboard.port dashboard.reset
       userdata flow.wait_for_launch flow.reserved_account flow.rpczone
       benchmark.minpeer benchmark.even_shard benchmark.peer_per_shard
-      benchmark.commit_delay
+      benchmark.commit_delay benchmark.log_conn
       explorer.server explorer.name explorer.port explorer.reset
       txgen.ip txgen.port txgen.enable
       bootnode.port bootnode.server bootnode.key bootnode.enable bootnode.p2pkey
+      bootnode.log_conn
       bootnode1.port bootnode1.server bootnode1.key bootnode1.enable
-      bootnode1.p2pkey
+      bootnode1.p2pkey bootnode1.log_conn
       wallet.enable
    )
    

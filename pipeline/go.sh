@@ -152,6 +152,10 @@ function do_launch_bootnode
    if [ -e ${CONFIG_DIR}/${configs[${BN}.p2pkey]} ]; then
       BOOTNODE_OPT+=(-K "${CONFIG_DIR}/${configs[${BN}.p2pkey]}")
    fi
+   case "${configs[${BN}.log_conn]}" in
+   ""|null) ;;
+   *) BOOTNODE_OPT+=(-log_conn);;
+   esac
    ./bootnode.sh -G -p ${configs[${BN}.port]} -f ${FOLDER} -S ${configs[${BN}.server]} -k ${configs[${BN}.key]} -P $PROFILE -n $BN "${BOOTNODE_OPT[@]}"
    expense bootnode
    BN_MA+="$(cat ${BN}-ma.txt),"
@@ -183,6 +187,11 @@ function do_run
    case "${commit_delay}" in
    ""|"null") ;;
    *) NODE_OPTS+=(-d "${commit_delay}");;
+   esac
+   local log_conn="${configs[benchmark.log_conn]:-}"
+   case "${log_conn}" in
+   ""|"null") ;;
+   *) NODE_OPTS+=(-L);;
    esac
 
    [ $VERBOSE ] && RUN_OPTS+=" -v"
