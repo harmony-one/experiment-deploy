@@ -18,7 +18,8 @@
      "port": 9874,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
-     "p2pkey": "b2-9874.key"
+     "p2pkey": "b2-9874.key",
+     "log_conn": true
   },
   "bootnode1": {
      "enable": true,
@@ -27,7 +28,8 @@
      "port": 9874,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
-     "p2pkey": "b1-9874.key"
+     "p2pkey": "b1-9874.key",
+     "log_conn": true
   },
   "azure": {
     "num_vm": 0,
@@ -45,6 +47,7 @@
     "attacked_mode": 0,
     "peer_per_shard": 100,
     "minpeer": 67,
+    "log_conn": true,
     "even_shard": true,
     "init_retry": false,
     "commit_delay": "2s",
