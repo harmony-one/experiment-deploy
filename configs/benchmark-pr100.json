@@ -43,11 +43,12 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "init_retry": false,
     "peer_per_shard": 100,
-    "even_shard": true,
     "minpeer": 60,
-    "archival": ",9,"
+    "even_shard": true,
+    "init_retry": false,
+
+    "archival": ",3,10,22,51,79,81,113,122,131,159,168,288,"
   },
   "logs": {
     "leader": true,
@@ -58,11 +59,13 @@
   },
   "dashboard": {
     "server": "34.222.41.95",
+    "name": "0.harmony.one",
     "port": 3000,
     "reset": "false"
   },
   "explorer": {
     "server": "34.222.41.95",
+    "name": "0.harmony.one",
     "port": 4444,
     "reset": "false"
   },
@@ -74,7 +77,7 @@
   "parallel": 100,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
-     "wait_for_launch": 90,
+     "wait_for_launch": 120,
      "reserved_account": ""
   },
   "genesis": "genesis.txt",
