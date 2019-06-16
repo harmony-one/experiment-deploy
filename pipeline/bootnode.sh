@@ -31,6 +31,7 @@ OPTIONS:
    -P profile     the name of the test profile (default: $PROFILE)
    -n bootnode    the name of the bootnode (default: $BN)
    -K p2pkey      the filename of the p2pkey (default: $P2PKEY)
+   -L             log P2P connections
 
 COMMANDS:
    download       download bootnode binary
@@ -78,7 +79,7 @@ function _do_kill
 
 function _do_launch
 {
-   local cmd="pushd $WORKDIR; nohup sudo LD_LIBRARY_PATH=. ./bootnode -ip $SERVER -port $PORT -key bootnode-$PORT.key"
+   local cmd="pushd $WORKDIR; nohup sudo LD_LIBRARY_PATH=. ./bootnode -ip $SERVER -port $PORT -key bootnode-$PORT.key ${log_conn_opt}"
    $DRYRUN ${SSH} ec2-user@${SERVER} "$cmd > run-bootnode.log 2>&1 &"
    echo "bootnode node started, sleeping for 5s ..."
    sleep 5
@@ -111,7 +112,10 @@ PROFILE=
 BN=bootnode
 P2PKEY=bootnode.key
 
-while getopts "hvGp:b:f:S:k:P:n:K:" option; do
+unset -v log_conn_opt
+log_conn_opt=
+
+while getopts "hvGp:b:f:S:k:P:n:K:L" option; do
    case $option in
       v) VERBOSE=-v ;;
       G) DRYRUN= ;;
@@ -123,6 +127,7 @@ while getopts "hvGp:b:f:S:k:P:n:K:" option; do
       P) PROFILE=$OPTARG ;;
       n) BN=$OPTARG ;;
       K) P2PKEY=$OPTARG ;;
+      L) log_conn_opt="-log_conn" ;;
       h|?|*) usage ;;
    esac
 done
