@@ -4,14 +4,14 @@
          "region": "iad",
          "type": "m5a.large",
          "ondemand": 2,
-         "spot": 156,
+         "spot": 146,
          "root": 20
       },
       {
          "region": "pdx",
          "type": "m5a.large",
          "ondemand": 2,
-         "spot": 156,
+         "spot": 146,
          "root": 20
       }
    ],
