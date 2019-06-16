@@ -147,11 +147,12 @@ function do_launch_bootnode
       return
    fi
 
+   local -a BOOTNODE_OPT
    logging launch $BN node - $PROFILE profile
    if [ -e ${CONFIG_DIR}/${configs[${BN}.p2pkey]} ]; then
-      BOOTNODE_OPT="-K ${CONFIG_DIR}/${configs[${BN}.p2pkey]}"
+      BOOTNODE_OPT+=(-K "${CONFIG_DIR}/${configs[${BN}.p2pkey]}")
    fi
-   ./bootnode.sh -G -p ${configs[${BN}.port]} -f ${FOLDER} -S ${configs[${BN}.server]} -k ${configs[${BN}.key]} -P $PROFILE -n $BN $BOOTNODE_OPT
+   ./bootnode.sh -G -p ${configs[${BN}.port]} -f ${FOLDER} -S ${configs[${BN}.server]} -k ${configs[${BN}.key]} -P $PROFILE -n $BN "${BOOTNODE_OPT[@]}"
    expense bootnode
    BN_MA+="$(cat ${BN}-ma.txt),"
 }
