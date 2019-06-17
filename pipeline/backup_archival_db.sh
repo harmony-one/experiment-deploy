@@ -45,7 +45,7 @@ do
 	'?') usage "unrecognized option -${OPTARG}";;
 	':') usage "missing argument for -${OPTARG}";;
 	h) print_usage; exit 0;;
-	*) msg "unhandled option -${OPTARG}"; exit 70;;
+	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
 shift $((${OPTIND} - 1))

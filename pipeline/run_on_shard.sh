@@ -71,7 +71,7 @@ do
 	r) remove=true;;
 	M) exit_mux_first="${use_ssh_mux}"; use_ssh_mux=true;;
 	h) print_usage; exit 0;;
-	*) msg "unhandled option -${OPTARG}"; exit 70;;
+	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
 shift $((${OPTIND} - 1))
