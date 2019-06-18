@@ -1,15 +1,15 @@
 {
-  "description": "aws 312 nodes on 4 shards, 2 region, run 300 seconds",
+  "description": "aws 184 nodes on 4 shard in 2 region, reserve 16 account index for external node runners",
   "client": {
-    "num_vm": 1,
+    "num_vm": 0,
     "type": "t3.medium",
     "regions": "iad"
   },
   "leader": {
     "num_vm": 2,
-    "type": "t3.medium",
+    "type": "m5a.large",
     "regions": "iad,pdx",
-    "root": 8
+    "root": 30
   },
   "bootnode": {
      "enable": true,
@@ -18,7 +18,8 @@
      "port": 9870,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
-     "p2pkey": "b2-9870.key"
+     "p2pkey": "b2-9870.key",
+     "log_conn": true
   },
   "bootnode1": {
      "enable": true,
@@ -27,7 +28,8 @@
      "port": 9870,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
-     "p2pkey": "b1-9870.key"
+     "p2pkey": "b1-9870.key",
+     "log_conn": true
   },
   "azure": {
     "num_vm": 0,
@@ -39,43 +41,55 @@
   },
   "benchmark": {
     "shards": 4,
-    "duration": 300,
-    "dashboard": false,
+    "duration": 60,
+    "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
-    "init_retry": false,
     "peer_per_shard": 100,
+    "minpeer": 67,
+    "log_conn": true,
     "even_shard": true,
-    "minpeer": 60,
-    "archival": ",9,"
+    "init_retry": false,
+    "commit_delay": "2s",
+    "bls": true,
+    "archival": ",3,10,22,51,79,81,113,122,131,159,168,288,"
   },
   "logs": {
     "leader": true,
-    "client": true,
+    "client": false,
     "validator": true,
     "soldier": true,
     "db": false
   },
   "dashboard": {
-    "server": "34.222.41.95",
+    "server": "18.236.168.100",
+    "name": "1.harmony.one",
     "port": 3000,
     "reset": "false"
   },
   "explorer": {
-    "server": "34.222.41.95",
+    "server": "54.213.59.51",
+    "name": "explorer.harmony.one",
     "port": 4444,
     "reset": "false"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },
   "parallel": 100,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
-     "wait_for_launch": 90,
-     "reserved_account": ""
+     "wait_for_launch": 120,
+     "reserved_account": "",
+     "rpczone": "t3"
+  },
+  "bls": {
+     "pass": "blspass.txt",
+     "bucket": "harmony-secret-keys",
+     "folder": "bls-test",
+     "keyfile": "blskey.txt"
   },
   "genesis": "genesis.txt",
   "libp2p": true
