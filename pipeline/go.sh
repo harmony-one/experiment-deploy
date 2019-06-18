@@ -286,9 +286,10 @@ function do_sync_logs
    MONTH=${TS:4:2}
    DAY=${TS:6:2}
    TIME=${TS:9:6}
-   aws s3 sync logs/$TS s3://harmony-benchmark/logs/$YEAR/$MONTH/$DAY/$TIME 2>&1 > /dev/null
-   S3URL=s3://harmony-benchmark/logs/$YEAR/$MONTH/$DAY/$TIME
-   echo s3://harmony-benchmark/logs/$YEAR/$MONTH/$DAY/$TIME
+   TSDIR="$YEAR/$MONTH/$DAY/$TIME"
+   aws s3 sync logs/$TS s3://harmony-benchmark/logs/$TSDIR 2>&1 > /dev/null
+   S3URL=s3://harmony-benchmark/logs/$TSDIR
+   echo s3://harmony-benchmark/logs/$TSDIR
    expense s3_sync
 }
 
