@@ -2,18 +2,33 @@
    "launch": [
       {
          "region": "iad",
-         "type": "t3.medium",
-         "ondemand": 2,
-         "spot": 140,
-         "root": 10
+         "type": "m5a.large",
+         "ondemand": 15,
+         "spot": 100,
+         "root": 30
       },
       {
          "region": "pdx",
-         "type": "t3.medium",
-         "ondemand": 2,
-         "spot": 140,
-         "root": 10
+         "type": "m5a.large",
+         "ondemand": 15,
+         "spot": 100,
+         "root": 30
+      },
+      {
+         "region": "nrt",
+         "type": "m5a.large",
+         "ondemand": 15,
+         "spot": 100,
+         "root": 30
+      },
+      {
+         "region": "dub",
+         "type": "m5a.large",
+         "ondemand": 15,
+         "spot": 100,
+         "root": 30
       }
+
    ],
    "userdata": {
       "name": "http",

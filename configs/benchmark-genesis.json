@@ -1,14 +1,14 @@
 {
-  "description": "aws 184 nodes on 4 shard in 2 region, reserve 16 account index for external node runners",
+  "description": "aws 464/600 nodes on 4 shard in 4 region, reserve 34 nodes for FN",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 2,
+    "num_vm": 1,
     "type": "m5a.large",
-    "regions": "iad,pdx",
+    "regions": "iad,pdx,nrt,dub",
     "root": 30
   },
   "bootnode": {
@@ -45,8 +45,8 @@
     "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 100,
-    "minpeer": 67,
+    "peer_per_shard": 150,
+    "minpeer": 101,
     "log_conn": true,
     "even_shard": true,
     "init_retry": false,
@@ -68,9 +68,9 @@
   },
   "explorer": {
     "server": "54.213.59.51",
-    "name": "explorer.harmony.one",
+    "name": "1.harmony.one",
     "port": 4444,
-    "reset": "false"
+    "reset": "true"
   },
   "txgen": {
      "enable": "false",
@@ -87,7 +87,7 @@
   "bls": {
      "pass": "blspass.txt",
      "bucket": "harmony-secret-keys",
-     "folder": "bls-test",
+     "folder": "bls",
      "keyfile": "blskey.txt"
   },
   "genesis": "genesis.txt",
