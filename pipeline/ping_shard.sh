@@ -40,5 +40,5 @@ shift $((${OPTIND} - 1))
 unset -v shard
 for shard
 do
-	"${progdir}/run_on_shard.sh" -Mr "${shard}" 'curl -s http://localhost:19000/ping; echo'
+	"${progdir}/run_on_shard.sh" -d "${logdir}" -Mr "${shard}" 'curl -s http://localhost:19000/ping; echo'
 done
