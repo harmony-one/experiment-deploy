@@ -11,13 +11,15 @@ esac
 
 . "${progdir}/msg.sh"
 . "${progdir}/usage.sh"
+. "${progdir}/common_opts.sh"
 
 print_usage() {
 	cat <<- ENDEND
-		usage: ${progname} [-d logdir] [-t timestamp] [-qTOESrMh] shard command
+		usage: ${progname} ${common_usage} [-t timestamp] [-qTOESrM] shard command
+
+		${common_usage_desc}
 
 		options:
-		-d logdir	use the given logdir (default: ${default_logdir})
 		-t timestamp	use the given timestamp (default: basename of realname of -d)
 		-o outdir	use the given output directory
 		 		(default: the run_on_shard/YYYY-MM-DDTHH:MM:SSZ subdir of -d)
@@ -30,7 +32,6 @@ print_usage() {
 		-r		remove outdir (-o) after running
 		-M		use opportunistic ssh connection multiplexing
 		 		(helps back-to-back invocations); -M -M uses fresh mux
-		-h		print this help
 
 		shard		the shard number, such as 0
 		command		the shell command to run on each host; may use \${ip}
@@ -38,13 +39,7 @@ print_usage() {
 	ENDEND
 }
 
-: ${WHOAMI=`id -un`}
-export WHOAMI
-
-unset -v default_logdir
-default_logdir="${progdir}/logs/${WHOAMI}"
-
-unset -v logdir ts outdir quiet terse remove print_stdout print_stderr print_status use_ssh_mux
+unset -v ts outdir quiet terse remove print_stdout print_stderr print_status use_ssh_mux
 quiet=false
 terse=false
 remove=false
@@ -60,7 +55,6 @@ do
 	case "${opt}" in
 	'?') usage "unrecognized option -${OPTARG}";;
 	':') usage "missing argument for -${OPTARG}";;
-	d) logdir="${OPTARG}";;
 	t) ts="${OPTARG}";;
 	o) outdir="${OPTARG}";;
 	q) quiet=true;;
@@ -70,7 +64,6 @@ do
 	S) print_status=false;;
 	r) remove=true;;
 	M) exit_mux_first="${use_ssh_mux}"; use_ssh_mux=true;;
-	h) print_usage; exit 0;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -86,9 +79,6 @@ case $# in
 	usage "extra arguments given"
 	;;
 esac
-
-# substitute default logdir if needed
-: ${logdir="${default_logdir}"}
 
 case "${ts+set}" in
 '')

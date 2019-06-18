@@ -11,13 +11,15 @@ esac
 
 . "${progdir}/msg.sh"
 . "${progdir}/usage.sh"
+. "${progdir}/common_opts.sh"
 
 print_usage() {
 	cat <<- ENDEND
 		usage: ${progname} ${common_usage} cmd shard [shard ...]
 
-		options:
+		${common_usage_desc}
 
+		arguments:
 		cmd		shell command to execute with log fed into stdin
 		shard		the shard number, such as 0
 	ENDEND
@@ -27,10 +29,10 @@ unset -v OPTIND OPTARG opt
 OPTIND=1
 while getopts :hf opt
 do
+	! process_common_opts || continue
 	case "${opt}" in
 	'?') usage "unrecognized option -${OPTARG}";;
 	':') usage "missing argument for -${OPTARG}";;
-	h) print_usage; exit 0;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done

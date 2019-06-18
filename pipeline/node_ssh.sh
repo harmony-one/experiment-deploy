@@ -11,19 +11,21 @@ esac
 
 . "${progdir}/msg.sh"
 . "${progdir}/usage.sh"
+. "${progdir}/common_opts.sh"
 . "${progdir}/shell_quote.sh"
 
 print_usage() {
 	cat <<- ENDEND
-		usage: ${progname} [-hM] [-d logdir] [-o opt] [user@]ipaddr [command]
+		usage: ${progname} ${common_usage} [-M] [-o opt] [user@]ipaddr [command]
+
+		${common_usage_desc}
 
 		options:
-		-d logdir	use the given logdir (default: ${default_logdir})
 		-o opt		add an extra ssh(1) option
 		-M		use opportunistic ssh connection multiplexing
 		 		(helps back-to-back invocations); -M -M uses fresh mux
-		-h		print this help
 
+		arguments:
 		user		remote username (default: same as local)
 		ipaddr		IP address of the node
 		command		the shell command to run on the host;
@@ -31,28 +33,21 @@ print_usage() {
 	ENDEND
 }
 
-: ${WHOAMI=`id -un`}
-export WHOAMI
-
-unset -v default_logdir
-default_logdir="${progdir}/logs/${WHOAMI}"
-
-unset -v logdir use_ssh_mux exit_mux_first ssh_opts
+unset -v use_ssh_mux exit_mux_first ssh_opts
 use_ssh_mux=false
 exit_mux_first=false
 ssh_opts=""
 
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts :d:o:Mh opt
+while getopts ":o:M${common_getopts_spec}" opt
 do
+	! process_common_opts || continue
 	case "${opt}" in
 	'?') usage "unrecognized option -${OPTARG}";;
 	':') usage "missing argument for -${OPTARG}";;
-	d) logdir="${OPTARG}";;
 	o) ssh_opts="${ssh_opts} $(shell_quote "${OPTARG}")";;
 	M) exit_mux_first="${use_ssh_mux}"; use_ssh_mux=true;;
-	h) print_usage; exit 0;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -72,9 +67,6 @@ case "${userip}" in
 	;;
 esac
 cmd_quoted=$(shell_quote "$@")
-
-# substitute default logdir if needed
-: ${logdir="${default_logdir}"}
 
 unset -v dist_config line shard name_tag
 dist_config="${logdir}/distribution_config.txt"
