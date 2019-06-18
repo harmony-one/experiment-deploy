@@ -11,5 +11,5 @@ err() {
 	status="${1-1}"
 	shift 1 2> /dev/null || :
 	msg "$@"
-	exit "${status}"
+	exit "${status}" || exit 1
 }
