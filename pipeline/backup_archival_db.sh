@@ -17,7 +17,7 @@ esac
 
 print_usage() {
 	cat <<- ENDEND
-		usage:	${progname} shard [shard ...]
+		usage: ${progname} ${common_usage} shard [shard ...]
 
 		shard		the shard number, such as 0
 	ENDEND

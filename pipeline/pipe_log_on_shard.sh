@@ -14,7 +14,7 @@ esac
 
 print_usage() {
 	cat <<- ENDEND
-		usage:	${progname} cmd shard [shard ...]
+		usage: ${progname} ${common_usage} cmd shard [shard ...]
 
 		options:
 
