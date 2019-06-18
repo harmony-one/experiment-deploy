@@ -463,18 +463,19 @@ function do_all
 }
 
 ######### VARIABLES #########
+: ${WHOAMI="${USER}"}
 PROFILE=tiny
 PROFILES=( $(ls $CONFIG_DIR/benchmark-*.json | sed -e "s,$CONFIG_DIR/benchmark-,,g" -e 's/.json//g') )
 SESSION_FILE=$CONFIG_DIR/profile-${PROFILE}.json
 BENCHMARK_FILE=$CONFIG_DIR/benchmark-${PROFILE}.json
 BUCKET=unique-bucket-bin
-USERID=${WHOAMI:-$USER}
+USERID=${WHOAMI}
 FOLDER=$USERID
 USERDATA=$CONFIG_DIR/userdata-soldier-http.sh
 VERBOSE=
 THEPWD=$(pwd)
 KEEP=false
-TAG=${WHOAMI:-USER}
+TAG=${WHOAMI}
 TXGEN=true
 WALLET=false
 
