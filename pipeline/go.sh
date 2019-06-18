@@ -154,7 +154,7 @@ function do_launch_bootnode
    fi
    case "${configs[${BN}.log_conn]}" in
    ""|null) ;;
-   *) BOOTNODE_OPT+=(-log_conn);;
+   *) BOOTNODE_OPT+=(-L);;
    esac
    ./bootnode.sh -G -p ${configs[${BN}.port]} -f ${FOLDER} -S ${configs[${BN}.server]} -k ${configs[${BN}.key]} -P $PROFILE -n $BN "${BOOTNODE_OPT[@]}"
    expense bootnode
