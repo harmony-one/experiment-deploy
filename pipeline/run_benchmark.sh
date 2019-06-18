@@ -28,7 +28,6 @@ OPTIONS:
    -P true/false     enable libp2p or not (default: $LIBP2P)
    -m minpeer        minimum number of peers required to start consensus (default: $MINPEER)
    -c                invoke client node (default: $CLIENT)
-   -s num            starting account index number (default: $ACCINDEX)
    -d duration       when running validators tell them to delay commit messages (default: use Harmony binary default)
 
 ACTIONS:
@@ -85,7 +84,7 @@ function read_nodes
 function do_simple_cmd
 {
    local cmd=$1
-   local start_index=$ACCINDEX
+   local start_index=0
 
    mkdir -p $LOGDIR/$cmd
 
@@ -122,7 +121,7 @@ function do_simple_cmd
    "ip":"127.0.0.1",
    "port":"9000",
    "sessionID":"$SESSION",
-   "benchmarkArgs":"$benchmarkArgs ACCINDEX -nopass",
+   "benchmarkArgs":"${benchmarkArgs}",
    "txgenArgs":"$txgenArgs"
    $CLIENT_JSON
 }
@@ -132,7 +131,7 @@ EOT
    "ip":"127.0.0.1",
    "port":"9000",
    "sessionID":"$SESSION",
-   "benchmarkArgs":"$benchmarkArgs ACCINDEX -nopass",
+   "benchmarkArgs":"${benchmarkArgs}",
    "txgenArgs":"$txgenArgs"
    $CLIENT_JSON
 }
@@ -179,26 +178,14 @@ EOT
 
       case $cmd in
          init|update|wallet)
-            if [ "${configs[genesis]}" != "" ]; then
-               # the new way of using account address directly
-               account=${genesis[$start_index]}
-               sed "s/ACCINDEX/-accounts $account/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
-            else
-               # the old way of using account_index
-               sed "s/ACCINDEX/-account_index $start_index/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
-            fi
             if [ "${configs[benchmark.bls]}" == "true" ]; then
                bls=${blskey[$start_index]}
-               sed -i "s/BLSKEY/$bls/" $LOGDIR/$cmd/leader.$cmd-$ip.json
+               sed "s/BLSKEY/$bls/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
                # download bls private key files to each leader
                ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
             fi
             CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd-$ip.json"
-            if [ "${configs[benchmark.even_shard]}" == "true" ]; then
-               (( start_index ++ ))
-            else
-               (( start_index += ${configs[benchmark.peer_per_shard]} ))
-            fi
+            (( start_index ++ ))
             ;;
       esac
 
@@ -223,33 +210,16 @@ EOT
 
          case $cmd in
             init|update|wallet)
-               index=$(_find_available_node_index $start_index)
-
-               if [ "${configs[genesis]}" != "" ]; then
-               # the new way of using account address directly
-                  account=${genesis[$start_index]}
-                  if $(_is_archival $index); then
-                     sed "s/ACCINDEX/-accounts $account -is_archival/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
-                  else
-                     sed "s/ACCINDEX/-accounts $account/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
-                  fi
-               else
-               # the old way of using account_index
-                  if $(_is_archival $index); then
-                     sed "s/ACCINDEX/-account_index $index -is_archival/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
-                  else
-                     sed "s/ACCINDEX/-account_index $index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
-                  fi
-               fi
+               index=$start_index
                if [ "${configs[benchmark.bls]}" == "true" ]; then
                   bls=${blskey[$start_index]}
-                  sed -i "s/BLSKEY/$bls/" $LOGDIR/$cmd/$cmd-$ip.json
+                  sed "s/BLSKEY/$bls/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
                   # download bls private key files to each node
                   ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls" &
                fi
 
                CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
-               start_index=$index
+               (( start_index ++ ))
                ;;
          esac
 
@@ -345,7 +315,6 @@ MINPEER=10
 CLIENT=
 BNMA=
 LIBP2P=false
-ACCINDEX=0
 
 declare -A NODES
 declare -A NODEIPS
@@ -355,7 +324,7 @@ unset -v commit_delay log_conn
 log_conn=false
 
 #################### MAIN ####################
-while getopts "hf:i:a:n:vD:A:C:m:cN:P:s:p:d:L" option; do
+while getopts "hf:i:a:n:vD:A:C:m:cN:P:p:d:L" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -376,7 +345,6 @@ while getopts "hf:i:a:n:vD:A:C:m:cN:P:s:p:d:L" option; do
       c) CLIENT=true ;;
       N) BNMA=$OPTARG ;;
       P) LIBP2P=$OPTARG ;;
-      s) ACCINDEX=$OPTARG ;;
       d) commit_delay="${OPTARG}";;
       L) log_conn=true;;
       h|?) usage ;;

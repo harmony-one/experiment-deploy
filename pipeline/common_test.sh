@@ -54,21 +54,7 @@ function test_find_available_node_index
    echo $d
 }
 
-function test_is_archival
-{
-   num=( 3 11 15 22 29 51 30 33 40 45 46 50 60 66 67 75 77 88 89 90 113 121 168 188 199 )
-
-   for n in ${num[@]}; do
-      if $(_is_archival $n);  then
-         echo $n is archival node
-      else
-         echo $n is not archival node
-      fi
-   done
-}
-
 test_read_blskey
 
 # test_read_profile
 # test_find_available_node_index
-# test_is_archival
