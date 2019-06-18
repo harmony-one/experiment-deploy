@@ -193,7 +193,7 @@ EOT
                # download bls private key files to each leader
                ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
             fi
-            CMD+=$" -d@$cmd/leader.$cmd-$ip.json"
+            CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd-$ip.json"
             if [ "${configs[benchmark.even_shard]}" == "true" ]; then
                (( start_index ++ ))
             else
@@ -203,7 +203,7 @@ EOT
       esac
 
       echo $n =\> $CMD
-      echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $cmd/$cmd.$n.$ip.log" >> $cmd_file
+      echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log" >> $cmd_file
    done
 
    start_index=${configs[benchmark.shards]}
@@ -248,13 +248,13 @@ EOT
                   ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls" &
                fi
 
-               CMD+=$" -d@$cmd/$cmd-$ip.json"
+               CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
                start_index=$index
                ;;
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $cmd/$cmd.$n.$ip.log &" >> $cmd_file
+         echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &" >> $cmd_file
       done 
       wait
       echo "wait" >> $cmd_file
