@@ -290,6 +290,7 @@ function do_sync_logs
    aws s3 sync logs/$TS s3://harmony-benchmark/logs/$TSDIR 2>&1 > /dev/null
    S3URL=s3://harmony-benchmark/logs/$TSDIR
    echo $S3URL
+   echo "$TSDIR" | aws s3 cp - s3://harmony-benchmark/logs/latest-${USERID}-${PROFILE}.txt
    expense s3_sync
 }
 
