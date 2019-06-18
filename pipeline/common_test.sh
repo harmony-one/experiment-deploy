@@ -12,6 +12,17 @@ function test_read_profile
       echo $k == ${configs[$k]}
    done
 
+}
+
+function test_read_blskey
+{
+   for i in ${blskey[@]}; do
+      echo $i
+   done
+}
+
+function test_read_genesis_file
+{
    for i in ${genesis[@]}; do
       echo $i
    done
@@ -56,6 +67,8 @@ function test_is_archival
    done
 }
 
-test_read_profile
+test_read_blskey
+
+# test_read_profile
 # test_find_available_node_index
 # test_is_archival

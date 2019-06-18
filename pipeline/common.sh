@@ -15,6 +15,7 @@ JQ='jq -M -r'
 declare -A configs
 declare -A managednodes
 declare -a genesis
+declare -a blskey
 
 function expense
 {
@@ -70,6 +71,7 @@ function read_profile
       bootnode1.port bootnode1.server bootnode1.key bootnode1.enable
       bootnode1.p2pkey bootnode1.log_conn
       wallet.enable
+      benchmark.bls bls.pass bls.bucket bls.folder bls.keyfile
    )
    
    managednodekey=.managednodes.nodes
@@ -91,6 +93,10 @@ function read_profile
 
    if [ "${configs[genesis]}" != "null" ]; then
       genesis=( $(cat $CONFIG_DIR/${configs[genesis]}) )
+   fi
+
+   if [ "${configs[bls.keyfile]}" != "null" ]; then
+      blskey=( $(cat $CONFIG_DIR/${configs[bls.keyfile]}) )
    fi
 }
 
