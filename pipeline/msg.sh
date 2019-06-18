@@ -13,3 +13,7 @@ err() {
 	msg "$@"
 	exit "${status}" || exit 1
 }
+
+msg_exit() {
+	err "$@"
+}
