@@ -52,6 +52,7 @@ unset -v OPTIND OPTARG opt
 OPTIND=1
 while getopts :d:t:o:qTOESrMh opt
 do
+	! process_common_opts "${opt}" || continue
 	case "${opt}" in
 	'?') usage "unrecognized option -${OPTARG}";;
 	':') usage "missing argument for -${OPTARG}";;

@@ -42,7 +42,7 @@ unset -v OPTIND OPTARG opt
 OPTIND=1
 while getopts ":o:M${common_getopts_spec}" opt
 do
-	! process_common_opts || continue
+	! process_common_opts "${opt}" || continue
 	case "${opt}" in
 	'?') usage "unrecognized option -${OPTARG}";;
 	':') usage "missing argument for -${OPTARG}";;
