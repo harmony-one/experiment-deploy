@@ -78,7 +78,7 @@
      "ip": "myip",
      "port": 8000
   },
-  "parallel": 100,
+  "parallel": 50,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 120,

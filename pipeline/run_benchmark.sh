@@ -3,7 +3,7 @@
 #TODO: parameter validation
 
 set -o pipefail
-set -x
+# set -x
 source ./common.sh
 
 function usage
@@ -243,7 +243,7 @@ EOT
                if [ "${configs[benchmark.bls]}" == "true" ]; then
                   bls=${blskey[$start_index]}
                   sed -i "s/BLSKEY/$bls/" $LOGDIR/$cmd/$cmd-$ip.json
-                  ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
+                  ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls" &
                fi
 
                CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
