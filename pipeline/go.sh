@@ -286,9 +286,11 @@ function do_sync_logs
    MONTH=${TS:4:2}
    DAY=${TS:6:2}
    TIME=${TS:9:6}
-   aws s3 sync logs/$TS s3://harmony-benchmark/logs/$YEAR/$MONTH/$DAY/$TIME 2>&1 > /dev/null
-   S3URL=s3://harmony-benchmark/logs/$YEAR/$MONTH/$DAY/$TIME
-   echo s3://harmony-benchmark/logs/$YEAR/$MONTH/$DAY/$TIME
+   TSDIR="$YEAR/$MONTH/$DAY/$TIME"
+   aws s3 sync logs/$TS s3://harmony-benchmark/logs/$TSDIR 2>&1 > /dev/null
+   S3URL=s3://harmony-benchmark/logs/$TSDIR
+   echo $S3URL
+   echo "$TSDIR" | aws s3 cp - s3://harmony-benchmark/logs/latest-${WHOAMI}-${PROFILE}.txt
    expense s3_sync
 }
 
@@ -461,18 +463,20 @@ function do_all
 }
 
 ######### VARIABLES #########
+: ${WHOAMI="${USER}"}
+export WHOAMI
 PROFILE=tiny
 PROFILES=( $(ls $CONFIG_DIR/benchmark-*.json | sed -e "s,$CONFIG_DIR/benchmark-,,g" -e 's/.json//g') )
 SESSION_FILE=$CONFIG_DIR/profile-${PROFILE}.json
 BENCHMARK_FILE=$CONFIG_DIR/benchmark-${PROFILE}.json
 BUCKET=unique-bucket-bin
-USERID=${WHOAMI:-$USER}
+USERID=${WHOAMI}
 FOLDER=$USERID
 USERDATA=$CONFIG_DIR/userdata-soldier-http.sh
 VERBOSE=
 THEPWD=$(pwd)
 KEEP=false
-TAG=${WHOAMI:-USER}
+TAG=${WHOAMI}
 TXGEN=true
 WALLET=false
 
