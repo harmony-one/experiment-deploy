@@ -98,6 +98,9 @@ function do_simple_cmd
       if [ "$LIBP2P" == "true" ]; then
          benchmarkArgs+=" -is_genesis"
       fi
+      if [ "${configs[benchmark.bls]}" == "true" ]; then
+         benchmarkArgs+=" -blspass file:${configs[bls.pass]} -blskey_file BLSKEY"
+      fi
       case "${commit_delay+set}" in
       set)
          benchmarkArgs+=" -delay_commit ${commit_delay}"
@@ -166,6 +169,9 @@ EOT
    WAIT_FOR_LEADER_LAUNCH=3
    CURL_TIMEOUT=20s
 
+   cmd_file=$LOGDIR/run_init.sh
+   echo "#!/usr/bin/env bash" > $cmd_file
+
 # send commands to leaders at first
    for n in $(seq 1 ${configs[benchmark.shards]}); do
       local ip=${NODEIPS[$n]}
@@ -181,7 +187,13 @@ EOT
                # the old way of using account_index
                sed "s/ACCINDEX/-account_index $start_index/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
             fi
-            CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd-$ip.json"
+            if [ "${configs[benchmark.bls]}" == "true" ]; then
+               bls=${blskey[$start_index]}
+               sed -i "s/BLSKEY/$bls/" $LOGDIR/$cmd/leader.$cmd-$ip.json
+               # download bls private key files to each leader
+               ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
+            fi
+            CMD+=$" -d@$cmd/leader.$cmd-$ip.json"
             if [ "${configs[benchmark.even_shard]}" == "true" ]; then
                (( start_index ++ ))
             else
@@ -191,9 +203,7 @@ EOT
       esac
 
       echo $n =\> $CMD
-      $TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log
-# wait for leaders up at first
-      sleep $WAIT_FOR_LEADER_LAUNCH
+      echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $cmd/$cmd.$n.$ip.log" >> $cmd_file
    done
 
    start_index=${configs[benchmark.shards]}
@@ -231,18 +241,31 @@ EOT
                      sed "s/ACCINDEX/-account_index $index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
                   fi
                fi
+               if [ "${configs[benchmark.bls]}" == "true" ]; then
+                  bls=${blskey[$start_index]}
+                  sed -i "s/BLSKEY/$bls/" $LOGDIR/$cmd/$cmd-$ip.json
+                  # download bls private key files to each node
+                  ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls" &
+               fi
 
-               CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
+               CMD+=$" -d@$cmd/$cmd-$ip.json"
                start_index=$index
                ;;
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         $TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &
+         echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $cmd/$cmd.$n.$ip.log &" >> $cmd_file
       done 
       wait
+      echo "wait" >> $cmd_file
       (( group++ ))
    done
+
+   # run the curl commands to init the harmony nodes
+   # we only do it after the blskey file downloaded to each node
+   chmod +x $cmd_file
+   $cmd_file
+
    duration=$SECONDS
 
    succeeded=$(find $LOGDIR/$cmd -name $cmd.*.log -type f -exec grep Succeeded {} \; | wc -l)

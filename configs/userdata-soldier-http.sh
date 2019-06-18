@@ -28,6 +28,9 @@ for bin in "${TESTBIN[@]}"; do
    chmod +x ${bin}
 done
 
+# Download the blspass file
+aws s3 cp s3://harmony-pass/blspass.txt blspass.txt
+
 export LD_LIBRARY_PATH=/home/ec2-user
 
 sysctl -w net.core.somaxconn=1024
