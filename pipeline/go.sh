@@ -289,7 +289,7 @@ function do_sync_logs
    TSDIR="$YEAR/$MONTH/$DAY/$TIME"
    aws s3 sync logs/$TS s3://harmony-benchmark/logs/$TSDIR 2>&1 > /dev/null
    S3URL=s3://harmony-benchmark/logs/$TSDIR
-   echo s3://harmony-benchmark/logs/$TSDIR
+   echo $S3URL
    expense s3_sync
 }
 
