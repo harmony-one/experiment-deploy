@@ -12,19 +12,8 @@ case "${0}" in
 *) progdir=".";;
 esac
 
-msg() {
-	case $# in
-	[1-9]*)
-		echo "${progname}: $*" >&2
-		;;
-	esac
-}
-
-usage() {
-	msg "$@"
-	print_usage >&2
-	exit 64  # EX_USAGE
-}
+. "${progdir}/msg.sh"
+. "${progdir}/usage.sh"
 
 print_usage() {
 	cat <<- ENDEND
