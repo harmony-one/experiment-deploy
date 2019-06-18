@@ -464,6 +464,7 @@ function do_all
 
 ######### VARIABLES #########
 : ${WHOAMI="${USER}"}
+export WHOAMI
 PROFILE=tiny
 PROFILES=( $(ls $CONFIG_DIR/benchmark-*.json | sed -e "s,$CONFIG_DIR/benchmark-,,g" -e 's/.json//g') )
 SESSION_FILE=$CONFIG_DIR/profile-${PROFILE}.json
