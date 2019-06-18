@@ -1,7 +1,7 @@
 msg() {
 	case $# in
 	[1-9]*)
-		echo "${progname}: $*" >&2
+		echo "${progname+"${progname}: "}$*" >&2
 		;;
 	esac
 }
