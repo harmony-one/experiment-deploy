@@ -51,8 +51,7 @@
     "even_shard": true,
     "init_retry": false,
     "commit_delay": "2s",
-    "bls": true,
-    "archival": ",3,10,22,51,79,81,113,122,131,159,168,288,"
+    "bls": true
   },
   "logs": {
     "leader": true,
