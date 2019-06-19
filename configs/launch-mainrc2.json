@@ -3,29 +3,29 @@
       {
          "region": "iad",
          "type": "m5a.large",
-         "ondemand": 115,
-         "spot": 0,
+         "ondemand": 15,
+         "spot": 100,
          "root": 30
       },
       {
          "region": "pdx",
          "type": "m5a.large",
-         "ondemand": 115,
-         "spot": 0,
+         "ondemand": 15,
+         "spot": 100,
          "root": 30
       },
       {
          "region": "nrt",
          "type": "m5a.large",
-         "ondemand": 115,
-         "spot": 0,
+         "ondemand": 15,
+         "spot": 100,
          "root": 30
       },
       {
          "region": "dub",
          "type": "m5a.large",
-         "ondemand": 115,
-         "spot": 0,
+         "ondemand": 15,
+         "spot": 100,
          "root": 30
       }
 

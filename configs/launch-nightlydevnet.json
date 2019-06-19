@@ -3,26 +3,26 @@
       {
          "region": "iad",
          "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 84
+         "ondemand": 1,
+         "spot": 114
       },
       {
          "region": "pdx",
          "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 84
+         "ondemand": 1,
+         "spot": 114
       },
       {
          "region": "sin",
          "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 84
+         "ondemand": 1,
+         "spot": 114
       },
       {
          "region": "fra",
          "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 84
+         "ondemand": 1,
+         "spot": 114
       }
    ],
    "userdata": {
