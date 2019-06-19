@@ -15,20 +15,20 @@
      "enable": true,
      "server": "54.213.43.194",
      "name": "b2.harmony.one",
-     "port": 9870,
+     "port": 9874,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
-     "p2pkey": "b2-9870.key",
+     "p2pkey": "b2-9874.key",
      "log_conn": true
   },
   "bootnode1": {
      "enable": true,
      "server": "100.26.90.187",
      "name": "b1.harmony.one",
-     "port": 9870,
+     "port": 9874,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
-     "p2pkey": "b1-9870.key",
+     "p2pkey": "b1-9874.key",
      "log_conn": true
   },
   "azure": {
@@ -58,7 +58,7 @@
     "client": false,
     "validator": true,
     "soldier": true,
-    "db": false
+    "db": true
   },
   "dashboard": {
     "server": "18.236.168.100",
@@ -68,7 +68,7 @@
   },
   "explorer": {
     "server": "54.213.59.51",
-    "name": "1.harmony.one",
+    "name": "explorer.harmony.one",
     "port": 4444,
     "reset": "true"
   },
@@ -82,7 +82,7 @@
   "flow": {
      "wait_for_launch": 120,
      "reserved_account": "",
-     "rpczone": "t3"
+     "rpczone": "t"
   },
   "bls": {
      "pass": "blspass.txt",
