@@ -53,5 +53,5 @@ esac
 unset -v shard
 for shard
 do
-	"${progdir}/run_on_shard.sh" -MTr "${shard}" 'cat ../tmp_log/log-"${ts}"/*-"${ip}"-9000.log | ('"${cmd:-"cat"}"')'
+	"${progdir}/run_on_shard.sh" -d "${logdir}" -MTr "${shard}" 'cat ../tmp_log/log-"${ts}"/*-"${ip}"-9000.log | ('"${cmd:-"cat"}"')'
 done

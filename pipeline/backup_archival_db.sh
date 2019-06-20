@@ -54,7 +54,8 @@ do
 		while read -r ip
 		do
 			echo "rsyncing from ${ip}"
-			rsync -azH -e "${progdir}/node_ssh.sh" --delete "${ip}:harmony_db_*" "${backup_dir}/s${shard}-${ip}/" &
+			# TODO ek – eliminate need for -d ${logdir} below
+			rsync -azH -e "${progdir}/node_ssh.sh -d ${logdir}" --delete "${ip}:harmony_db_*" "${backup_dir}/s${shard}-${ip}/" &
 		done
 		wait
 	)

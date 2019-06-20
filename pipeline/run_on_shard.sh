@@ -137,7 +137,7 @@ shard_awk 'print $1;' | (
 				set -- "$@" -M
 			fi
 		fi
-		"${progdir}/node_ssh.sh" "$@" -o-n "ec2-user@${ip}" '
+		"${progdir}/node_ssh.sh" -d "${logdir}" "$@" -o-n "ec2-user@${ip}" '
 			ts='\'"${ts}"\''
 			ip='\'"${ip}"\''
 			'"${cmd}"'
