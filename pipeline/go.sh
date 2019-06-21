@@ -193,6 +193,16 @@ function do_run
    ""|"null") ;;
    *) NODE_OPTS+=(-L);;
    esac
+   local rpc_zone="${configs[flow.rpczone]}"
+   case "${rpc_zone}" in
+   null)
+	   # not given in the config file; use node binary default
+	   ;;
+   *)
+	   # given in the config file, including empty (which disables DNS)
+	   NODE_OPTS+=(-z "${rpc_zone}.hmny.io")
+	   ;;
+   esac
 
    [ $VERBOSE ] && RUN_OPTS+=" -v"
 

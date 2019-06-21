@@ -32,6 +32,8 @@ OPTIONS:
    -c                invoke client node (default: $CLIENT)
    -d duration       when running validators tell them to delay commit messages
                      (default: use Harmony binary default)
+   -z zone           use the given DNS zone; "" disables DNS-based discovery
+                     (default: use Harmony binary default)
 
 ACTIONS:
    auto              automate the test execution based on test plan (TODO)
@@ -112,6 +114,11 @@ function do_simple_cmd
       then
          benchmarkArgs+=" -log_conn"
       fi
+      case "${dns_zone+set}" in
+      set)
+         benchmarkArgs+=" -dns_zone=${dns_zone}"
+         ;;
+      esac
       txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BOOTNODES"
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
@@ -323,11 +330,11 @@ declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
-unset -v commit_delay log_conn
+unset -v commit_delay log_conn dns_zone
 log_conn=false
 
 #################### MAIN ####################
-while getopts "hf:i:a:n:vD:A:C:m:cN:P:p:d:L" option; do
+while getopts "hf:i:a:n:vD:A:C:m:cN:P:p:d:Lz:" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -350,6 +357,7 @@ while getopts "hf:i:a:n:vD:A:C:m:cN:P:p:d:L" option; do
       P) LIBP2P=$OPTARG ;;
       d) commit_delay="${OPTARG}";;
       L) log_conn=true;;
+      z) dns_zone="${OPTARG}";;
       h|?) usage ;;
    esac
 done
