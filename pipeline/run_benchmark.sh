@@ -21,14 +21,19 @@ OPTIONS:
    -p profile        profile of the benchmark test (default: $PROFILE)
    -n num            parallel process num in a group (default: $PARALLEL)
    -v                verbose
-   -D dashboard_ip   enable dashboard support, specify the ip address of dashboard server (default: $DASHBOARD)
+   -D dashboard_ip   enable dashboard support, specify the ip address of
+                     dashboard server (default: $DASHBOARD)
    -A attacked_mode  enable attacked mode support (default mode: $ATTACK)
    -C cross_ratio    enable cross_shard_ratio (default ratio: $CROSSTX)
    -N multiaddr      the multiaddress of the boot node (default: $BNMA)
    -P true/false     enable libp2p or not (default: $LIBP2P)
-   -m minpeer        minimum number of peers required to start consensus (default: $MINPEER)
+   -m minpeer        minimum number of peers required to start consensus
+                     (default: $MINPEER)
    -c                invoke client node (default: $CLIENT)
-   -d duration       when running validators tell them to delay commit messages (default: use Harmony binary default)
+   -d duration       when running validators tell them to delay commit messages
+                     (default: use Harmony binary default)
+   -z zone           use the given DNS zone; "" disables DNS-based discovery
+                     (default: use Harmony binary default)
 
 ACTIONS:
    auto              automate the test execution based on test plan (TODO)
@@ -102,13 +107,18 @@ function do_simple_cmd
       fi
       case "${commit_delay+set}" in
       set)
-         benchmarkArgs+=" -delay_commit ${commit_delay}"
+         benchmarkArgs+=" -delay_commit=${commit_delay}"
          ;;
       esac
       if ${log_conn}
       then
-	      benchmarkArgs+=" -log_conn"
+         benchmarkArgs+=" -log_conn"
       fi
+      case "${dns_zone+set}" in
+      set)
+         benchmarkArgs+=" -dns_zone=${dns_zone}"
+         ;;
+      esac
       txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BOOTNODES"
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
@@ -320,11 +330,11 @@ declare -A NODES
 declare -A NODEIPS
 declare -A PORT
 
-unset -v commit_delay log_conn
+unset -v commit_delay log_conn dns_zone
 log_conn=false
 
 #################### MAIN ####################
-while getopts "hf:i:a:n:vD:A:C:m:cN:P:p:d:L" option; do
+while getopts "hf:i:a:n:vD:A:C:m:cN:P:p:d:Lz:" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -347,6 +357,7 @@ while getopts "hf:i:a:n:vD:A:C:m:cN:P:p:d:L" option; do
       P) LIBP2P=$OPTARG ;;
       d) commit_delay="${OPTARG}";;
       L) log_conn=true;;
+      z) dns_zone="${OPTARG}";;
       h|?) usage ;;
    esac
 done
