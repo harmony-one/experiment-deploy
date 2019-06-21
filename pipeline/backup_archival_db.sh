@@ -49,7 +49,7 @@ mkdir -p "${backup_dir}"
 unset -v shard
 for shard
 do
-	"${progdir}/run_on_shard.sh" -d "${logdir}" -rEST "${shard}" 'pgrep -f -a is_archival | grep -qv pgrep && echo "${ip}"' | (
+	"${progdir}/run_on_shard.sh" -d "${logdir}" -rEST "${shard}" 'echo "${ip}"' | head -10 | (
 		unset -v ip
 		while read -r ip
 		do
