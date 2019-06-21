@@ -119,8 +119,7 @@ function do_simple_cmd
          benchmarkArgs+=" $DASHBOARD"
       fi
       # Disable DNS for the initial launch
-      # This must be the last benchmark arg so that dns_zone append will work later
-      benchmarkArgs+=" -dns_zone="
+      benchmarkArgs+=" -dns=no"
       if [ "$CLIENT" == "true" ]; then
          CLIENT_JSON=',"role":"client"'
       fi
@@ -285,7 +284,7 @@ EOT
             "${LOGDIR}/${cmd}/leader.${cmd}-"*".json" \
             "${LOGDIR}/${cmd}/${cmd}-"*".json"
          do
-            $JQ '.benchmarkArgs += "'"${dns_zone}"'"' < "${initfile}" > "${initfile}.new"
+            $JQ '.benchmarkArgs += " -dns_zone='"${dns_zone}"'"' < "${initfile}" > "${initfile}.new"
             mv -f "${initfile}.new" "${initfile}"
          done
          ;;
