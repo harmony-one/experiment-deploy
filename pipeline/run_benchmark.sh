@@ -105,7 +105,7 @@ function do_simple_cmd
       fi
       case "${commit_delay+set}" in
       set)
-         benchmarkArgs+=" -delay_commit ${commit_delay}"
+         benchmarkArgs+=" -delay_commit=${commit_delay}"
          ;;
       esac
       if ${log_conn}
