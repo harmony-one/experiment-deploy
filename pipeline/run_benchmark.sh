@@ -285,7 +285,7 @@ EOT
             "${LOGDIR}/${cmd}/leader.${cmd}-"*".json" \
             "${LOGDIR}/${cmd}/${cmd}-"*".json"
          do
-            $JQ '.benchmarkArgs += "'"${dns_zone}"'"' < "${initfile}" > "${intifile}.new"
+            $JQ '.benchmarkArgs += "'"${dns_zone}"'"' < "${initfile}" > "${initfile}.new"
             mv -f "${initfile}.new" "${initfile}"
          done
          ;;
