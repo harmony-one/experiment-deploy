@@ -29,7 +29,7 @@ EOT
 
 function terminate_ids
 {
-   for r in ${REGIONS[@]}; do
+   for r in ${REGIONS[@]}; do {
       NUM=$(wc -l $r.ids | cut -f 1 -d ' ')
       echo terminating instances in $r: $NUM instances
       if [ $NUM -gt 500 ]; then
@@ -51,17 +51,19 @@ function terminate_ids
             echo no $r.ids file
          fi
       fi
-   done
+   } & done
+   wait
 }
 
 function list_ids
 {
    echo Listing running instance with name filter \"$FILTER\" ..
 
-   for r in ${REGIONS[@]}; do
+   for r in ${REGIONS[@]}; do {
       $AWS --region $r ec2 describe-instances --no-paginate --filters Name=instance-state-name,Values=running | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | [.id, .type, .tag.Value ] | @tsv ' | grep -E $FILTER > $r.ids
       echo $(wc -l $r.ids | cut -f1 -d' ') running instances found in $r
-   done
+   } & done
+   wait
    num=$(wc -l *.ids | tail -n 1)
    echo $num running instances found with name fileter: \"$FILTER\"
 }

@@ -119,7 +119,7 @@ function do_simple_cmd
          benchmarkArgs+=" $DASHBOARD"
       fi
       # Disable DNS for the initial launch
-      benchmarkArgs+=" -dns=no"
+      benchmarkArgs+=" -dns=false"
       if [ "$CLIENT" == "true" ]; then
          CLIENT_JSON=',"role":"client"'
       fi
