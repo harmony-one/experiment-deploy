@@ -21,14 +21,17 @@ OPTIONS:
    -p profile        profile of the benchmark test (default: $PROFILE)
    -n num            parallel process num in a group (default: $PARALLEL)
    -v                verbose
-   -D dashboard_ip   enable dashboard support, specify the ip address of dashboard server (default: $DASHBOARD)
+   -D dashboard_ip   enable dashboard support, specify the ip address of
+                     dashboard server (default: $DASHBOARD)
    -A attacked_mode  enable attacked mode support (default mode: $ATTACK)
    -C cross_ratio    enable cross_shard_ratio (default ratio: $CROSSTX)
    -N multiaddr      the multiaddress of the boot node (default: $BNMA)
    -P true/false     enable libp2p or not (default: $LIBP2P)
-   -m minpeer        minimum number of peers required to start consensus (default: $MINPEER)
+   -m minpeer        minimum number of peers required to start consensus
+                     (default: $MINPEER)
    -c                invoke client node (default: $CLIENT)
-   -d duration       when running validators tell them to delay commit messages (default: use Harmony binary default)
+   -d duration       when running validators tell them to delay commit messages
+                     (default: use Harmony binary default)
 
 ACTIONS:
    auto              automate the test execution based on test plan (TODO)
