@@ -284,8 +284,8 @@ EOT
             "${LOGDIR}/${cmd}/leader.${cmd}-"*".json" \
             "${LOGDIR}/${cmd}/${cmd}-"*".json"
          do
-            $JQ '.benchmarkArgs += " -dns_zone='"${dns_zone}"'"' < "${initfile}" > "${initfile}.new"
-            mv -f "${initfile}.new" "${initfile}"
+            : # $JQ '.benchmarkArgs += " -dns_zone='"${dns_zone}"'"' < "${initfile}" > "${initfile}.new"
+            : # mv -f "${initfile}.new" "${initfile}"
          done
          ;;
       esac

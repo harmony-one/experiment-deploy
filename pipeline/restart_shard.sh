@@ -81,7 +81,7 @@ echo "Moving staged database back into place..."
 pause
 
 echo "Restarting shard ${shard}..."
-./go.sh -p drum reinit `./run_on_shard.sh -d "${logdir}" -rT "${shard}" 'echo $ip'`
+./go.sh -p ek-test reinit `./run_on_shard.sh -d "${logdir}" -rT "${shard}" 'echo $ip'`
 
 echo
 echo "All done!"
