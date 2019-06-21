@@ -286,7 +286,7 @@ EOT
             "${LOGDIR}/${cmd}/${cmd}-"*".json"
          do
             $JQ '.benchmarkArgs += "'"${dns_zone}"'"' < "${initfile}" > "${intifile}.new"
-            mv "${initfile}.new" "${initfile}"
+            mv -f "${initfile}.new" "${initfile}"
          done
          ;;
       esac
