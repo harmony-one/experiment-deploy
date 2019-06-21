@@ -110,7 +110,7 @@ function do_simple_cmd
       esac
       if ${log_conn}
       then
-	      benchmarkArgs+=" -log_conn"
+         benchmarkArgs+=" -log_conn"
       fi
       txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BOOTNODES"
       if [ -n "$DASHBOARD" ]; then
