@@ -114,15 +114,13 @@ function do_simple_cmd
       then
          benchmarkArgs+=" -log_conn"
       fi
-      case "${dns_zone+set}" in
-      set)
-         benchmarkArgs+=" -dns_zone=${dns_zone}"
-         ;;
-      esac
       txgenArgs="-duration -1 -cross_shard_ratio $CROSSTX $BOOTNODES"
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
       fi
+      # Disable DNS for the initial launch
+      # This must be the last benchmark arg so that dns_zone append will work later
+      benchmarkArgs+=" -dns_zone="
       if [ "$CLIENT" == "true" ]; then
          CLIENT_JSON=',"role":"client"'
       fi
@@ -278,6 +276,22 @@ EOT
 
    fi
 
+   # add DNS zone option to init json for later restarts
+   case "${cmd}" in
+   init)
+      case "${dns_zone+set}" in
+      set)
+         for initfile in \
+            "${LOGDIR}/${cmd}/leader.${cmd}-"*".json" \
+            "${LOGDIR}/${cmd}/${cmd}-"*".json"
+         do
+            $JQ '.benchmarkArgs += "'"${dns_zone}"'"' < "${initfile}" > "${intifile}.new"
+            mv -f "${initfile}.new" "${initfile}"
+         done
+         ;;
+      esac
+      ;;
+   esac
 }
 
 function do_update
