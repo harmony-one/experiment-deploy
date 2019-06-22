@@ -45,7 +45,7 @@ print_usage() {
 	ENDEND
 }
 
-unset -v timeout step_retries
+unset -v timeout step_retries cycle_retries
 unset -v OPTIND OPTARG opt
 OPTIND=1
 while getopts ":${common_getopts_spec}t:r:R:" opt
@@ -56,6 +56,7 @@ do
 	':') usage "missing argument for -${OPTARG}";;
 	t) timeout="${OPTARG}";;
 	r) step_retries="${OPTARG}";;
+	R) cycle_retries="${OPTARG}";;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
