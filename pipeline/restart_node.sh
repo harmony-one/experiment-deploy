@@ -232,7 +232,7 @@ wait_for_consensus() {
 		rn_debug "checking for bingo"
 		bingo=$("${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" '
 			tail -c+'"$((${logsize} + 1)) $(shell_quote "${logfile}")"' |
-			jq '\''select(.msg | test("HOORAY|BINGO"))'\'' | head -1
+			jq -c '\''select(.msg | test("HOORAY|BINGO"))'\'' | head -1
 		')
 		case "${bingo}" in
 		?*)
