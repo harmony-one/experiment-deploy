@@ -82,6 +82,8 @@ var (
 		"-version",
 		"-cross_shard_ratio",
 	}
+
+	inited = false
 )
 
 func printVersion(me string) {
@@ -144,6 +146,10 @@ func Include(vs []string, t string) bool {
 }
 
 func initHandler(w http.ResponseWriter, r *http.Request) {
+	if inited {
+		io.WriteString(w, "Inited")
+	}
+
 	var res string
 	if r.Method != http.MethodGet {
 		res = "Not Supported Method"
@@ -174,6 +180,7 @@ func initHandler(w http.ResponseWriter, r *http.Request) {
 	globalSession.nodeAdditionalArgs = append(globalSession.nodeAdditionalArgs, strings.Split(init.BenchmarkArgs, " ")...)
 	if err := runInstance(init.Role); err == nil {
 		res = "Succeeded"
+		inited = true
 	} else {
 		res = fmt.Sprintf("Failed init %v", err)
 	}
@@ -276,9 +283,9 @@ func walletHandler(w http.ResponseWriter, r *http.Request) {
 func httpServer() {
 	http.HandleFunc("/init", initHandler)
 	http.HandleFunc("/ping", pingHandler)
-//	http.HandleFunc("/update", updateHandler)
-//	http.HandleFunc("/kill", killHandler)
-//	http.HandleFunc("/wallet", walletHandler)
+	//	http.HandleFunc("/update", updateHandler)
+	//	http.HandleFunc("/kill", killHandler)
+	//	http.HandleFunc("/wallet", walletHandler)
 
 	s := http.Server{
 		Addr:           fmt.Sprintf("0.0.0.0:1%v", setting.port),
