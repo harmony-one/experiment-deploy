@@ -276,9 +276,9 @@ func walletHandler(w http.ResponseWriter, r *http.Request) {
 func httpServer() {
 	http.HandleFunc("/init", initHandler)
 	http.HandleFunc("/ping", pingHandler)
-	http.HandleFunc("/update", updateHandler)
-	http.HandleFunc("/kill", killHandler)
-	http.HandleFunc("/wallet", walletHandler)
+//	http.HandleFunc("/update", updateHandler)
+//	http.HandleFunc("/kill", killHandler)
+//	http.HandleFunc("/wallet", walletHandler)
 
 	s := http.Server{
 		Addr:           fmt.Sprintf("0.0.0.0:1%v", setting.port),
