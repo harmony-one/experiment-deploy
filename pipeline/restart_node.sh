@@ -16,7 +16,7 @@ esac
 . "${progdir}/common_opts.sh"
 
 unset -v default_timeout default_step_retries default_cycle_retries default_bucket
-default_timeout=300
+default_timeout=450
 default_step_retries=2
 default_cycle_retries=2
 default_bucket=unique-bucket-bin
@@ -161,7 +161,6 @@ rn_debug "s3_folder=$(shell_quote "${s3_folder}")"
 fetch_binaries() {
 	"${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" "
 		aws s3 sync $(shell_quote "${s3_folder}") staging
-		ls -l staging
 	"
 }
 
@@ -267,7 +266,7 @@ reinit_harmony() {
 wait_for_consensus() {
 	local bingo now deadline
 	now=$(date +%s)
-	deadline=$((${now} + 90))
+	deadline=$((${now} + ${timeout}))
 	while sleep 5
 	do
 		rn_debug "checking for bingo"
@@ -319,7 +318,7 @@ do
 		rn_info "restarting harmony process"
 		run_with_retries reinit_harmony || break
 		rn_info "waiting for consensus to start"
-		run_with_retries wait_for_consensus || break
+		wait_for_consensus || break
 		break 2
 	done
 	case $((${cycles_left} > 0)) in
