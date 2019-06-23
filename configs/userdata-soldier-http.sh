@@ -15,13 +15,12 @@
 
 
 mkdir -p /home/ec2-user
-mkdir -p /home/ec2-user/folder_to_be_deleted
 cd /home/ec2-user
 
 BUCKET=unique-bucket-bin
 FOLDER=leo/
 
-TESTBIN=( txgen soldier harmony libbls384_256.so libmcl.so wallet beat_tx_node.sh db.tgz hmykey.tgz )
+TESTBIN=( soldier harmony libbls384_256.so libmcl.so )
 
 for bin in "${TESTBIN[@]}"; do
    curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
@@ -165,7 +164,12 @@ function restore_db {
 function restore_key {
    if [ -e hmykey.tgz ]; then
       if file hmykey.tgz | grep gzip ; then
-         tar xfz hmykey.tgz && rm -f hmykey.tgz
+         tar xfz hmykey.tgz && rm hmykey.tgz
+      fi
+   fi
+   if [ -e hmykey2.tgz ]; then
+      if file hmykey2.tgz | grep gzip ; then
+         tar xfz hmykey2.tgz && rm hmykey2.tgz
       fi
    fi
 }
@@ -193,7 +197,7 @@ ENDEND
    # install dependencies of BLS
    yum -y install libstdc++ libgcc zlib openssl gmp
 
-   setup_metricbeat
+#   setup_metricbeat
 
 fi
 
@@ -205,10 +209,10 @@ fuser -k -n tcp $SOLDIER_PORT
 fuser -k -n tcp $NODE_PORT
 
 # restore blockchain db
-restore_db
+# restore_db
 
 # restore key of hmy test node
-restore_key
+# restore_key
 
 # deploy node exporter
 setup_node_exporter
