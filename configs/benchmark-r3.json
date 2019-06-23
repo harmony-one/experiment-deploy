@@ -1,0 +1,95 @@
+{
+  "description": "aws 448/600 nodes on 4 shard in 6 regions, reserve 152 nodes for FN",
+  "client": {
+    "num_vm": 0,
+    "type": "t3.medium",
+    "regions": "iad"
+  },
+  "leader": {
+    "num_vm": 1,
+    "type": "m5a.large",
+    "regions": "iad,pdx,nrt,dub",
+    "root": 50
+  },
+  "bootnode": {
+     "enable": true,
+     "server": "54.213.43.194",
+     "name": "b2.harmony.one",
+     "port": 9874,
+     "user": "ec2-user",
+     "key": "oregon-key-benchmark.pem",
+     "p2pkey": "b2-9874.key",
+     "log_conn": true
+  },
+  "bootnode1": {
+     "enable": true,
+     "server": "100.26.90.187",
+     "name": "b1.harmony.one",
+     "port": 9874,
+     "user": "ec2-user",
+     "key": "virginia-key-benchmark.pem",
+     "p2pkey": "b1-9874.key",
+     "log_conn": true
+  },
+  "azure": {
+    "num_vm": 0,
+    "regions": [
+      "eastus",
+      "westeurope",
+      "southeastasia"
+    ]
+  },
+  "benchmark": {
+    "shards": 4,
+    "duration": 60,
+    "dashboard": true,
+    "crosstx": 30,
+    "attacked_mode": 0,
+    "peer_per_shard": 150,
+    "minpeer": 101,
+    "log_conn": false,
+    "even_shard": true,
+    "init_retry": false,
+    "commit_delay": "2s",
+    "bls": true
+  },
+  "logs": {
+    "leader": true,
+    "client": false,
+    "validator": true,
+    "soldier": true,
+    "db": true
+  },
+  "dashboard": {
+    "server": "18.236.168.100",
+    "name": "1.harmony.one",
+    "port": 3000,
+    "reset": "false"
+  },
+  "explorer": {
+    "server": "54.213.59.51",
+    "name": "explorer.harmony.one",
+    "port": 4444,
+    "reset": "true"
+  },
+  "txgen": {
+     "enable": "false",
+     "ip": "myip",
+     "port": 8000
+  },
+  "parallel": 50,
+  "userdata": "userdata-soldier-http.sh",
+  "flow": {
+     "wait_for_launch": 120,
+     "reserved_account": "",
+     "rpczone": "t"
+  },
+  "bls": {
+     "pass": "blspass.txt",
+     "bucket": "harmony-secret-keys",
+     "folder": "bls",
+     "keyfile": "blskey.txt"
+  },
+  "genesis": "genesis.txt",
+  "libp2p": true
+}
