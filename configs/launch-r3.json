@@ -29,7 +29,7 @@
          "root": 50
       },
       {
-         "region": "fra",
+         "region": "cmh",
          "type": "m5a.large",
          "ondemand": 0,
          "spot": 50,
