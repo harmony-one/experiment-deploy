@@ -12,7 +12,7 @@ esac
 . "${progdir}/msg.sh"
 . "${progdir}/usage.sh"
 . "${progdir}/common_opts.sh"
-. "${progdir}/shell_quote.sh"
+. "${progdir}/util.sh"
 
 print_usage() {
 	cat <<- ENDEND

@@ -1,7 +1,7 @@
 msg() {
 	case $# in
 	[1-9]*)
-		echo "${progname}: $*" >&2
+		echo "${progname+"${progname}: "}$*" >&2
 		;;
 	esac
 }
@@ -11,5 +11,9 @@ err() {
 	status="${1-1}"
 	shift 1 2> /dev/null || :
 	msg "$@"
-	exit "${status}"
+	exit "${status}" || exit 1
+}
+
+msg_exit() {
+	err "$@"
 }
