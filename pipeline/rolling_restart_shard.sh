@@ -80,8 +80,8 @@ pause() {
 rollupg_info "restarting shards: $*"
 
 unset -v result_dir ts
-ts=$(date -u +%Y-%m-%dT%H:%M:%S)
-result_dir=$(mktemp -d "${progname}.${ts}.XXXXXX")
+ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+result_dir=$(mktemp -d "${logdir}/${progname}.${ts}.XXXXXX")
 rollupg_notice "will save restart result and data in ${result_dir}"
 pause
 
