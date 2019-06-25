@@ -121,7 +121,7 @@ function do_simple_cmd
          CLIENT_JSON=',"role":"client"'
       fi
 
-      explorerArgs=benchmarkArgs
+      explorerArgs=$benchmarkArgs
       explorerArgs+=" -is_genesis=false -is_explorer=true -shard_id=SHARDID"
       cat>$LOGDIR/$cmd/leader.$cmd.json<<EOT
 {
@@ -211,9 +211,8 @@ EOT
    done
 
 # send commands to explorers at second
-
    local explorer_shard_id=0
-   for n in $(seq ${configs[benchmark.shards]}+1 ${configs[benchmark.shards]}*2); do
+   for n in $(seq $(expr ${configs[benchmark.shards]} + 1) $(expr ${configs[benchmark.shards]} * 2)); do
       local ip=${NODEIPS[$n]}
       CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
 
@@ -221,7 +220,6 @@ EOT
          init|update|wallet)
             sed "s/SHARDID/$explorer_shard_id/" $LOGDIR/$cmd/explorer.$cmd.json > $LOGDIR/$cmd/explorer.$cmd-$ip.json
             CMD+=$" -d@$LOGDIR/$cmd/explorer.$cmd-$ip.json"
-            (( start_index ++ ))
             (( explorer_shard_id ++ ))
             ;;
       esac
@@ -230,7 +228,7 @@ EOT
       echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log" >> $cmd_file
    done
 
-   start_index=${configs[benchmark.shards]}*2
+   start_index=${configs[benchmark.shards]} * 2
    while [ $end -lt $NUM_NODES ]; do
       start=$(( $PARALLEL * $group + ${configs[benchmark.shards]}*2 + 1))
       end=$(( $PARALLEL + $start - 1 ))
