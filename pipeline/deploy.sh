@@ -23,6 +23,7 @@ OPTIONS:
    -P launch_profile    launch profile (default: $LAUNCH_PROFILE)
    -i ip_file           file containing ip address of pre-launched VMs
    -l leaders           file containing ip addresses of leader VMs
+   -e explorer_nodes    file containing ip addresses of explorer node VMs
    -b bucket            specify the bucket containing all test binaries (default: $BUCKET)
    -f folder            specify the folder name in the bucket (default: $FOLDER)
    -r regions           specify the regions for deployment, delimited by , (default: $REGIONS)
@@ -120,6 +121,11 @@ function generate_distribution
       mv -f raw_ip.txt.tmp.$USERID raw_ip.txt
    fi
 
+   if [ -f "$EXPLORER_NODES" ]; then
+      cat $EXPLORER_NODES raw_ip.txt > raw_ip.txt.tmp.$USERID
+      mv -f raw_ip.txt.tmp.$USERID raw_ip.txt
+   fi
+
    cp raw_ip.txt logs/$TS
    awk ' { print $1 } ' raw_ip.txt > logs/$TS/hosts.txt
 
@@ -150,6 +156,7 @@ COMMANDER_NUM=0
 SLEEP_TIME=10
 RUN_PROFILE=tiny
 LEADERS=
+EXPLORER_NODES=
 IP_FILE=
 BUCKET=unique-bucket-bin
 USERID=${WHOAMI:-$USER}
@@ -174,6 +181,7 @@ while getopts "hnc:C:s:t:P:f:b:i:r:u:l:" option; do
       r) REGIONS=$OPTARG ;;
       u) USERDATA=$CONFIGDIR/$OPTARG ;;
       l) LEADERS=$OPTARG ;;
+      e) EXPLORER_NODES=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done

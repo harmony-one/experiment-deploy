@@ -89,6 +89,24 @@ function do_launch
       LEADER_IP=( $(cat raw_ip-leader.txt | awk ' { print $1 } ') )
    fi
 
+   if [ ${configs[explorer_node.num_vm]} -gt 0 ]; then
+      logging launching ${configs[explorer_node.num_vm]} explorer nodes: ${configs[explorer_node.type]}
+      ../bin/instance \
+      -config_dir $CONFIG_DIR \
+      -instance_count ${configs[explorer_node.num_vm]} \
+      -instance_type ${configs[explorer_node.type]} \
+      -launch_region ${configs[explorer_node.regions]} \
+      -ip_file raw_ip-explorer_node.txt \
+      -output instance_ids_output-explorer_node.txt \
+      -tag_file instance_output-explorer_node.txt \
+      -tag ${TAG}-explorer_node \
+      -root_volume ${configs[explorer_node.root]} \
+      -launch_profile launch-${PROFILE}.json
+      LAUNCH_OPT+=' -e raw_ip-explorer_node.txt'
+      num_explorer_nodes=$(wc -l raw_ip-explorer_node.txt)
+      EXPLORER_NODE_IP=( $(cat raw_ip-explorer_node.txt | awk ' { print $1 } ') )
+   fi
+
    ./deploy.sh \
    -C ${configs[azure.num_vm]} \
    -s ${configs[benchmark.shards]} \
