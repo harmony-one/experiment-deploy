@@ -165,23 +165,13 @@ fetch_binaries() {
 }
 
 kill_harmony() {
-	local soldier_status status
-	if soldier_status=$(curl -s "http://${ip}:19000/kill")
-	then
-		case "${soldier_status}" in
-		Succeeded)
-			rn_debug "kill succeeded"
-			;;
-		*)
-			rn_info "soldier returned: $(shell_quote "${soldier_status}")"
-			return 1
-			;;
-		esac
-	else
-		status=$?
-		rn_warning "soldier curl returned status ${status}"
-		return "${status}"
-	fi
+	local status
+	status=0
+	node_ssh "${ip}" 'sudo pkill harmony' || status=$?
+	case "${status}" in
+	1) status=0;;  # it is OK if no processes have been found
+	esac
+	return ${status}
 }
 
 wait_for_harmony_process_to_exit() {
