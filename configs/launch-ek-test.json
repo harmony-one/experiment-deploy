@@ -5,42 +5,42 @@
          "type": "t2.micro",
          "ondemand": 1,
          "spot": 100,
-         "root": 50
+         "root": 8
       },
       {
          "region": "pdx",
          "type": "t2.micro",
          "ondemand": 1,
          "spot": 100,
-         "root": 50
+         "root": 8
       },
       {
          "region": "nrt",
          "type": "t2.micro",
          "ondemand": 1,
          "spot": 70,
-         "root": 50
+         "root": 8
       },
       {
          "region": "dub",
          "type": "t2.micro",
          "ondemand": 1,
          "spot": 70,
-         "root": 50
+         "root": 8
       },
       {
          "region": "cmh",
          "type": "t2.micro",
          "ondemand": 0,
          "spot": 50,
-         "root": 50
+         "root": 8
       },
       {
          "region": "sin",
          "type": "t2.micro",
          "ondemand": 0,
          "spot": 50,
-         "root": 50
+         "root": 8
       }
    ],
    "userdata": {
