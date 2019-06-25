@@ -144,6 +144,19 @@ find_initfile() {
 find_initfile
 rn_info "init file is ${initfile}"
 
+unset -v launch_args
+rn_info "getting launch arguments from init file"
+get_launch_params() {
+	local port sid args
+	port="$(jq -r .port < "${initfile}")"
+	sid="$(jq -r .sessionID < "${initfile}")"
+	args="$(jq -r .benchmarkArgs < "${initfile}")"
+	set -- -ip "${ip}" -port "${port}" -log_folder "../tmp_log/log-${sid}" ${args}
+	launch_args=$(shell_quote "$@")
+}
+get_launch_params
+rn_info "launch arguments are: ${launch_args}"
+
 rn_info "getting log filename"
 get_logfile() {
 	logfile=$(node_ssh "${ip}" '
@@ -238,23 +251,16 @@ get_logfile_size() {
 	fi
 }
 
-reinit_harmony() {
-	local soldier_status status
-	if soldier_status=$(curl -X GET -s "http://${ip}:19000/init" -H 'Content-Type: application/json' -d "@${initfile}")
-	then
-		case "${soldier_status}" in
-		Succeeded)
-			rn_debug "init succeeded"
-			;;
-		*)
-			rn_info "soldier returned: $(shell_quote "${soldier_status}")"
-			return 1;;
-		esac
-	else
-		status=$?
-		rn_warning "soldier_curl returned status ${status}"
-		return "${status}"
-	fi
+start_harmony() {
+	node_ssh -o-n "${ip}" 'sudo sh -c '\''
+		LD_LIBRARY_PATH=.
+		export LD_LIBRARY_PATH
+		exec < /dev/null > /dev/null 2>> harmony.err
+		echo "running: ./harmony $*" >&2
+		./harmony "$@" &
+		echo "harmony is running, pid=$!" >&2
+		echo $! > harmony.pid
+	'\'' sh '"${launch_args}"
 }
 
 wait_for_consensus() {
@@ -310,7 +316,7 @@ do
 		run_with_retries get_logfile_size || break
 		rn_info "log file is ${logsize} bytes"
 		rn_info "restarting harmony process"
-		run_with_retries reinit_harmony || break
+		run_with_retries start_harmony || break
 		rn_info "waiting for consensus to start"
 		wait_for_consensus || break
 		break 2
