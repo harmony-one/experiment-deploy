@@ -15,12 +15,14 @@ esac
 . "${progdir}/util.sh"
 . "${progdir}/common_opts.sh"
 
-unset -v default_timeout default_step_retries default_cycle_retries default_bucket
+unset -v default_timeout default_step_retries default_cycle_retries \
+	default_bucket default_folder default_profile
 default_timeout=450
 default_step_retries=2
 default_cycle_retries=2
 default_bucket=unique-bucket-bin
 default_folder="${WHOAMI}"
+default_profile="${WHOAMI}"
 
 print_usage() {
 	cat <<- ENDEND
@@ -46,17 +48,18 @@ print_usage() {
 		 		(default: ${default_bucket})
 		-F FOLDER	fetch upgrade binaries from the given folder
 		 		(default: ${default_folder})
+		-p PROFILE	fetch parameters from the given profile (default: ${default_profile})
 
 		arguments:
 		ip		the IP address to upgrade
 	ENDEND
 }
 
-unset -v timeout step_retries cycle_retries upgrade bucket folder
+unset -v timeout step_retries cycle_retries upgrade bucket folder profile
 upgrade=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}t:r:R:UB:F:" opt
+while getopts ":${common_getopts_spec}t:r:R:UB:F:p:" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -68,6 +71,7 @@ do
 	U) upgrade=true;;
 	B) bucket="${OPTARG}";;
 	F) folder="${OPTARG}";;
+	p) profile="${OPTARG}";;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -78,6 +82,7 @@ shift $((${OPTIND} - 1))
 : ${cycle_retries="${default_cycle_retries}"}
 : ${bucket="${default_bucket}"}
 : ${folder="${default_folder}"}
+: ${profile="${default_profile}"}
 
 node_ssh() {
 	"${progdir}/node_ssh.sh" -d "${logdir}" "$@"
@@ -128,6 +133,18 @@ run_with_retries() {
 
 rn_notice "node to restart is ${ip}"
 
+unset -v dns_zone
+rn_info "getting DNS zone with which to restart nodes"
+get_dns_zone() {
+	local rpczone
+	rpczone=$(jq -r '.flow.rpczone // ""' < "${progdir}/../configs/benchmark-${profile}.json")
+	case "${rpczone}" in
+	?*) dns_zone="${rpczone}.hmny.io";;
+	esac
+}
+get_dns_zone
+rn_info "DNS zone is ${dns_zone-'<unset>'}"
+
 unset -v logfile initfile
 
 rn_info "looking for init file"
@@ -152,6 +169,9 @@ get_launch_params() {
 	sid="$(jq -r .sessionID < "${initfile}")"
 	args="$(jq -r .benchmarkArgs < "${initfile}")"
 	set -- -ip "${ip}" -port "${port}" -log_folder "../tmp_log/log-${sid}" ${args}
+	case "${dns_zone+set}" in
+	set) set -- "$@" "-dns_zone=${dns_zone}";;
+	esac
 	launch_args=$(shell_quote "$@")
 }
 get_launch_params
