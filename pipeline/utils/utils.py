@@ -154,7 +154,7 @@ def generate_distribution_config(shard_number, client_number, ip_list, distribut
         return False
 
     # Create ip for clients.
-    commander_id, client_id, leader_id, validator_id = 0, 0, 0, 0
+    commander_id, client_id, leader_id, explorer_node_id, validator_id = 0, 0, 0, 0
     validator_number = len(ip_list) - client_number - shard_number - commander_number
     with open(distribution_config, "w") as fout:
         for i in range(len(ip_list)):
@@ -165,6 +165,9 @@ def generate_distribution_config(shard_number, client_number, ip_list, distribut
             elif leader_id < shard_number:
                 fout.write("%s 9000 leader %d %s\n" % (ip, leader_id, node_name_tag))
                 leader_id = leader_id + 1
+            elif explorer_node_id < shard_number:
+                fout.write("%s 9000 explorer_node %d %s\n" % (ip, explorer_node_id, node_name_tag))
+                explorer_node_id = explorer_node_id + 1
             elif validator_id < validator_number:
                 fout.write("%s 9000 validator %d %s\n" % (ip, validator_id % shard_number, node_name_tag))
                 validator_id = validator_id + 1
