@@ -105,7 +105,7 @@ unset -v ip
 ip="${1}"
 shift 1
 
-log_define -v restart_node_log_level -l DEBUG rn
+log_define -v restart_node_log_level -l INFO rn
 
 # run_with_retries ${cmd} [${arg} ...]
 #	Run the given command with the given arguments, if any, retrying the
