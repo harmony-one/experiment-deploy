@@ -219,3 +219,57 @@ setup_node_exporter
 
 # Run soldier
 ./soldier -ip $PUB_IP -port $NODE_PORT > soldier-${PUB_IP}.log 2>&1 &
+
+
+function install_docker {
+   # https://docs.docker.com/install/linux/docker-ce/centos/
+   sudo yum remove -y docker \
+                     docker-client \
+                     docker-client-latest \
+                     docker-common \
+                     docker-latest \
+                     docker-latest-logrotate \
+                     docker-logrotate \
+                     docker-engine
+
+
+   sudo yum install -y yum-utils \
+      device-mapper-persistent-data \
+      lvm2
+
+   sudo yum-config-manager \
+      --add-repo \
+      https://download.docker.com/linux/centos/docker-ce.repo
+
+   sudo yum install -y containerd.io docker-ce-18.09.1 docker-ce-cli-18.09.1
+   
+   sudo systemctl enable docker.service
+   sudo systemctl start docker
+   sudo usermod -aG docker ec2-user
+
+   sudo modprobe iptable_nat
+
+   # persistent
+   cat > /etc/sysconfig/modules/dockerd.modules <<- ENDEND
+#!/bin/sh
+
+exec /sbin/modprobe iptable_nat >/dev/null 2>&1
+ENDEND
+
+   sudo chmod +x /etc/sysconfig/modules/dockerd.modules
+
+   # https://docs.docker.com/compose/install/
+   sudo curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+   sudo chmod +x /usr/local/bin/docker-compose
+}
+
+function download_map3 {
+   mkdir map3
+   curl https://static.hyn.space/deploy-map3/edge-dashboard/docker-compose.yml -o map3/docker-compose.yml
+}
+
+install_docker
+
+download_map3
+
+/usr/local/bin/docker-compose -f map3/docker-compose.yml up --detach
