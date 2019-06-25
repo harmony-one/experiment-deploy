@@ -23,29 +23,32 @@ default_stride=4
 
 print_usage() {
 	cat <<- ENDEND
-		usage: ${progname} ${common_usage} [-s STRIDE] shard [shard ...]
+		usage: ${progname} ${common_usage} [-v] [-s STRIDE] shard [shard ...]
 
 		${common_usage_desc}
 
 		options:
 		-s STRIDE	restart STRIDE nodes at a time (default: ${default_stride})
+		-v		print stdout/stderr from restart_node.sh (default: just save)
 
 		arguments:
 		shard		the shard number, such as 0
 	ENDEND
 }
 
-unset -v stride
+unset -v stride verbose
+verbose=false
 
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}s:" opt
+while getopts ":${common_getopts_spec}s:v" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
 	'?') usage "unrecognized option -${OPTARG}";;
 	':') usage "missing argument for -${OPTARG}";;
 	s) stride="${OPTARG}";;
+	v) verbose=true;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -135,12 +138,12 @@ check_restart_result() {
 	for ip
 	do
 		prefix="${result_dir}/${ip}"
-		if ! print_file "${prefix}.out" "${ip} stdout"
+		if ${verbose} && ! print_file "${prefix}.out" "${ip} stdout"
 		then
 			rollupg_err "${prefix}.out not found"
 			ok=false
 		fi
-		if ! print_file "${prefix}.err" "${ip} stderr"
+		if ${verbose} && ! print_file "${prefix}.err" "${ip} stderr"
 		then
 			rollupg_err "${prefix}.err not found"
 			ok=false
