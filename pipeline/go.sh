@@ -102,7 +102,7 @@ function do_launch
       -tag ${TAG}-explorer_node \
       -root_volume ${configs[explorer_node.root]} \
       -launch_profile launch-${PROFILE}.json
-      LAUNCH_OPT+=' -e raw_ip-explorer_node.txt'
+      LAUNCH_OPT+=' -E raw_ip-explorer_node.txt'
       num_explorer_nodes=$(wc -l raw_ip-explorer_node.txt)
       EXPLORER_NODE_IP=( $(cat raw_ip-explorer_node.txt | awk ' { print $1 } ') )
    fi
@@ -126,6 +126,12 @@ function do_launch
       cat instance_ids_output-leader.txt >> instance_ids_output.txt
       cat instance_output-leader.txt >> instance_output.txt
       rm instance_ids_output-leader.txt instance_output-leader.txt &
+   fi
+
+   if [ ${configs[leader.num_vm]} -gt 0 ]; then
+      cat instance_ids_output-explorer_node.txt >> instance_ids_output.txt
+      cat instance_output-explorer_node.txt >> instance_output.txt
+      rm instance_ids_output-explorer_node.txt instance_output-explorer_node.txt &
    fi
 
    echo waiting for instances launch ${configs[flow.wait_for_launch]} ...

@@ -166,6 +166,7 @@ CONFIGDIR=$(realpath $ROOTDIR)/configs
 TS=$(date +%Y%m%d.%H%M%S)
 USERDATA=$CONFIGDIR/userdata-soldier-http.sh
 PYTHON=python
+REGIONS=
 
 while getopts "hnc:C:s:t:P:f:b:i:r:u:l:" option; do
    case $option in
