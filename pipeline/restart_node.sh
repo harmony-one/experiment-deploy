@@ -79,6 +79,10 @@ shift $((${OPTIND} - 1))
 : ${bucket="${default_bucket}"}
 : ${folder="${default_folder}"}
 
+node_ssh() {
+	"${progdir}/node_ssh.sh" -d "${logdir}" "$@"
+}
+
 case "${timeout}" in
 ""|*[^0-9]*) usage "invalid timeout: ${timeout}";;
 esac
@@ -142,7 +146,7 @@ rn_info "init file is ${initfile}"
 
 rn_info "getting log filename"
 get_logfile() {
-	logfile=$("${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" '
+	logfile=$(node_ssh "${ip}" '
 		ls -t ../tmp_log/log-*/*.log | head -1
 	') || return $?
 	if [ -z "${logfile}" ]
@@ -159,7 +163,7 @@ s3_folder="s3://${bucket}/${folder}"
 rn_debug "s3_folder=$(shell_quote "${s3_folder}")"
 
 fetch_binaries() {
-	"${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" "
+	node_ssh "${ip}" "
 		aws s3 sync $(shell_quote "${s3_folder}") staging
 	"
 }
@@ -182,7 +186,7 @@ wait_for_harmony_process_to_exit() {
 	while :
 	do
 		status=0
-		"${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" 'pgrep harmony > /dev/null' || status=$?
+		node_ssh "${ip}" 'pgrep harmony > /dev/null' || status=$?
 		case "${status}" in
 		0)
 			;;
@@ -208,7 +212,7 @@ wait_for_harmony_process_to_exit() {
 }
 
 upgrade_binaries() {
-	"${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" '
+	node_ssh "${ip}" '
 		set -eu
 		unset -v f
 		for f in harmony txgen wallet libmcl.so libbls384_256.so
@@ -226,7 +230,7 @@ upgrade_binaries() {
 
 unset -v logsize
 get_logfile_size() {
-	logsize=$("${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" 'stat -c %s '"$(shell_quote "${logfile}")") || return $?
+	logsize=$(node_ssh "${ip}" 'stat -c %s '"$(shell_quote "${logfile}")") || return $?
 	if [ -z "${logsize}" ]
 	then
 		rn_warning "cannot get size of log file ${logfile}"
@@ -260,7 +264,7 @@ wait_for_consensus() {
 	while sleep 5
 	do
 		rn_debug "checking for bingo"
-		bingo=$("${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" '
+		bingo=$(node_ssh "${ip}" '
 			tail -c+'"$((${logsize} + 1)) $(shell_quote "${logfile}")"' |
 			jq -c '\''select(.msg | test("HOORAY|BINGO"))'\'' | head -1
 		')
