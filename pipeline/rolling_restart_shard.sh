@@ -98,7 +98,7 @@ restart_shard() {
 	set --
 	for ip in $(cat "${result_dir}/${shard}/order.txt")
 	do
-		capture "${result_dir}/${ip}" "${progdir}/restart_node.sh" -d "${logdir}" -U "${ip}" &
+		capture "${result_dir}/${shard}/${ip}" "${progdir}/restart_node.sh" -d "${logdir}" -U "${ip}" &
 		set -- "$@" "${ip}"
 		case $(($# < ${stride})) in
 		0)
@@ -137,7 +137,7 @@ check_restart_result() {
 	ok=true
 	for ip
 	do
-		prefix="${result_dir}/${ip}"
+		prefix="${result_dir}/${shard}/${ip}"
 		if ${verbose} && ! print_file "${prefix}.out" "${ip} stdout"
 		then
 			rollupg_err "${prefix}.out not found"
