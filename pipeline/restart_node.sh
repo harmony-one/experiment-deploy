@@ -134,7 +134,6 @@ run_with_retries() {
 rn_notice "node to restart is ${ip}"
 
 unset -v dns_zone
-rn_info "getting DNS zone with which to restart nodes"
 get_dns_zone() {
 	local rpczone
 	rpczone=$(jq -r '.flow.rpczone // ""' < "${progdir}/../configs/benchmark-${profile}.json")
@@ -142,12 +141,8 @@ get_dns_zone() {
 	?*) dns_zone="${rpczone}.hmny.io";;
 	esac
 }
-get_dns_zone
-rn_info "DNS zone is ${dns_zone-'<unset>'}"
 
 unset -v logfile initfile
-
-rn_info "looking for init file"
 find_initfile() {
 	local prefix
 	for prefix in init leader.init
@@ -158,11 +153,8 @@ find_initfile() {
 	rn_crit "cannot find init file for ${ip}!"
 	exit 78  # EX_CONFIG
 }
-find_initfile
-rn_info "init file is ${initfile}"
 
 unset -v launch_args
-rn_info "getting launch arguments from init file"
 get_launch_params() {
 	local port sid args
 	port="$(jq -r .port < "${initfile}")"
@@ -174,10 +166,7 @@ get_launch_params() {
 	esac
 	launch_args=$(shell_quote "$@")
 }
-get_launch_params
-rn_info "launch arguments are: ${launch_args}"
 
-rn_info "getting log filename"
 get_logfile() {
 	logfile=$(node_ssh "${ip}" '
 		ls -t ../tmp_log/log-*/*.log | head -1
@@ -188,8 +177,6 @@ get_logfile() {
 		return 1
 	fi
 }
-run_with_retries get_logfile
-rn_info "log file is ${logfile}"
 
 unset -v s3_folder
 s3_folder="s3://${bucket}/${folder}"
@@ -311,6 +298,20 @@ wait_for_consensus() {
 	return 1
 }
 
+# HERE BE DRAGONS
+
+rn_info "getting DNS zone with which to restart nodes"
+get_dns_zone
+rn_info "DNS zone is ${dns_zone-'<unset>'}"
+rn_info "looking for init file"
+find_initfile
+rn_info "init file is ${initfile}"
+rn_info "getting launch arguments from init file"
+get_launch_params
+rn_info "launch arguments are: ${launch_args}"
+rn_info "getting log filename"
+run_with_retries get_logfile
+rn_info "log file is ${logfile}"
 unset -v cycles_left cycle_ok
 cycles_left=${cycle_retries}
 while :
