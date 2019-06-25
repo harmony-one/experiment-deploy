@@ -154,7 +154,7 @@ def generate_distribution_config(shard_number, explorer_number, client_number, i
         return False
 
     # Create ip for clients.
-    commander_id, client_id, leader_id, explorer_node_id, validator_id = 0, 0, 0, 0
+    commander_id, client_id, leader_id, explorer_node_id, validator_id = 0, 0, 0, 0, 0
     validator_number = len(ip_list) - client_number - shard_number - explorer_number - commander_number
     with open(distribution_config, "w") as fout:
         for i in range(len(ip_list)):
