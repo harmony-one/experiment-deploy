@@ -23,7 +23,7 @@ OPTIONS:
    -P launch_profile    launch profile (default: $LAUNCH_PROFILE)
    -i ip_file           file containing ip address of pre-launched VMs
    -l leaders           file containing ip addresses of leader VMs
-   -E explorer_nodes    file containing ip addresses of explorer node VMs
+   -e explorer_nodes    file containing ip addresses of explorer node VMs
    -b bucket            specify the bucket containing all test binaries (default: $BUCKET)
    -f folder            specify the folder name in the bucket (default: $FOLDER)
    -r regions           specify the regions for deployment, delimited by , (default: $REGIONS)
@@ -168,7 +168,7 @@ USERDATA=$CONFIGDIR/userdata-soldier-http.sh
 PYTHON=python
 REGIONS=
 
-while getopts "hnc:C:s:t:P:f:b:i:r:u:l:" option; do
+while getopts "hnc:C:s:t:P:f:b:i:r:u:l:e:" option; do
    case $option in
       n) DRYRUN=--dry-run ;;
       c) AWS_VM=$OPTARG ;;
@@ -182,7 +182,7 @@ while getopts "hnc:C:s:t:P:f:b:i:r:u:l:" option; do
       r) REGIONS=$OPTARG ;;
       u) USERDATA=$CONFIGDIR/$OPTARG ;;
       l) LEADERS=$OPTARG ;;
-      E) EXPLORER_NODES=$OPTARG ;;
+      e) EXPLORER_NODES=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done

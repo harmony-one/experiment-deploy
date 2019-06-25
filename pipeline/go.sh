@@ -102,7 +102,7 @@ function do_launch
       -tag ${TAG}-explorer_node \
       -root_volume ${configs[explorer_node.root]} \
       -launch_profile launch-${PROFILE}.json
-      LAUNCH_OPT+=' -E raw_ip-explorer_node.txt'
+      LAUNCH_OPT+=' -e raw_ip-explorer_node.txt'
       num_explorer_nodes=$(wc -l raw_ip-explorer_node.txt)
       EXPLORER_NODE_IP=( $(cat raw_ip-explorer_node.txt | awk ' { print $1 } ') )
    fi
