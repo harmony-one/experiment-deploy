@@ -181,7 +181,7 @@ while getopts "hnc:C:s:t:P:f:b:i:r:u:l:" option; do
       r) REGIONS=$OPTARG ;;
       u) USERDATA=$CONFIGDIR/$OPTARG ;;
       l) LEADERS=$OPTARG ;;
-      e) EXPLORER_NODES=$OPTARG ;;
+      E) EXPLORER_NODES=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done
