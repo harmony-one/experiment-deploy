@@ -96,7 +96,8 @@ esac
 
 case "${outdir+set}" in
 '')
-	outdir="${logdir}/run_on_shard/$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+	mkdir -p "${logdir}/run_on_shard"
+	outdir="$(mktemp -d "${logdir}/run_on_shard/$(date -u +%Y-%m-%dT%H:%M:%SZ).XXXXXX")"
 	msg "using outdir ${outdir}"
 	;;
 esac
