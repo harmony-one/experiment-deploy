@@ -7,9 +7,9 @@
   },
   "leader": {
     "num_vm": 1,
-    "type": "m5a.large",
+    "type": "t2.micro",
     "regions": "iad,pdx,nrt,dub",
-    "root": 30
+    "root": 8
   },
   "bootnode": {
      "enable": true,
