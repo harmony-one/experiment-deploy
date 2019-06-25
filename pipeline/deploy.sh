@@ -23,7 +23,7 @@ OPTIONS:
    -P launch_profile    launch profile (default: $LAUNCH_PROFILE)
    -i ip_file           file containing ip address of pre-launched VMs
    -l leaders           file containing ip addresses of leader VMs
-   -e explorer_nodes    file containing ip addresses of explorer node VMs
+   -E explorer_nodes    file containing ip addresses of explorer node VMs
    -b bucket            specify the bucket containing all test binaries (default: $BUCKET)
    -f folder            specify the folder name in the bucket (default: $FOLDER)
    -r regions           specify the regions for deployment, delimited by , (default: $REGIONS)
@@ -116,13 +116,13 @@ function generate_distribution
       cat $IP_FILE >> raw_ip.txt
    fi
 
-   if [ -f "$LEADERS" ]; then
-      cat $LEADERS raw_ip.txt > raw_ip.txt.tmp.$USERID
+   if [ -f "$EXPLORER_NODES" ]; then
+      cat $EXPLORER_NODES raw_ip.txt > raw_ip.txt.tmp.$USERID
       mv -f raw_ip.txt.tmp.$USERID raw_ip.txt
    fi
 
-   if [ -f "$EXPLORER_NODES" ]; then
-      cat $EXPLORER_NODES raw_ip.txt > raw_ip.txt.tmp.$USERID
+   if [ -f "$LEADERS" ]; then
+      cat $LEADERS raw_ip.txt > raw_ip.txt.tmp.$USERID
       mv -f raw_ip.txt.tmp.$USERID raw_ip.txt
    fi
 
