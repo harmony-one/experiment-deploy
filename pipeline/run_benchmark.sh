@@ -212,7 +212,9 @@ EOT
 
 # send commands to explorers at second
    local explorer_shard_id=0
-   for n in $(seq $(expr ${configs[benchmark.shards]} + 1) $(expr ${configs[benchmark.shards]} * 2)); do
+   local explorer_start_index=${configs[benchmark.shards]} + 1
+   local explorer_end_index=${configs[benchmark.shards]} * 2
+   for n in $(seq $explorer_start_index $explorer_end_index); do
       local ip=${NODEIPS[$n]}
       CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
 
