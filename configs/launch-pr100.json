@@ -4,14 +4,14 @@
          "region": "iad",
          "type": "t3.micro",
          "ondemand": 2,
-         "spot": 228,
+         "spot": 220,
          "root": 8
       },
       {
          "region": "pdx",
          "type": "t3.micro",
          "ondemand": 2,
-         "spot": 228,
+         "spot": 220,
          "root": 8
       }
 
