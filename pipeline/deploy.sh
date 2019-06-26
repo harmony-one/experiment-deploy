@@ -130,7 +130,7 @@ function generate_distribution
    awk ' { print $1 } ' raw_ip.txt > logs/$TS/hosts.txt
 
    echo "Generate distribution_config"
-   $PYTHON ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --explorer_node_number $SHARD_NUM --client_number $CLIENT_NUM --commander_number $COMMANDER_NUM
+   $PYTHON ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --explorer_number $SHARD_NUM --client_number $CLIENT_NUM --commander_number $COMMANDER_NUM
 
    cp distribution_config.txt logs/$TS
    cat>$CONFIGDIR/profile-${LAUNCH_PROFILE}.json<<EOT
