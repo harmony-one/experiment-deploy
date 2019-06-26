@@ -168,14 +168,16 @@ get_launch_params() {
 }
 
 get_logfile() {
-	logfile=$(node_ssh "${ip}" '
-		ls -t ../tmp_log/log-*/*.log | head -1
+	local logfiledir
+	logfiledir=$(node_ssh "${ip}" '
+		ls -td ../tmp_log/log-* | head -1
 	') || return $?
-	if [ -z "${logfile}" ]
+	if [ -z "${logfiledir}" ]
 	then
-		rn_warning "cannot find log file"
+		rn_warning "cannot find log directory"
 		return 1
 	fi
+	logfile="${logfiledir}/validator-${ip}-9000.log"
 }
 
 unset -v s3_folder
