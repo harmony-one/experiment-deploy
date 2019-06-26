@@ -252,7 +252,12 @@ upgrade_binaries() {
 
 unset -v logsize
 get_logfile_size() {
-	logsize=$(node_ssh "${ip}" 'stat -c %s '"$(shell_quote "${logfile}")") || return $?
+	logsize=$(node_ssh "${ip}" '
+		unset -v logfile
+		logfile='"$(shell_quote "${logfile}")"'
+		[ -f "${logfile}" ] || sudo touch "${logfile}"
+		stat -c %s '"$(shell_quote "${logfile}")"'
+	') || return $?
 	if [ -z "${logsize}" ]
 	then
 		rn_warning "cannot get size of log file ${logfile}"
