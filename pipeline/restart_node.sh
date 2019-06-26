@@ -26,7 +26,7 @@ default_profile="${WHOAMI}"
 
 print_usage() {
 	cat <<- ENDEND
-		usage: ${progname} ${common_usage} [-t timeout] [-r step_retries] [-R cycle_retries] ip
+		usage: ${progname} ${common_usage} [-t timeout] [-r step_retries] [-R cycle_retries] [-p profile] ip
 
 		Restarts the node at the given IP address.
 

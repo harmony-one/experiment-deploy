@@ -18,17 +18,19 @@ esac
 
 log_define rollupg
 
-unset -v default_stride
+unset -v default_stride default_profile
 default_stride=4
+default_profile="${WHOAMI}"
 
 print_usage() {
 	cat <<- ENDEND
-		usage: ${progname} ${common_usage} [-v] [-s STRIDE] shard [shard ...]
+		usage: ${progname} ${common_usage} [-v] [-s STRIDE] [-p PROFILE] shard [shard ...]
 
 		${common_usage_desc}
 
 		options:
 		-s STRIDE	restart STRIDE nodes at a time (default: ${default_stride})
+		-p PROFILE	use the given profile (default: ${default_profile})
 		-v		print stdout/stderr from restart_node.sh (default: just save)
 
 		arguments:
@@ -36,12 +38,12 @@ print_usage() {
 	ENDEND
 }
 
-unset -v stride verbose
+unset -v stride verbose profile
 verbose=false
 
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}s:v" opt
+while getopts ":${common_getopts_spec}s:vp:" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -49,12 +51,15 @@ do
 	':') usage "missing argument for -${OPTARG}";;
 	s) stride="${OPTARG}";;
 	v) verbose=true;;
+	p) profile="${OPTARG}";;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
 shift $((${OPTIND} - 1))
 
 : ${stride="${default_stride}"}
+: ${profile="${default_profile}"}
+
 case "${stride}" in
 ""|*[^0-9]*) usage "invalid stride ${stride}";;
 esac
@@ -98,7 +103,7 @@ restart_shard() {
 	set --
 	for ip in $(cat "${result_dir}/${shard}/order.txt")
 	do
-		capture "${result_dir}/${shard}/${ip}" "${progdir}/restart_node.sh" -d "${logdir}" -U "${ip}" &
+		capture "${result_dir}/${shard}/${ip}" "${progdir}/restart_node.sh" -p "${profile}" -d "${logdir}" -U "${ip}" &
 		set -- "$@" "${ip}"
 		case $(($# < ${stride})) in
 		0)
