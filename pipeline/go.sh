@@ -128,7 +128,7 @@ function do_launch
       rm instance_ids_output-leader.txt instance_output-leader.txt &
    fi
 
-   if [ ${configs[leader.num_vm]} -gt 0 ]; then
+   if [ ${configs[explorer_node.num_vm]} -gt 0 ]; then
       cat instance_ids_output-explorer_node.txt >> instance_ids_output.txt
       cat instance_output-explorer_node.txt >> instance_output.txt
       rm instance_ids_output-explorer_node.txt instance_output-explorer_node.txt &
