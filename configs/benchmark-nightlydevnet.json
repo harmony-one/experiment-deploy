@@ -1,5 +1,5 @@
 {
-  "description": "aws 464/600 nodes on 4 shard in 4 region, reserve 34 nodes for FN",
+  "description": "aws 448/600 nodes on 4 shard in 4 regions",
   "client": {
     "num_vm": 1,
     "type": "t3.medium",
@@ -8,7 +8,7 @@
   "leader": {
     "num_vm": 1,
     "type": "t3.medium",
-    "regions": "pdx,iad,sin,fra",
+    "regions": "pdx,iad,sin,dub",
     "root": 8
   },
   "bootnode": {
