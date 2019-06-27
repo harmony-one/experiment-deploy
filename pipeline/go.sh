@@ -482,6 +482,8 @@ function do_all
 {
    do_launch_bootnode
    do_launch_bootnode bootnode1
+   do_launch_bootnode bootnode3
+   do_launch_bootnode bootnode4
    do_launch
    do_run
    do_reset
