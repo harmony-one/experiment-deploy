@@ -232,7 +232,7 @@ EOT
 
    start_index=${configs[benchmark.shards]} * 2
    while [ $end -lt $NUM_NODES ]; do
-      start=$(( $PARALLEL * $group + ${configs[benchmark.shards]}*2 + 1))
+      start=$(( $PARALLEL * $group + ${configs[benchmark.shards]} * 2 + 1))
       end=$(( $PARALLEL + $start - 1 ))
 
       if [ $end -ge $NUM_NODES ]; then
