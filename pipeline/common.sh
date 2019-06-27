@@ -71,6 +71,10 @@ function read_profile
       bootnode.log_conn
       bootnode1.port bootnode1.server bootnode1.key bootnode1.enable
       bootnode1.p2pkey bootnode1.log_conn
+      bootnode3.port bootnode3.server bootnode3.key bootnode3.enable
+      bootnode3.p2pkey bootnode3.log_conn
+      bootnode4.port bootnode4.server bootnode4.key bootnode4.enable
+      bootnode4.p2pkey bootnode4.log_conn
       wallet.enable
       benchmark.bls bls.pass bls.bucket bls.folder bls.keyfile
    )

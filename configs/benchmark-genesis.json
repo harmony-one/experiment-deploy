@@ -31,6 +31,26 @@
      "p2pkey": "b1-9870.key",
      "log_conn": true
   },
+  "bootnode3": {
+     "enable": true,
+     "server": "13.113.101.219",
+     "name": "b3.harmony.one",
+     "port": 13019,
+     "user": "ec2-user",
+     "key": "tokyo-key-benchmark.pem",
+     "p2pkey": "b3-13019.key",
+     "log_conn": true
+  },
+  "bootnode4": {
+     "enable": true,
+     "server": "99.81.170.167",
+     "name": "b4.harmony.one",
+     "port": 13019,
+     "user": "ec2-user",
+     "key": "ireland-key-benchmark.pem",
+     "p2pkey": "b4-13019.key",
+     "log_conn": true
+  },
   "azure": {
     "num_vm": 0,
     "regions": [

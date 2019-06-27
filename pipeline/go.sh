@@ -547,7 +547,9 @@ case $ACTION in
          do_all ;;
    bootnode)
          do_launch_bootnode
-         do_launch_bootnode bootnode1 ;;
+         do_launch_bootnode bootnode1
+         do_launch_bootnode bootnode3
+         do_launch_bootnode bootnode4 ;;
    launch)
          do_launch ;;
    run)  
