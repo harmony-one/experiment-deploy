@@ -2,44 +2,44 @@
    "launch": [
       {
          "region": "iad",
-         "type": "t3.medium",
+         "type": "t3.small",
          "ondemand": 0,
-         "spot": 77,
+         "spot": 74,
          "root": 10
       },
       {
          "region": "pdx",
-         "type": "t3.medium",
+         "type": "t3.small",
          "ondemand": 0,
-         "spot": 77,
+         "spot": 74,
          "root": 10
       },
       {
          "region": "nrt",
-         "type": "t3.medium",
+         "type": "t3.small",
          "ondemand": 0,
-         "spot": 77,
+         "spot": 74,
          "root": 10
       },
       {
          "region": "dub",
-         "type": "t3.medium",
+         "type": "t3.small",
          "ondemand": 0,
-         "spot": 77,
+         "spot": 74,
          "root": 10
       },
       {
-         "region": "sfo",
-         "type": "t3.medium",
+         "region": "sin",
+         "type": "t3.small",
          "ondemand": 0,
-         "spot": 77,
+         "spot": 74,
          "root": 10
       },
       {
          "region": "cmh",
-         "type": "t3.medium",
+         "type": "t3.small",
          "ondemand": 0,
-         "spot": 77,
+         "spot": 74,
          "root": 10
       }
    ],

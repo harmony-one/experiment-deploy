@@ -11,6 +11,12 @@
     "regions": "iad,pdx,nrt,dub",
     "root": 10
   },
+  "explorer_node": {
+    "num_vm": 1,
+    "type": "t3.medium",
+    "regions": "iad,pdx,nrt,dub",
+    "root": 10
+  },
   "bootnode": {
      "enable": true,
      "server": "54.213.43.194",
