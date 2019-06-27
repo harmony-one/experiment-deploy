@@ -8,9 +8,13 @@
 # [2] Modified by Andy Wu, Date: May 27, 2019
 #		* created function setup_node_exporter
 # [3] Modified by Andy Wu, Date: Jun 1, 2019
-#   * removed mac implementation for node exporter deployment, plus code refactor
-#   * fixed a code conflict issue
-# 
+#   	* removed mac implementation for node exporter deployment, plus code refactor
+#   	* fixed a code conflict issue
+# [4] Added the feature to monitor cpu usage of HARMONY process
+#     * notes to Andy, temporarily disabled func get_es_endpoint(), need to enable it before pushing 
+#     * added function setup_pushgateway() to deploy pushgateway as a service
+#     * added a function to download better_top.sh, and run it as a service
+#     * ATTN: need to open port :9091  
 # ------------------------------------------------------------------
 
 
@@ -150,6 +154,85 @@ setup_node_exporter() {
    popd
 }
 
+setup_pushgateway() {
+   set -eu
+
+   URL_pushgateway=https://github.com/prometheus/pushgateway/releases/download/v0.8.0/pushgateway-0.8.0.linux-amd64.tar.gz
+
+   pushd /tmp
+
+   curl -LO $URL_pushgateway
+   tar -xvf ./pushgateway-0.8.0.linux-amd64.tar.gz
+   mv pushgateway-0.8.0.linux-amd64/pushgateway /usr/local/bin/
+
+   useradd -rs /bin/false pushgateway
+
+   pushgateway_service=/etc/systemd/system/pushgateway.service
+   echo "[Unit]
+   Description=pushgateway
+   After=network.target
+
+   [Service]
+   User=pushgateway
+   Group=pushgateway
+   Type=simple
+   ExecStart=/usr/local/bin/pushgateway
+
+   [Install]
+   WantedBy=multi-user.target" > $pushgateway_service
+
+   systemctl daemon-reload
+   systemctl start pushgateway
+
+   #enable the node exporter servie to the system startup
+   systemctl enable pushgateway
+
+   popd
+
+}
+
+setup_better_top() {
+   set -eu
+
+   pushd /tmp
+
+   # Might need to update this URL once this script has been merged to harmony repo
+   URL_harmony_top=https://raw.githubusercontent.com/AndyBoWu/experiment-deploy-1/master/configs/better-top.sh
+   curl -LO $URL_harmony_top
+
+   chmod +x better-top.sh
+
+   mv better-top.sh /usr/local/bin
+
+   useradd -rs /bin/false bettertop
+
+   bettertop_service=/etc/systemd/system/bettertop.service
+   echo "[Unit]
+   Description=bettertop
+   After=network.target
+
+   [Service]
+   User=bettertop
+   Group=bettertop
+   Type=simple
+   ExecStart=/usr/local/bin/bettertop.sh
+
+   [Install]
+   WantedBy=multi-user.target" > $bettertop_service      
+
+   systemctl daemon-reload
+   systemctl start bettertop
+
+   #enable the node exporter servie to the system startup
+   systemctl enable bettertop
+
+   popd
+
+}
+
+
+
+
 function restore_db {
    local dbdir=db/harmony_${PUB_IP}_${NODE_PORT}
 
@@ -216,6 +299,13 @@ fuser -k -n tcp $NODE_PORT
 
 # deploy node exporter
 setup_node_exporter
+
+# deploy pushgateway
+setup_pushgateway
+
+# deploy better-top.sh as a service
+setup_better_top
+
 
 # Run soldier
 ./soldier -ip $PUB_IP -port $NODE_PORT > soldier-${PUB_IP}.log 2>&1 &
