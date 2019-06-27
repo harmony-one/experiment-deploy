@@ -40,5 +40,19 @@ shift $((${OPTIND} - 1))
 unset -v shard
 for shard
 do
-	"${progdir}/run_on_shard.sh" -d "${logdir}" -Mr "${shard}" 'curl -s http://localhost:19000/kill; echo'
+	"${progdir}/run_on_shard.sh" -d "${logdir}" -rT "${shard}" '
+		if sudo pkill harmony
+		then
+			unset -v start end
+			start=$(date +%s)
+			while sudo pgrep harmony > /dev/null
+			do
+				sleep 1
+			done
+			end=$(date +%s)
+			echo "${ip}: OK: $((${end} - ${start}))s"
+		else
+			echo "${ip}: ERROR: pkill returned $?"
+		fi
+	'
 done

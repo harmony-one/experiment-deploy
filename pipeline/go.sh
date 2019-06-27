@@ -352,17 +352,17 @@ function do_reset
 {
    if [ "${configs[dashboard.reset]}" == "true" ]; then
       echo "resetting dashboard ..."
-      echo curl -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
+      echo curl -m 3 -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
       cat > explorer.reset.json<<EOT
 {
    "secret":"426669"
 }
 EOT
-      curl -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+      curl -m 3 -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
    fi
    if [ "${configs[explorer.reset]}" == "true" ]; then
       echo "resetting explorer ..."
-      echo curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669", "leaderIp":""}'
+      echo curl -m 3 -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669", "leaderIp":""}'
       for l in "${LEADER_IP[@]}"; do
          leaders+="\"$l:5000\"",
       done
@@ -373,7 +373,7 @@ EOT
    "leaders":[$leaders]
 }
 EOT
-      curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+      curl -m 3 -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
    fi
    [ -e explorer.reset.json ] && mv -f explorer.reset.json logs/$TS
 }
@@ -450,8 +450,8 @@ reinit_ip() {
       f="logs/${TS}/init/${pfx}-${ip}.json"
       [ -f "${f}" ] || continue
       ok=true
-      echo curl -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
-      curl -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
+      echo curl -m 3 -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
+      curl -m 3 -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
    done
    ${ok} || echo "WARNING: could not find init JSON file for ${ip}; skipped it" >&2
 }

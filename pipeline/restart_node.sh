@@ -15,16 +15,18 @@ esac
 . "${progdir}/util.sh"
 . "${progdir}/common_opts.sh"
 
-unset -v default_timeout default_step_retries default_cycle_retries default_bucket
+unset -v default_timeout default_step_retries default_cycle_retries \
+	default_bucket default_folder default_profile
 default_timeout=450
 default_step_retries=2
 default_cycle_retries=2
 default_bucket=unique-bucket-bin
 default_folder="${WHOAMI}"
+default_profile="${WHOAMI}"
 
 print_usage() {
 	cat <<- ENDEND
-		usage: ${progname} ${common_usage} [-t timeout] [-r step_retries] [-R cycle_retries] ip
+		usage: ${progname} ${common_usage} [-t timeout] [-r step_retries] [-R cycle_retries] [-p profile] ip
 
 		Restarts the node at the given IP address.
 
@@ -46,17 +48,18 @@ print_usage() {
 		 		(default: ${default_bucket})
 		-F FOLDER	fetch upgrade binaries from the given folder
 		 		(default: ${default_folder})
+		-p PROFILE	fetch parameters from the given profile (default: ${default_profile})
 
 		arguments:
 		ip		the IP address to upgrade
 	ENDEND
 }
 
-unset -v timeout step_retries cycle_retries upgrade bucket folder
+unset -v timeout step_retries cycle_retries upgrade bucket folder profile
 upgrade=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}t:r:R:UB:F:" opt
+while getopts ":${common_getopts_spec}t:r:R:UB:F:p:" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -68,6 +71,7 @@ do
 	U) upgrade=true;;
 	B) bucket="${OPTARG}";;
 	F) folder="${OPTARG}";;
+	p) profile="${OPTARG}";;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -78,6 +82,11 @@ shift $((${OPTIND} - 1))
 : ${cycle_retries="${default_cycle_retries}"}
 : ${bucket="${default_bucket}"}
 : ${folder="${default_folder}"}
+: ${profile="${default_profile}"}
+
+node_ssh() {
+	"${progdir}/node_ssh.sh" -d "${logdir}" "$@"
+}
 
 case "${timeout}" in
 ""|*[^0-9]*) usage "invalid timeout: ${timeout}";;
@@ -96,7 +105,7 @@ unset -v ip
 ip="${1}"
 shift 1
 
-log_define -v restart_node_log_level -l DEBUG rn
+log_define -v restart_node_log_level -l INFO rn
 
 # run_with_retries ${cmd} [${arg} ...]
 #	Run the given command with the given arguments, if any, retrying the
@@ -124,9 +133,16 @@ run_with_retries() {
 
 rn_notice "node to restart is ${ip}"
 
-unset -v logfile initfile
+unset -v dns_zone
+get_dns_zone() {
+	local rpczone
+	rpczone=$(jq -r '.flow.rpczone // ""' < "${progdir}/../configs/benchmark-${profile}.json")
+	case "${rpczone}" in
+	?*) dns_zone="${rpczone}.hmny.io";;
+	esac
+}
 
-rn_info "looking for init file"
+unset -v logfile initfile
 find_initfile() {
 	local prefix
 	for prefix in init leader.init
@@ -137,51 +153,51 @@ find_initfile() {
 	rn_crit "cannot find init file for ${ip}!"
 	exit 78  # EX_CONFIG
 }
-find_initfile
-rn_info "init file is ${initfile}"
 
-rn_info "getting log filename"
+unset -v launch_args
+get_launch_params() {
+	local port sid args
+	port="$(jq -r .port < "${initfile}")"
+	sid="$(jq -r .sessionID < "${initfile}")"
+	args="$(jq -r .benchmarkArgs < "${initfile}")"
+	set -- -ip "${ip}" -port "${port}" -log_folder "../tmp_log/log-${sid}" ${args} -leader_override=true
+	case "${dns_zone+set}" in
+	set) set -- "$@" "-dns_zone=${dns_zone}";;
+	esac
+	launch_args=$(shell_quote "$@")
+}
+
 get_logfile() {
-	logfile=$("${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" '
-		ls -t ../tmp_log/log-*/*.log | head -1
+	local logfiledir
+	logfiledir=$(node_ssh "${ip}" '
+		ls -td ../tmp_log/log-* | head -1
 	') || return $?
-	if [ -z "${logfile}" ]
+	if [ -z "${logfiledir}" ]
 	then
-		rn_warning "cannot find log file"
+		rn_warning "cannot find log directory"
 		return 1
 	fi
+	logfile="${logfiledir}/validator-${ip}-9000.log"
 }
-run_with_retries get_logfile
-rn_info "log file is ${logfile}"
 
 unset -v s3_folder
 s3_folder="s3://${bucket}/${folder}"
 rn_debug "s3_folder=$(shell_quote "${s3_folder}")"
 
 fetch_binaries() {
-	"${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" "
+	node_ssh "${ip}" "
 		aws s3 sync $(shell_quote "${s3_folder}") staging
 	"
 }
 
 kill_harmony() {
-	local soldier_status status
-	if soldier_status=$(curl -s "http://${ip}:19000/kill")
-	then
-		case "${soldier_status}" in
-		Succeeded)
-			rn_debug "kill succeeded"
-			;;
-		*)
-			rn_info "soldier returned: $(shell_quote "${soldier_status}")"
-			return 1
-			;;
-		esac
-	else
-		status=$?
-		rn_warning "soldier curl returned status ${status}"
-		return "${status}"
-	fi
+	local status
+	status=0
+	node_ssh "${ip}" 'sudo pkill harmony' || status=$?
+	case "${status}" in
+	1) status=0;;  # it is OK if no processes have been found
+	esac
+	return ${status}
 }
 
 wait_for_harmony_process_to_exit() {
@@ -192,7 +208,7 @@ wait_for_harmony_process_to_exit() {
 	while :
 	do
 		status=0
-		"${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" 'pgrep harmony > /dev/null' || status=$?
+		node_ssh "${ip}" 'pgrep harmony > /dev/null' || status=$?
 		case "${status}" in
 		0)
 			;;
@@ -218,7 +234,7 @@ wait_for_harmony_process_to_exit() {
 }
 
 upgrade_binaries() {
-	"${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" '
+	node_ssh "${ip}" '
 		set -eu
 		unset -v f
 		for f in harmony txgen wallet libmcl.so libbls384_256.so
@@ -236,7 +252,12 @@ upgrade_binaries() {
 
 unset -v logsize
 get_logfile_size() {
-	logsize=$("${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" 'stat -c %s '"$(shell_quote "${logfile}")") || return $?
+	logsize=$(node_ssh "${ip}" '
+		unset -v logfile
+		logfile='"$(shell_quote "${logfile}")"'
+		[ -f "${logfile}" ] || sudo touch "${logfile}"
+		stat -c %s '"$(shell_quote "${logfile}")"'
+	') || return $?
 	if [ -z "${logsize}" ]
 	then
 		rn_warning "cannot get size of log file ${logfile}"
@@ -244,23 +265,16 @@ get_logfile_size() {
 	fi
 }
 
-reinit_harmony() {
-	local soldier_status status
-	if soldier_status=$(curl -X GET -s "http://${ip}:19000/init" -H 'Content-Type: application/json' -d "@${initfile}")
-	then
-		case "${soldier_status}" in
-		Succeeded)
-			rn_debug "init succeeded"
-			;;
-		*)
-			rn_info "soldier returned: $(shell_quote "${soldier_status}")"
-			return 1;;
-		esac
-	else
-		status=$?
-		rn_warning "soldier_curl returned status ${status}"
-		return "${status}"
-	fi
+start_harmony() {
+	node_ssh -o-n "${ip}" 'sudo sh -c '\''
+		LD_LIBRARY_PATH=.
+		export LD_LIBRARY_PATH
+		exec < /dev/null > /dev/null 2>> harmony.err
+		echo "running: ./harmony $*" >&2
+		./harmony "$@" &
+		echo "harmony is running, pid=$!" >&2
+		echo $! > harmony.pid
+	'\'' sh '"${launch_args}"
 }
 
 wait_for_consensus() {
@@ -270,7 +284,7 @@ wait_for_consensus() {
 	while sleep 5
 	do
 		rn_debug "checking for bingo"
-		bingo=$("${progdir}/node_ssh.sh" -d "${logdir}" "${ip}" '
+		bingo=$(node_ssh "${ip}" '
 			tail -c+'"$((${logsize} + 1)) $(shell_quote "${logfile}")"' |
 			jq -c '\''select(.msg | test("HOORAY|BINGO"))'\'' | head -1
 		')
@@ -291,6 +305,20 @@ wait_for_consensus() {
 	return 1
 }
 
+# HERE BE DRAGONS
+
+rn_info "getting DNS zone with which to restart nodes"
+get_dns_zone
+rn_info "DNS zone is ${dns_zone-'<unset>'}"
+rn_info "looking for init file"
+find_initfile
+rn_info "init file is ${initfile}"
+rn_info "getting launch arguments from init file"
+get_launch_params
+rn_info "launch arguments are: ${launch_args}"
+rn_info "getting log filename"
+run_with_retries get_logfile
+rn_info "log file is ${logfile}"
 unset -v cycles_left cycle_ok
 cycles_left=${cycle_retries}
 while :
@@ -316,7 +344,7 @@ do
 		run_with_retries get_logfile_size || break
 		rn_info "log file is ${logsize} bytes"
 		rn_info "restarting harmony process"
-		run_with_retries reinit_harmony || break
+		run_with_retries start_harmony || break
 		rn_info "waiting for consensus to start"
 		wait_for_consensus || break
 		break 2
