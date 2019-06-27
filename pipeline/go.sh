@@ -363,13 +363,13 @@ EOT
    if [ "${configs[explorer.reset]}" == "true" ]; then
       echo "resetting explorer ..."
       for l in "${EXPLORER_NODE_IP[@]}"; do
-         leaders+="\"$l:5000\"",
+         explorer_nodes+="\"$l:5000\"",
       done
-      leaders=$(echo $leaders | sed s/,$//)
+      explorer_nodes=$(echo $explorer_nodes | sed s/,$//)
       cat > explorer.reset.json<<EOT
 {
    "secret":"426669",
-   "leaders":[$leaders]
+   "leaders":[$explorer_nodes]
 }
 EOT
       echo curl -m 3 -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
