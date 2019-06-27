@@ -352,17 +352,16 @@ function do_reset
 {
    if [ "${configs[dashboard.reset]}" == "true" ]; then
       echo "resetting dashboard ..."
-      echo curl -m 3 -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
       cat > explorer.reset.json<<EOT
 {
    "secret":"426669"
 }
 EOT
+      echo curl -m 3 -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
       curl -m 3 -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
    fi
    if [ "${configs[explorer.reset]}" == "true" ]; then
       echo "resetting explorer ..."
-      echo curl -m 3 -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669", "leaderIp":""}'
       for l in "${LEADER_IP[@]}"; do
          leaders+="\"$l:5000\"",
       done
@@ -373,6 +372,7 @@ EOT
    "leaders":[$leaders]
 }
 EOT
+      echo curl -m 3 -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
       curl -m 3 -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
    fi
    [ -e explorer.reset.json ] && mv -f explorer.reset.json logs/$TS
