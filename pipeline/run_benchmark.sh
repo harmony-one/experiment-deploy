@@ -99,9 +99,6 @@ function do_simple_cmd
    case $cmd in
       init)
       benchmarkArgs="$BOOTNODES -min_peers $MINPEER"
-      if [ "$LIBP2P" == "true" ]; then
-         benchmarkArgs+=" -is_genesis"
-      fi
       if [ "${configs[benchmark.bls]}" == "true" ]; then
          benchmarkArgs+=" -blspass file:${configs[bls.pass]} -blskey_file BLSKEY"
       fi
@@ -123,6 +120,9 @@ function do_simple_cmd
       if [ "$CLIENT" == "true" ]; then
          CLIENT_JSON=',"role":"client"'
       fi
+
+      explorerArgs=$benchmarkArgs
+      explorerArgs+=" -is_genesis=false -is_explorer=true -shard_id=SHARDID"
       cat>$LOGDIR/$cmd/leader.$cmd.json<<EOT
 {
    "ip":"127.0.0.1",
@@ -139,6 +139,16 @@ EOT
    "port":"9000",
    "sessionID":"$SESSION",
    "benchmarkArgs":"${benchmarkArgs}",
+   "txgenArgs":"$txgenArgs"
+   $CLIENT_JSON
+}
+EOT
+      cat>$LOGDIR/$cmd/explorer.$cmd.json<<EOT
+{
+   "ip":"127.0.0.1",
+   "port":"9000",
+   "sessionID":"$SESSION",
+   "benchmarkArgs":"${explorerArgs}",
    "txgenArgs":"$txgenArgs"
    $CLIENT_JSON
 }
@@ -200,9 +210,29 @@ EOT
       echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log" >> $cmd_file
    done
 
-   start_index=${configs[benchmark.shards]}
+# send commands to explorers at second
+   local explorer_shard_id=0
+   local explorer_start_index=$((${configs[benchmark.shards]} + 1))
+   local explorer_end_index=$((${configs[benchmark.shards]} * 2))
+   for n in $(seq $explorer_start_index $explorer_end_index); do
+      local ip=${NODEIPS[$n]}
+      CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
+
+      case $cmd in
+         init|update|wallet)
+            sed "s/SHARDID/$explorer_shard_id/" $LOGDIR/$cmd/explorer.$cmd.json > $LOGDIR/$cmd/explorer.$cmd-$ip.json
+            CMD+=$" -d@$LOGDIR/$cmd/explorer.$cmd-$ip.json"
+            (( explorer_shard_id ++ ))
+            ;;
+      esac
+
+      echo $n =\> $CMD
+      echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log" >> $cmd_file
+   done
+
+   start_index=${configs[benchmark.shards]} * 2
    while [ $end -lt $NUM_NODES ]; do
-      start=$(( $PARALLEL * $group + ${configs[benchmark.shards]} + 1))
+      start=$(( $PARALLEL * $group + ${configs[benchmark.shards]} * 2 + 1))
       end=$(( $PARALLEL + $start - 1 ))
 
       if [ $end -ge $NUM_NODES ]; then

@@ -89,6 +89,24 @@ function do_launch
       LEADER_IP=( $(cat raw_ip-leader.txt | awk ' { print $1 } ') )
    fi
 
+   if [ ${configs[explorer_node.num_vm]} -gt 0 ]; then
+      logging launching ${configs[explorer_node.num_vm]} explorer nodes: ${configs[explorer_node.type]}
+      ../bin/instance \
+      -config_dir $CONFIG_DIR \
+      -instance_count ${configs[explorer_node.num_vm]} \
+      -instance_type ${configs[explorer_node.type]} \
+      -launch_region ${configs[explorer_node.regions]} \
+      -ip_file raw_ip-explorer_node.txt \
+      -output instance_ids_output-explorer_node.txt \
+      -tag_file instance_output-explorer_node.txt \
+      -tag ${TAG}-explorer_node \
+      -root_volume ${configs[explorer_node.root]} \
+      -launch_profile launch-${PROFILE}.json
+      LAUNCH_OPT+=' -e raw_ip-explorer_node.txt'
+      num_explorer_nodes=$(wc -l raw_ip-explorer_node.txt)
+      EXPLORER_NODE_IP=( $(cat raw_ip-explorer_node.txt | awk ' { print $1 } ') )
+   fi
+
    ./deploy.sh \
    -C ${configs[azure.num_vm]} \
    -s ${configs[benchmark.shards]} \
@@ -108,6 +126,12 @@ function do_launch
       cat instance_ids_output-leader.txt >> instance_ids_output.txt
       cat instance_output-leader.txt >> instance_output.txt
       rm instance_ids_output-leader.txt instance_output-leader.txt &
+   fi
+
+   if [ ${configs[explorer_node.num_vm]} -gt 0 ]; then
+      cat instance_ids_output-explorer_node.txt >> instance_ids_output.txt
+      cat instance_output-explorer_node.txt >> instance_output.txt
+      rm instance_ids_output-explorer_node.txt instance_output-explorer_node.txt &
    fi
 
    echo waiting for instances launch ${configs[flow.wait_for_launch]} ...
@@ -328,27 +352,27 @@ function do_reset
 {
    if [ "${configs[dashboard.reset]}" == "true" ]; then
       echo "resetting dashboard ..."
-      echo curl -m 3 -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
       cat > explorer.reset.json<<EOT
 {
    "secret":"426669"
 }
 EOT
+      echo curl -m 3 -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
       curl -m 3 -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
    fi
    if [ "${configs[explorer.reset]}" == "true" ]; then
       echo "resetting explorer ..."
-      echo curl -m 3 -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669", "leaderIp":""}'
-      for l in "${LEADER_IP[@]}"; do
-         leaders+="\"$l:5000\"",
+      for l in "${EXPLORER_NODE_IP[@]}"; do
+         explorer_nodes+="\"$l:5000\"",
       done
-      leaders=$(echo $leaders | sed s/,$//)
+      explorer_nodes=$(echo $explorer_nodes | sed s/,$//)
       cat > explorer.reset.json<<EOT
 {
    "secret":"426669",
-   "leaders":[$leaders]
+   "leaders":[$explorer_nodes]
 }
 EOT
+      echo curl -m 3 -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
       curl -m 3 -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
    fi
    [ -e explorer.reset.json ] && mv -f explorer.reset.json logs/$TS

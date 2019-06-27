@@ -56,6 +56,7 @@ function read_profile
    keys=(
       description libp2p genesis aws.profile azure.num_vm azure.regions
       leader.regions leader.num_vm leader.type leader.root
+      explorer_node.regions explorer_node.num_vm explorer_node.type explorer_node.root
       client.regions client.num_vm client.type
       benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx
       benchmark.attacked_mode benchmark.init_retry

@@ -23,6 +23,7 @@ OPTIONS:
    -P launch_profile    launch profile (default: $LAUNCH_PROFILE)
    -i ip_file           file containing ip address of pre-launched VMs
    -l leaders           file containing ip addresses of leader VMs
+   -e explorer_nodes    file containing ip addresses of explorer node VMs
    -b bucket            specify the bucket containing all test binaries (default: $BUCKET)
    -f folder            specify the folder name in the bucket (default: $FOLDER)
    -r regions           specify the regions for deployment, delimited by , (default: $REGIONS)
@@ -115,6 +116,11 @@ function generate_distribution
       cat $IP_FILE >> raw_ip.txt
    fi
 
+   if [ -f "$EXPLORER_NODES" ]; then
+      cat $EXPLORER_NODES raw_ip.txt > raw_ip.txt.tmp.$USERID
+      mv -f raw_ip.txt.tmp.$USERID raw_ip.txt
+   fi
+
    if [ -f "$LEADERS" ]; then
       cat $LEADERS raw_ip.txt > raw_ip.txt.tmp.$USERID
       mv -f raw_ip.txt.tmp.$USERID raw_ip.txt
@@ -124,7 +130,7 @@ function generate_distribution
    awk ' { print $1 } ' raw_ip.txt > logs/$TS/hosts.txt
 
    echo "Generate distribution_config"
-   $PYTHON ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM --commander_number $COMMANDER_NUM
+   $PYTHON ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --explorer_number $SHARD_NUM --client_number $CLIENT_NUM --commander_number $COMMANDER_NUM
 
    cp distribution_config.txt logs/$TS
    cat>$CONFIGDIR/profile-${LAUNCH_PROFILE}.json<<EOT
@@ -150,6 +156,7 @@ COMMANDER_NUM=0
 SLEEP_TIME=10
 RUN_PROFILE=tiny
 LEADERS=
+EXPLORER_NODES=
 IP_FILE=
 BUCKET=unique-bucket-bin
 USERID=${WHOAMI:-$USER}
@@ -159,8 +166,9 @@ CONFIGDIR=$(realpath $ROOTDIR)/configs
 TS=$(date +%Y%m%d.%H%M%S)
 USERDATA=$CONFIGDIR/userdata-soldier-http.sh
 PYTHON=python
+REGIONS=
 
-while getopts "hnc:C:s:t:P:f:b:i:r:u:l:" option; do
+while getopts "hnc:C:s:t:P:f:b:i:r:u:l:e:" option; do
    case $option in
       n) DRYRUN=--dry-run ;;
       c) AWS_VM=$OPTARG ;;
@@ -174,6 +182,7 @@ while getopts "hnc:C:s:t:P:f:b:i:r:u:l:" option; do
       r) REGIONS=$OPTARG ;;
       u) USERDATA=$CONFIGDIR/$OPTARG ;;
       l) LEADERS=$OPTARG ;;
+      e) EXPLORER_NODES=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done
