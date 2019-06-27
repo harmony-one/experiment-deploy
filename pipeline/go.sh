@@ -362,7 +362,7 @@ EOT
    fi
    if [ "${configs[explorer.reset]}" == "true" ]; then
       echo "resetting explorer ..."
-      for l in "${LEADER_IP[@]}"; do
+      for l in "${EXPLORER_NODE_IP[@]}"; do
          leaders+="\"$l:5000\"",
       done
       leaders=$(echo $leaders | sed s/,$//)
