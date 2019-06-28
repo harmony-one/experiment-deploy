@@ -82,7 +82,8 @@ function list_ids
    for r in ${REGIONS[@]}; do {
       if [ -n "$PROFILE" ]; then
          echo Listing running instance with tag: Profile =\> \"$PROFILE\" at $r ...
-         $AWS --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running Name=tag:Profile,Values=${PROFILE}" | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | [.id, .type, .tag.Value ] | @tsv ' | sort > $r.ids
+         query=".Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | select (.tag.Value | contains (\"-$PROFILE-\")) | [.id, .type, .tag.Value ] | @tsv "
+         $AWS --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running" "Name=tag:Profile,Values=${PROFILE}" | jq -r "$query" | sort > $r.ids
       else
          echo Listing running instance with name filter \"$FILTER\" at $r ...
          $AWS --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running" | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | [.id, .type, .tag.Value ] | @tsv ' | grep -E $FILTER | sort > $r.ids
@@ -105,7 +106,7 @@ FILTER=${WHOAMI:-USER}
 PROFILE=
 
 ############################### MAIN FUNCTION    ###############################
-while getopts "hGg:p" option; do
+while getopts "hGg:p:" option; do
    case $option in
       h) usage ;;
       G) DRYRUN= ;;
