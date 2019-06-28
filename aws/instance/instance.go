@@ -59,6 +59,8 @@ type Limit struct {
 	T3medium int `json:"t3.medium"`
 	T3large  int `json:"t3.large"`
 	T2micro  int `json:"t2.micro"`
+	M5alarge int `json:"m5a.large"`
+	M5large  int `json:"m5a.large"`
 }
 
 // Region is the struct containg AWS Region info
