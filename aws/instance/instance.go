@@ -157,6 +157,7 @@ var (
 	instanceCount = flag.Int("instance_count", 0, "number of instance to be launched in each region, will override profile")
 	launchRegion  = flag.String("launch_region", "pdx", "list of regions, separated by ',', will override profile")
 	rootVolume    = flag.Int64("root_volume", 0, "the size of the root volume in GB, will override profile")
+	protection    = flag.Bool("protection", false, "protect on-demand instance from termination")
 
 	userDataString string
 
@@ -452,7 +453,7 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType instType) err
 		for _, r := range result.Reservations {
 			for _, inst := range r.Instances {
 				if inst != nil && inst.PublicIpAddress != nil && *inst.PublicIpAddress != "" {
-					if instType != spot { // protect the on-demand instance
+					if instType != spot && *protection { // protect the on-demand instance
 						input := &ec2.ModifyInstanceAttributeInput{
 							InstanceId: inst.InstanceId,
 							DisableApiTermination: &ec2.AttributeBooleanValue{
