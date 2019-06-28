@@ -315,6 +315,10 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 							Key:   aws.String("Name"),
 							Value: aws.String(tagValue),
 						},
+						{
+							Key:   aws.String("Profile"),
+							Value: aws.String(*tag),
+						},
 					},
 				},
 			},
@@ -356,6 +360,10 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 						{
 							Key:   aws.String("Name"),
 							Value: aws.String(tagValue),
+						},
+						{
+							Key:   aws.String("Profile"),
+							Value: aws.String(*tag),
 						},
 					},
 				},
