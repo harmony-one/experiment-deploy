@@ -193,10 +193,6 @@ function do_run
    local RUN_OPTS=
    local -a NODE_OPTS
 
-   if [ "${configs[benchmark.dashboard]}" == "true" ]; then
-      RUN_OPTS+=" -D ${configs[dashboard.server]}:${configs[dashboard.port]}"
-   fi
-
    if [ "${configs[libp2p]}" == "true" ]; then
       RUN_OPTS+=" -P true"
    fi
@@ -350,19 +346,11 @@ function do_deinit
    [ -e ${THEPWD}/logs/$TS/tps.txt ] && cat ${THEPWD}/logs/$TS/tps.txt
 }
 
-function do_reset
+function do_reset_explorer
 {
-   if [ "${configs[dashboard.reset]}" == "true" ]; then
-      echo "resetting dashboard ..."
-      cat > explorer.reset.json<<EOT
-{
-   "secret":"426669"
-}
-EOT
-      echo curl -m 3 -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
-      curl -m 3 -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
-   fi
-   if [ "${configs[explorer.reset]}" == "true" ]; then
+   explorer=${1:-explorer}
+
+   if [ "${configs[${explorer}.reset]}" == "true" ]; then
       echo "resetting explorer ..."
       for l in "${EXPLORER_NODE_IP[@]}"; do
          explorer_nodes+="\"$l:5000\"",
@@ -374,10 +362,11 @@ EOT
    "leaders":[$explorer_nodes]
 }
 EOT
-      echo curl -m 3 -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
-      curl -m 3 -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+      echo curl -m 3 -X POST https://${configs[${explorer}.name]}:${configs[${explorer}.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+      curl -m 3 -X POST https://${configs[${explorer}.name]}:${configs[${explorer}.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+
+      [ -e explorer.reset.json ] && cp explorer.reset.json logs/$TS
    fi
-   [ -e explorer.reset.json ] && mv -f explorer.reset.json logs/$TS
 }
 
 function do_wallet_ini
@@ -488,7 +477,8 @@ function do_all
    do_launch_bootnode bootnode4
    do_launch
    do_run
-   do_reset
+   do_reset_explorer
+   do_reset_explorer explorer2
    download_logs
    analyze_logs
    do_sync_logs
@@ -567,7 +557,8 @@ case $ACTION in
    deinit)
          do_deinit ;;
    reset)
-         do_reset ;;
+         do_reset_explorer
+         do_reset_explorer explorer2 ;;
    wallet)
          do_wallet_ini ;;
    reinit)
