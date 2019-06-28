@@ -53,13 +53,13 @@ echo "root soft     nofile         65535" | sudo tee -a /etc/security/limits.con
 echo "root hard     nofile         65535" | sudo tee -a /etc/security/limits.conf
 echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
 
-get_es_endpoint() {
-   # TODO ek: Make this work with a public (non-VPC) endpoint.
-   ${AWS} es describe-elasticsearch-domain --domain-name="${1-"${ES_DOMAIN}"}" | \
-      jq -r .DomainStatus.Endpoints.vpc | \
-      grep .
-   # grep . makes this function return failure if empty, i.e. domain not found.
-}
+# get_es_endpoint() {
+#    # TODO ek: Make this work with a public (non-VPC) endpoint.
+#    ${AWS} es describe-elasticsearch-domain --domain-name="${1-"${ES_DOMAIN}"}" | \
+#       jq -r .DomainStatus.Endpoints.vpc | \
+#       grep .
+#    # grep . makes this function return failure if empty, i.e. domain not found.
+# }
 
 setup_metricbeat() {
    (
@@ -120,9 +120,15 @@ setup_node_exporter() {
 	# node_exporter version: 0.18.0/2019-05-09
 	URL_node_exporter_linux=https://github.com/prometheus/node_exporter/releases/download/v0.18.0/node_exporter-0.18.0.linux-amd64.tar.gz
 
-   # download and decompress the node exporter in the tmp folder
+   	# download and decompress the node exporter in the tmp folder
 	pushd /tmp
 	curl -LO $URL_node_exporter_linux
+   status_curl=$?
+   if [ "$status_curl" -ne 0 ]; then
+      echo "[X]Failed to download node_exporter.."
+      exit 1
+   fi
+
    tar -xvf /tmp/node_exporter-0.18.0.$os-amd64.tar.gz
    # add a servcie account for node_exporter
 	useradd -rs /bin/false node_exporter
@@ -162,8 +168,14 @@ setup_pushgateway() {
    pushd /tmp
 
    curl -LO $URL_pushgateway
+   status_curl=$?
+   if [ "$status_curl" -ne 0 ]; then
+      echo "[X]Failed to download pushgateway.."
+      exit 1
+   fi
+  
    tar -xvf ./pushgateway-0.8.0.linux-amd64.tar.gz
-   mv pushgateway-0.8.0.linux-amd64/pushgateway /usr/local/bin/
+   mv -f pushgateway-0.8.0.linux-amd64/pushgateway /usr/local/bin/
 
    useradd -rs /bin/false pushgateway
 
@@ -199,10 +211,15 @@ setup_better_top() {
    # Might need to update this URL once this script has been merged to harmony repo
    URL_harmony_top=https://raw.githubusercontent.com/AndyBoWu/experiment-deploy-1/master/configs/better-top.sh
    curl -LO $URL_harmony_top
+   status_curl=$?
+   if [ "$status_curl" -ne 0 ]; then
+      echo "[X]Failed to download better_top.sh.."
+      exit 1
+   fi
 
    chmod +x better-top.sh
 
-   mv better-top.sh /usr/local/bin
+   mv -f better-top.sh /usr/local/bin
 
    useradd -rs /bin/false bettertop
 
