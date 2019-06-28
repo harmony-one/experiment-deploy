@@ -3,43 +3,57 @@
       {
          "region": "iad",
          "type": "t3.small",
-         "ondemand": 0,
-         "spot": 74,
+         "ondemand": 70,
+         "spot": 0,
          "root": 10
       },
       {
          "region": "pdx",
          "type": "t3.small",
-         "ondemand": 0,
-         "spot": 74,
+         "ondemand": 70,
+         "spot": 0,
          "root": 10
       },
       {
          "region": "nrt",
          "type": "t3.small",
-         "ondemand": 0,
-         "spot": 74,
+         "ondemand": 55,
+         "spot": 0,
          "root": 10
       },
       {
          "region": "dub",
          "type": "t3.small",
-         "ondemand": 0,
-         "spot": 74,
+         "ondemand": 55,
+         "spot": 0,
          "root": 10
       },
       {
          "region": "sin",
          "type": "t3.small",
-         "ondemand": 0,
-         "spot": 74,
+         "ondemand": 50,
+         "spot": 0,
+         "root": 10
+      },
+      {
+         "region": "sfo",
+         "type": "m5.large",
+         "ondemand": 50,
+         "spot": 0,
+         "root": 10
+      },
+      {
+         "region": "fra",
+         "type": "t3.small",
+         "ondemand": 40,
+         "spot": 0,
          "root": 10
       },
       {
          "region": "cmh",
          "type": "t3.small",
-         "ondemand": 0,
-         "spot": 74,
+         "ondemand": 54,
+         "spot": 0,
          "root": 10
       }
    ],
