@@ -5,6 +5,7 @@
          "type": "m5a.large",
          "ondemand": 70,
          "spot": 0,
+         "protection": true,
          "root": 50
       },
       {
@@ -12,6 +13,7 @@
          "type": "m5a.large",
          "ondemand": 70,
          "spot": 0,
+         "protection": true,
          "root": 50
       },
       {
@@ -19,6 +21,7 @@
          "type": "m5a.large",
          "ondemand": 55,
          "spot": 0,
+         "protection": true,
          "root": 50
       },
       {
@@ -26,6 +29,7 @@
          "type": "m5a.large",
          "ondemand": 55,
          "spot": 0,
+         "protection": true,
          "root": 50
       },
       {
@@ -33,6 +37,7 @@
          "type": "m5a.large",
          "ondemand": 50,
          "spot": 0,
+         "protection": true,
          "root": 50
       },
       {
@@ -40,6 +45,7 @@
          "type": "m5.large",
          "ondemand": 50,
          "spot": 0,
+         "protection": true,
          "root": 50
       },
       {
@@ -47,6 +53,7 @@
          "type": "m5a.large",
          "ondemand": 40,
          "spot": 0,
+         "protection": true,
          "root": 50
       },
       {
@@ -54,6 +61,7 @@
          "type": "m5a.large",
          "ondemand": 54,
          "spot": 0,
+         "protection": true,
          "root": 50
       }
    ],
