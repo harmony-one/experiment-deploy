@@ -86,6 +86,10 @@ function read_profile
       configs[$k]=$($JQ .$k $BENCHMARK_PROFILE)
    done
 
+   # set some default value
+   [ "${configs[leader.protection]}" == "null" ] && configs[leader.protection]=false
+   [ "${configs[explorer_ndoe.protection]}" == "null" ] && configs[explorer_node.protection]=false
+
    nodes_num=$($JQ " $managednodekey | length " $BENCHMARK_PROFILE)
    configs[managednodes.num]=$nodes_num
    i=0
@@ -103,6 +107,7 @@ function read_profile
    if [ "${configs[bls.keyfile]}" != "null" ]; then
       blskey=( $(cat $CONFIG_DIR/${configs[bls.keyfile]}) )
    fi
+
 }
 
 function gen_userdata
