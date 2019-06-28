@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -67,7 +66,6 @@ type sessionInfo struct {
 }
 
 const (
-	bucketName      = "richard-bucket-test"
 	logFolderPrefix = "../tmp_log/"
 )
 
@@ -87,15 +85,11 @@ var (
 )
 
 func printVersion(me string) {
-	fmt.Fprintf(os.Stderr, "Harmony (C) 2018. %v, version %v-%v (%v %v)\n", path.Base(me), version, commit, builtBy, builtAt)
+	fmt.Fprintf(os.Stderr, "Harmony (C) 2019. %v, version %v-%v (%v %v)\n", path.Base(me), version, commit, builtBy, builtAt)
 	os.Exit(0)
 }
 
 func killPort(port string) error {
-	if runtime.GOOS == "windows" {
-		command := fmt.Sprintf("(Get-NetTCPConnection -LocalPort %s).OwningProcess -Force", port)
-		return utils.RunCmd(nil, "Stop-Process", "-Id", command)
-	}
 	command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", port)
 	return utils.RunCmd(nil, "/bin/bash", "-c", command)
 }
@@ -128,21 +122,6 @@ func runClient() error {
 func startWallet(command string) error {
 	log.Println("starting wallet")
 	return utils.RunCmd(nil, "/bin/bash", "-c", command)
-}
-
-// Index ...
-func Index(vs []string, t string) int {
-	for i, v := range vs {
-		if v == t {
-			return i
-		}
-	}
-	return -1
-}
-
-// Include ...
-func Include(vs []string, t string) bool {
-	return Index(vs, t) >= 0
 }
 
 func initHandler(w http.ResponseWriter, r *http.Request) {
@@ -299,16 +278,16 @@ func httpServer() {
 	log.Println("Supported API:")
 	log.Println("/ping\t\t\tI'm alive!")
 	log.Println("/init\t\t\tStart Benchmark/Txgen")
-	log.Println("/update\t\t\tDownload/Update binary")
-	log.Println("/kill\t\t\tKill Running Benchmark/Txgen")
-	log.Println("/wallet\t\t\tStart Wallet Process")
+	//	log.Println("/update\t\t\tDownload/Update binary")
+	//	log.Println("/kill\t\t\tKill Running Benchmark/Txgen")
+	//	log.Println("/wallet\t\t\tStart Wallet Process")
 
 	log.Fatalf(fmt.Sprintf("http server error: %v", s.ListenAndServe()))
 }
 
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "IP of the node.")
-	port := flag.String("port", "9000", "port of the node.")
+	port := flag.String("port", "9000", "base port of the node.")
 	versionFlag := flag.Bool("version", false, "Output version info")
 
 	flag.Parse()
