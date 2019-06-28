@@ -16,7 +16,7 @@
     "num_vm": 1,
     "type": "m5a.large",
     "regions": "iad,pdx,nrt,dub",
-    "root": 50,
+    "root": 100,
     "protection": true
   },
   "bootnode": {
@@ -89,14 +89,17 @@
     "db": true
   },
   "dashboard": {
-    "server": "18.236.168.100",
     "name": "1.harmony.one",
     "port": 3000,
     "reset": "false"
   },
   "explorer": {
-    "server": "54.213.59.51",
     "name": "explorer.harmony.one",
+    "port": 4444,
+    "reset": "true"
+  },
+  "explorer2": {
+    "name": "34.220.94.30",
     "port": 4444,
     "reset": "true"
   },
