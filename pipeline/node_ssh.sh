@@ -22,6 +22,7 @@ print_usage() {
 
 		options:
 		-o opt		add an extra ssh(1) option
+		-p profile	use specified profile
 		-M		use opportunistic ssh connection multiplexing
 		 		(helps back-to-back invocations); -M -M uses fresh mux
 
@@ -40,7 +41,7 @@ ssh_opts=""
 
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":o:M${common_getopts_spec}" opt
+while getopts ":o:M${common_getopts_spec}p:" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -48,6 +49,7 @@ do
 	':') usage "missing argument for -${OPTARG}";;
 	o) ssh_opts="${ssh_opts} $(shell_quote "${OPTARG}")";;
 	M) exit_mux_first="${use_ssh_mux}"; use_ssh_mux=true;;
+	p) logdir="${progdir}/logs/${OPTARG}";;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
