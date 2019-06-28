@@ -82,6 +82,7 @@ var (
 	}
 
 	inited = false
+	pid    = -1
 )
 
 func printVersion(me string) {
@@ -89,12 +90,12 @@ func printVersion(me string) {
 	os.Exit(0)
 }
 
-func killPort(port string) error {
+func killPort(port string) (int, error) {
 	command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", port)
 	return utils.RunCmd(nil, "/bin/bash", "-c", command)
 }
 
-func runInstance(role string) error {
+func runInstance(role string) (int, error) {
 	os.MkdirAll(globalSession.logFolder, os.ModePerm)
 
 	if role == "client" {
@@ -103,7 +104,7 @@ func runInstance(role string) error {
 	return runNode()
 }
 
-func runNode() error {
+func runNode() (int, error) {
 	log.Println("running instance")
 	args :=
 		append([]string{"-ip", setting.ip, "-port", setting.port, "-log_folder", globalSession.logFolder}, globalSession.nodeAdditionalArgs...)
@@ -111,7 +112,7 @@ func runNode() error {
 	return utils.RunCmd([]string{"LD_LIBRARY_PATH=."}, "./harmony", args...)
 }
 
-func runClient() error {
+func runClient() (int, error) {
 	log.Println("running client")
 	args :=
 		append([]string{"-ip", setting.ip, "-port", setting.port, "-log_folder", globalSession.logFolder}, globalSession.txgenAdditionalArgs...)
@@ -119,14 +120,14 @@ func runClient() error {
 	return utils.RunCmd([]string{"LD_LIBRARY_PATH=."}, "./txgen", args...)
 }
 
-func startWallet(command string) error {
+func startWallet(command string) (int, error) {
 	log.Println("starting wallet")
 	return utils.RunCmd(nil, "/bin/bash", "-c", command)
 }
 
 func initHandler(w http.ResponseWriter, r *http.Request) {
 	if inited {
-		io.WriteString(w, "Inited")
+		io.WriteString(w, fmt.Sprintf("Inited: %v\n", utils.Pid))
 	}
 
 	var res string
@@ -157,11 +158,11 @@ func initHandler(w http.ResponseWriter, r *http.Request) {
 
 	globalSession.txgenAdditionalArgs = append(globalSession.txgenAdditionalArgs, strings.Split(init.TxgenArgs, " ")...)
 	globalSession.nodeAdditionalArgs = append(globalSession.nodeAdditionalArgs, strings.Split(init.BenchmarkArgs, " ")...)
-	if err := runInstance(init.Role); err == nil {
-		res = "Succeeded"
+	if pid, err := runInstance(init.Role); err == nil {
+		res = fmt.Sprintf("Succeeded: %d", utils.Pid)
 		inited = true
 	} else {
-		res = fmt.Sprintf("Failed init %v", err)
+		res = fmt.Sprintf("Failed init: %v/%v", err, pid)
 	}
 	io.WriteString(w, res)
 }
@@ -219,7 +220,7 @@ func killHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println("Kill Handler")
-	if err := killPort(setting.port); err == nil {
+	if _, err := killPort(setting.port); err == nil {
 		res = "Succeeded"
 	} else {
 		res = "Failed"
@@ -251,7 +252,7 @@ func walletHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cmd := fmt.Sprintf("./beat_tx_node.sh -i %v -n %v -c %v -s %v -W %v", wallet.Interval, wallet.Number, wallet.Loop, wallet.Shards, wallet.URL)
-	if err := startWallet(cmd); err == nil {
+	if _, err := startWallet(cmd); err == nil {
 		res = "Succeeded"
 	} else {
 		res = "Failed"

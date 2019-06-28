@@ -9,6 +9,11 @@ import (
 	"os/exec"
 )
 
+// Pid is the process id return by the current RunCmd
+var (
+	Pid int
+)
+
 // DownloadFile download files from http
 func DownloadFile(filepath string, url string) error {
 	// Create the file
@@ -34,7 +39,7 @@ func DownloadFile(filepath string, url string) error {
 }
 
 // RunCmd Runs command `name` with arguments `args`, env is the environmental settings
-func RunCmd(env []string, name string, args ...string) error {
+func RunCmd(env []string, name string, args ...string) (int, error) {
 	cmd := exec.Command(name, args...)
 	if env != nil && len(env) > 0 {
 		cmd.Env = append(os.Environ(), env...)
@@ -44,18 +49,20 @@ func RunCmd(env []string, name string, args ...string) error {
 	cmd.Stderr = stderrBytes
 
 	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
-		return err
+		log.Printf("Error Start: %v", err)
+		return -1, err
 	}
+
+	Pid = cmd.Process.Pid
 
 	log.Println("Command running", name, args)
 	go func() {
 		if err := cmd.Wait(); err != nil {
-			log.Printf("Stderr %v", string(stderrBytes.Bytes()))
+			log.Printf("Stderr: %v", string(stderrBytes.Bytes()))
 			log.Printf("Command finished with error: %v", err)
 		} else {
 			log.Printf("Command finished successfully")
 		}
 	}()
-	return nil
+	return -1, nil
 }
