@@ -83,6 +83,7 @@ function do_launch
       -tag_file instance_output-leader.txt \
       -tag ${TAG}-leader \
       -root_volume ${configs[leader.root]} \
+      -protection ${configs[leader.protection]} \
       -launch_profile launch-${PROFILE}.json
       LAUNCH_OPT+=' -l raw_ip-leader.txt'
       num_leader=$(wc -l raw_ip-leader.txt)
@@ -101,6 +102,7 @@ function do_launch
       -tag_file instance_output-explorer_node.txt \
       -tag ${TAG}-explorer_node \
       -root_volume ${configs[explorer_node.root]} \
+      -protection ${configs[explorer_node.protection]} \
       -launch_profile launch-${PROFILE}.json
       LAUNCH_OPT+=' -e raw_ip-explorer_node.txt'
       num_explorer_nodes=$(wc -l raw_ip-explorer_node.txt)
