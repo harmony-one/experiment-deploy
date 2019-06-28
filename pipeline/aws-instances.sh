@@ -13,6 +13,7 @@ OPTIONS:
    -h          print this help message
    -G          do the real work, not dryrun
    -g filter   grep filter to filter out the instances (default: $FILTER)
+   -p profile  find all running instance with specified Profile tag
 
 ACTION:
    list        list all running instances (id,type,name) - default
@@ -55,7 +56,7 @@ function terminate_ids
       if [ $NUM -gt 500 ]; then
          split -l 300 --additional-suffix=.ids $r.ids $r-split-
          for f in $r-split-*.ids; do
-            id=$(cat $f | cut -f 1 | tr '\n' ' ')
+            id=$(cat $f | cut -f 1 | sort -u | tr '\n' ' ')
             if [ "$id" != "" ]; then
                $DRYRUN $AWS --region $r ec2 terminate-instances --instance-ids $id --query 'TerminatingInstances[*].InstanceId'
             else
@@ -64,7 +65,7 @@ function terminate_ids
          done
          rm -f $r-split-*.ids
       else
-         id=$(cat $r.ids | cut -f 1 | tr '\n' ' ')
+         id=$(cat $r.ids | cut -f 1 | sort -u | tr '\n' ' ')
          if [ "$id" != "" ]; then
             $DRYRUN $AWS --region $r ec2 terminate-instances --instance-ids $id --query 'TerminatingInstances[*].InstanceId'
          else
@@ -77,10 +78,15 @@ function terminate_ids
 
 function list_ids
 {
-   echo Listing running instance with name filter \"$FILTER\" ..
 
    for r in ${REGIONS[@]}; do {
-      $AWS --region $r ec2 describe-instances --no-paginate --filters Name=instance-state-name,Values=running | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | [.id, .type, .tag.Value ] | @tsv ' | grep -E $FILTER > $r.ids
+      if [ -n "$PROFILE" ]; then
+         echo Listing running instance with tag: Profile =\> \"$PROFILE\" at $r ...
+         $AWS --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running Name=tag:Profile,Values=${PROFILE}" | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | [.id, .type, .tag.Value ] | @tsv ' | sort > $r.ids
+      else
+         echo Listing running instance with name filter \"$FILTER\" at $r ...
+         $AWS --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running" | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | [.id, .type, .tag.Value ] | @tsv ' | grep -E $FILTER | sort > $r.ids
+      fi
       NUM_INST=$(wc -l $r.ids | cut -f1 -d' ')
       echo ${NUM_INST} running instances found in $r
       if [ ${NUM_INST} == 0 ]; then
@@ -96,13 +102,15 @@ function list_ids
 DRYRUN=echo
 AWS=aws
 FILTER=${WHOAMI:-USER}
+PROFILE=
 
 ############################### MAIN FUNCTION    ###############################
-while getopts "hGg:" option; do
+while getopts "hGg:p" option; do
    case $option in
       h) usage ;;
       G) DRYRUN= ;;
       g) FILTER=$OPTARG ;;
+      p) PROFILE=$OPTARG ;;
    esac
 done
 
