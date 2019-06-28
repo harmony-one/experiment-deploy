@@ -108,6 +108,7 @@ type InstanceConfig struct {
 	Spot       int    `json:"spot"`
 	AmiName    string `json:"ami",omitempty`
 	Root       int64  `json:"root",omitempty`
+	Protection bool   `json:"protection",omitempty`
 }
 
 // LaunchConfig is the struct having all launch configuration
@@ -452,10 +453,11 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType instType) err
 				fmt.Printf("describe instances next token: %v\n", token)
 			}
 		*/
+
 		for _, r := range result.Reservations {
 			for _, inst := range r.Instances {
 				if inst != nil && inst.PublicIpAddress != nil && *inst.PublicIpAddress != "" {
-					if instType != spot && *protection { // protect the on-demand instance
+					if instType == onDemand && (*protection || i.Protection) { // only protect the on-demand instance
 						input := &ec2.ModifyInstanceAttributeInput{
 							InstanceId: inst.InstanceId,
 							DisableApiTermination: &ec2.AttributeBooleanValue{
@@ -589,6 +591,8 @@ func main() {
 				Number:     *instanceCount,
 				Spot:       0,
 				AmiName:    "default",
+				Root:       *rootVolume,
+				Protection: *protection,
 			}
 			wg.Add(1)
 			go launchInstances(&rc, regions, onDemand)
