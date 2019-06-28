@@ -13,7 +13,7 @@ package main
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	//	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
@@ -452,6 +452,27 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType instType) err
 		for _, r := range result.Reservations {
 			for _, inst := range r.Instances {
 				if inst != nil && inst.PublicIpAddress != nil && *inst.PublicIpAddress != "" {
+					if instType != spot { // protect the on-demand instance
+						input := &ec2.ModifyInstanceAttributeInput{
+							InstanceId: inst.InstanceId,
+							DisableApiTermination: &ec2.AttributeBooleanValue{
+								Value: aws.Bool(true),
+							},
+						}
+						_, err := svc.ModifyInstanceAttribute(input)
+						if err != nil {
+							if aerr, ok := err.(awserr.Error); ok {
+								switch aerr.Code() {
+								default:
+									fmt.Println(aerr.Error())
+								}
+							} else {
+								// Print the error, cast err to awserr.Error to get the Code and
+								// Message from an error.
+								fmt.Println(err.Error())
+							}
+						}
+					}
 					if _, ok := myInstances.Load(*inst.PublicIpAddress); !ok {
 						for _, t := range inst.Tags {
 							if *t.Key == "Name" {
