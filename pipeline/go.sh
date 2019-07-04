@@ -440,6 +440,7 @@ reinit_ip() {
    do
       f="logs/${TS}/init/${pfx}-${ip}.json"
       [ -f "${f}" ] || continue
+      sed -i s/dns=false/dns=true/ ${f}
       ok=true
       echo curl -m 3 -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
       curl -m 3 -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
