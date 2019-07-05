@@ -53,13 +53,13 @@ echo "root soft     nofile         65535" | sudo tee -a /etc/security/limits.con
 echo "root hard     nofile         65535" | sudo tee -a /etc/security/limits.conf
 echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
 
-# get_es_endpoint() {
-#    # TODO ek: Make this work with a public (non-VPC) endpoint.
-#    ${AWS} es describe-elasticsearch-domain --domain-name="${1-"${ES_DOMAIN}"}" | \
-#       jq -r .DomainStatus.Endpoints.vpc | \
-#       grep .
-#    # grep . makes this function return failure if empty, i.e. domain not found.
-# }
+get_es_endpoint() {
+   # TODO ek: Make this work with a public (non-VPC) endpoint.
+   ${AWS} es describe-elasticsearch-domain --domain-name="${1-"${ES_DOMAIN}"}" | \
+      jq -r .DomainStatus.Endpoints.vpc | \
+      grep .
+   # grep . makes this function return failure if empty, i.e. domain not found.
+}
 
 setup_metricbeat() {
    (
