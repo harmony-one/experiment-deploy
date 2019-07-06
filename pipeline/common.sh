@@ -17,6 +17,8 @@ declare -A managednodes
 declare -a genesis
 declare -a blskey
 
+REGIONS=( nrt sfo iad pdx fra sin cmh dub )
+
 function expense
 {
    local step=$1
