@@ -66,7 +66,7 @@ function read_profile
       parallel
       userdata flow.wait_for_launch flow.reserved_account flow.rpczone
       benchmark.minpeer benchmark.even_shard benchmark.peer_per_shard
-      benchmark.commit_delay benchmark.log_conn
+      benchmark.commit_delay benchmark.log_conn benchmark.network_type
       explorer.name explorer.port explorer.reset
       explorer2.name explorer2.port explorer2.reset
       txgen.ip txgen.port txgen.enable
