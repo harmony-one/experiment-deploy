@@ -19,6 +19,7 @@ ACTION:
    list        list all running instances (id,type,name) - default
    delete      delete all running instances
    unprotect   disable termination protection
+   unmonitor   disable detailed cloud watch monitor
 
 
 EXAMPLES:
@@ -44,6 +45,18 @@ function disable_protection
             $DRYRUN $AWS --region $r ec2 modify-instance-attribute --no-disable-api-termination --instance-id $id
          done<$r.ids
       fi
+   done
+}
+
+function disable_monitor
+{
+   for r in ${REGIONS[@]}; do
+      [ ! -e $r.ids ] && continue
+      while read line; do
+         echo "disabling detailed monitoring $line ..."
+         id=$(echo "$line" | cut -f 1)
+         $DRYRUN $AWS --region $r ec2 unmonitor-instances --instance-id $id
+      done<$r.ids
    done
 }
 
@@ -127,6 +140,8 @@ case "$ACTION" in
       disable_protection ;;
    "delete")
       terminate_ids ;;
+   "unmonitor")
+      disable_monitor ;;
 esac
 
 if [ -n "$DRYRUN" ]; then
