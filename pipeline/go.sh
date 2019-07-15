@@ -216,6 +216,11 @@ function do_run
    ""|"null") ;;
    *) NODE_OPTS+=(-L);;
    esac
+   local network_type="${configs[benchmark.network_type]:-}"
+   case "${network_type}" in
+   ""|"null") ;;
+   *) NODE_OPTS+=(-t "${network_type}");;
+   esac
    local rpc_zone="${configs[flow.rpczone]}"
    case "${rpc_zone}" in
    null)
