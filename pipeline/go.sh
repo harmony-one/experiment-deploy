@@ -604,10 +604,21 @@ case $ACTION in
    all)  
          do_all ;;
    bootnode)
-         do_launch_bootnode
-         do_launch_bootnode bootnode1
-         do_launch_bootnode bootnode3
-         do_launch_bootnode bootnode4 ;;
+      case "$1" in
+         "")
+            do_launch_bootnode
+            do_launch_bootnode bootnode1
+            do_launch_bootnode bootnode3
+            do_launch_bootnode bootnode4
+            ;;
+         "bootnode1"|"bootnode2"|"bootnode3"|"bootnode4")
+            do_launch_bootnode $1
+            ;;
+         *)
+            echo "parameter has to be bootnode[1-4]"
+            ;;
+      esac
+      ;;
    launch)
          do_launch ;;
    run)  
@@ -629,6 +640,9 @@ case $ACTION in
          do_reinit $* ;;
    replace)
          do_replace $* ;;
+   *)
+      echo "unknown action! \"$ACTION\""
+      ;;
 esac
 
 exit 0
