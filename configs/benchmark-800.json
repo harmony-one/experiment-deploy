@@ -1,15 +1,23 @@
 {
-  "description": "aws 800 nodes on 4 shard in 4 region",
+  "description": "aws 400 nodes on 1 shard",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
     "regions": "iad"
   },
+  "explorer_node": {
+    "num_vm": 0,
+    "type": "m5a.large",
+    "regions": "iad",
+    "root": 100,
+    "protection": true
+  },
   "leader": {
     "num_vm": 1,
     "type": "t3.large",
-    "regions": "iad,pdx,sin,fra",
-    "root": 30
+    "regions": "iad",
+    "root": 10,
+    "protection": false
   },
   "bootnode": {
      "enable": true,
@@ -38,16 +46,18 @@
     ]
   },
   "benchmark": {
-    "shards": 4,
+    "shards": 1,
     "duration": 60,
     "dashboard": true,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 200,
-    "minpeer": 140,
+    "peer_per_shard": 400,
+    "minpeer": 300,
     "even_shard": true,
     "init_retry": false,
-    "archival": ",3,10,22,51,79,81,113,122,131,159,168,288,"
+    "network_type": "testnet",
+    "bls": true,
+    "archival": ""
   },
   "logs": {
     "leader": true,
@@ -77,8 +87,16 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 90,
-     "reserved_account": ",29,30,31,32,33,34,40,41,42,43,44,45,46,47,48,49,88,90,91,92,93,94,95,96,97,137,138,139,140,141,142,143,144,145,146,147,179,180,181,182,185,186,188,190,191,192,193,194,195,196,198,199,",
-     "rpczone": "t"
+     "reserved_account": "",
+     "rpczone": "t1"
   },
-  "libp2p": true
+  "bls": {
+     "pass": "blsnopass.txt",
+     "bucket": "harmony-secret-keys",
+     "folder": "bls-test",
+     "keyfile": "blskey-test.txt"
+  },
+  "libp2p": true,
+  "genesis": "genesis.txt"
+
 }
