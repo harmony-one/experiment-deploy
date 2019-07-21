@@ -29,6 +29,7 @@ done
 
 # Download the blspass file
 aws s3 cp s3://harmony-pass/blspass.txt blspass.txt
+aws s3 cp s3://harmony-pass/blsnopass.txt blsnopass.txt
 
 export LD_LIBRARY_PATH=/home/ec2-user
 
