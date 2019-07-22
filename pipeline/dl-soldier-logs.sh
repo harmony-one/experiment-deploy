@@ -80,7 +80,8 @@ function download_logs
             ${SCP} -r ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
          else
             key=$(${GREP} ^$r ${CFG} | cut -f 3 -d ,)
-            ${SCP} -i $DIR/../keys/$key.pem -r ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
+            # echo rsync -rav -e ${SSSH} -i $DIR/../keys/$key.pem ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node
+            rsync -rav -e "${SSH} -i $DIR/../keys/$key.pem" ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
          fi
          (( count++ ))
       done
