@@ -81,7 +81,7 @@ function download_logs
          else
             key=$(${GREP} ^$r ${CFG} | cut -f 3 -d ,)
             # echo rsync -rav -e ${SSSH} -i $DIR/../keys/$key.pem ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node
-            rsync -rav -e "${SSH} -i $DIR/../keys/$key.pem" ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
+            rsync -avz -e "${SSH} -i $DIR/../keys/$key.pem" ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
          fi
          (( count++ ))
       done
