@@ -180,7 +180,7 @@ function do_launch_bootnode
       BOOTNODE_OPT+=(-K "${CONFIG_DIR}/${configs[${BN}.p2pkey]}")
    fi
    case "${configs[${BN}.log_conn]}" in
-   ""|null) ;;
+   ""|"null"|"false") ;;
    *) BOOTNODE_OPT+=(-L);;
    esac
    ./bootnode.sh -G -p ${configs[${BN}.port]} -f ${FOLDER} -S ${configs[${BN}.server]} -k ${configs[${BN}.key]} -P $PROFILE -n $BN "${BOOTNODE_OPT[@]}"
@@ -213,7 +213,7 @@ function do_run
    esac
    local log_conn="${configs[benchmark.log_conn]:-}"
    case "${log_conn}" in
-   ""|"null") ;;
+   ""|"null"|"false") ;;
    *) NODE_OPTS+=(-L);;
    esac
    local network_type="${configs[benchmark.network_type]:-}"
