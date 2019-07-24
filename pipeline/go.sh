@@ -442,7 +442,7 @@ reinit_ip() {
    local ip pfx f ok
    ip="${1}"
    ok=false
-   for pfx in init leader.init
+   for pfx in init leader.init explorer.init
    do
       f="logs/${TS}/init/${pfx}-${ip}.json"
       [ -f "${f}" ] || continue
