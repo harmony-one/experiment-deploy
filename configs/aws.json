@@ -205,6 +205,10 @@
     {
       "name": "m5a.large",
       "price": 0.086
+    },
+    {
+      "name": "m5.large",
+      "price": 0.106
     }
   ]
 }
