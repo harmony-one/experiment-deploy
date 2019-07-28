@@ -273,25 +273,25 @@ function download_logs
    fi
 
    logging download logs ...
-   ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt version
+   ./dl-soldier-logs.sh -p $PROFILE -g leader version
 
    if [ "${configs[logs.leader]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt benchmark
-      ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt soldier
+      ./dl-soldier-logs.sh -p $PROFILE -g leader benchmark
+      ./dl-soldier-logs.sh -p $PROFILE -g validator soldier
    fi
    if [[ "${configs[logs.client]}" == "true" && ${configs[client.num_vm]} -gt 0 ]]; then
-      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/client.config.txt soldier
-      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/client.config.txt benchmark
+      ./dl-soldier-logs.sh -p $PROFILE -g client -D logs/$PROFILE/client.config.txt soldier
+      ./dl-soldier-logs.sh -p $PROFILE -g client -D logs/$PROFILE/client.config.txt benchmark
    fi
    if [ "${configs[logs.validator]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt benchmark
+      ./dl-soldier-logs.sh -p $PROFILE -g validator benchmark
    fi
    if [ "${configs[logs.soldier]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt soldier &
+      ./dl-soldier-logs.sh -p $PROFILE -g leader oldier &
    fi
    if [ "${configs[logs.db]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt db &
-      ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt db &
+      ./dl-soldier-logs.sh -p $PROFILE -g leader db &
+      ./dl-soldier-logs.sh -p $PROFILE -g validator db &
    fi
    wait
    expense download
