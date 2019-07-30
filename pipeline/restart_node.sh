@@ -145,7 +145,7 @@ get_dns_zone() {
 unset -v logfile initfile
 find_initfile() {
 	local prefix
-	for prefix in init leader.init
+	for prefix in init leader.init explorer.init
 	do
 		initfile="${logdir}/init/${prefix}-${ip}.json"
 		[ -f "${initfile}" ] && return 0 || :
