@@ -142,13 +142,20 @@ get_dns_zone() {
 	esac
 }
 
-unset -v logfile initfile
+unset -v logfile initfile is_explorer
 find_initfile() {
 	local prefix
 	for prefix in init leader.init explorer.init
 	do
 		initfile="${logdir}/init/${prefix}-${ip}.json"
-		[ -f "${initfile}" ] && return 0 || :
+		if [ -f "${initfile}" ]
+		then
+			case "${initfile##*/}" in
+			explorer.init-*) is_explorer=true;;
+			*) is_explorer=false;;
+			esac
+			return 0
+		fi
 	done
 	rn_crit "cannot find init file for ${ip}!"
 	exit 78  # EX_CONFIG
@@ -278,6 +285,11 @@ start_harmony() {
 }
 
 wait_for_consensus() {
+	if ${is_explorer-false}
+	then
+		rn_info "${ip} is an explorer node; no need to wait for consensus"
+		return
+	fi
 	local bingo now deadline
 	now=$(date +%s)
 	deadline=$((${now} + ${timeout}))
