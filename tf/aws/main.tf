@@ -20,12 +20,54 @@ resource "aws_spot_instance_request" "foundation-node" {
   instance_type = "${var.node_instance_type}"
   vpc_security_group_ids = ["${aws_security_group.harmony-node-sg.id}"]
   key_name = "harmony-node"
+  wait_for_fulfillment = true
+
+  root_block_device  {
+    volume_type = "gp2"
+    volume_size = "${var.node_volume_size}"
+  }
+
+  tags = {
+    Name    = "HarmonyNode-MainNet"
+    Project = "Harmony"
+  }
+
+  volume_tags = {
+    Name    = "HarmonyNode-MainNet-Volume"
+    Project = "Harmony"
+  }
+}
   
+resource "null_resource" "provisioner" {
   provisioner "file" {
-    source = "bls.key"
+    source = "files/bls.key"
     destination = "/home/ec2-user/bls.key"
     connection {
-      host = self.public_ip
+      host = "${aws_spot_instance_request.foundation-node.public_ip}"
+      type = "ssh"
+      user = "ec2-user"
+      private_key = "${file(var.private_key_path)}"
+      agent = true
+    }
+  }
+
+  provisioner "file" {
+    source = "files/bls.pass"
+    destination = "/home/ec2-user/bls.pass"
+    connection {
+      host = "${aws_spot_instance_request.foundation-node.public_ip}"
+      type = "ssh"
+      user = "ec2-user"
+      private_key = "${file(var.private_key_path)}"
+      agent = true
+    }
+  }
+
+  provisioner "file" {
+    source = "files/harmony.service"
+    destination = "/home/ec2-user/harmony.service"
+    connection {
+      host = "${aws_spot_instance_request.foundation-node.public_ip}"
       type = "ssh"
       user = "ec2-user"
       private_key = "${file(var.private_key_path)}"
@@ -37,10 +79,12 @@ resource "aws_spot_instance_request" "foundation-node" {
     inline = [
       "curl -LO https://harmony.one/node.sh",
       "chmod +x node.sh",
-		"home/ec2-user/setup.sh",
+      "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
+      "sudo systemctl enable harmony.service",
+      "sudo systemctl start harmony.service",
     ]
     connection {
-      host = self.public_ip
+      host = "${aws_spot_instance_request.foundation-node.public_ip}"
       type = "ssh"
       user = "ec2-user"
       private_key = "${file(var.private_key_path)}"
@@ -48,19 +92,5 @@ resource "aws_spot_instance_request" "foundation-node" {
     }
   }
 
-  root_block_device  {
-    volume_type = "gp2"
-    volume_size = "${var.node_volume_size}"
-  }
-
-  tags = {
-    Name    = "HarmonyNode-MainNet-Spot"
-    Owner   = "${var.node_owner}"
-    Project = "Harmony"
-  }
-
-  volume_tags = {
-    Name    = "HarmonyNode-MainNet-Volume"
-    Project = "Harmony"
-  }
+  depends_on = ["aws_spot_instance_request.foundation-node"]
 }

@@ -13,6 +13,14 @@ resource "aws_security_group" "harmony-node-sg" {
   }
 
   ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["73.170.34.104/32"]
+    description = "Enable SSH from Leo Home wifi"
+  }
+
+  ingress {
     from_port   = 6000
     to_port     = 6000
     protocol    = "tcp"

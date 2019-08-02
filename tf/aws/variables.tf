@@ -7,7 +7,7 @@ variable "public_key_path" {
 
 variable "private_key_path" {
   description = "The path to the SSH Private Key to access ec2 instance."
-  default = "keys/harmony-node.pem"
+  default = "~/.ssh/harmony-node.pem"
 }
 
 variable "node_volume_size" {
@@ -17,7 +17,7 @@ variable "node_volume_size" {
 
 variable "node_instance_type" {
   description = "Instance type of the ec2 node instance"
-  default     = "t3.medium"
+  default     = "t3.small"
 }
 
 variable "aws_region" {
