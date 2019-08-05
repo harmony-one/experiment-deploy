@@ -21,4 +21,3 @@ data "aws_ami" "harmony-node-ami" {
   }
 }
 
-
