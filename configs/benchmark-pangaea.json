@@ -1,5 +1,5 @@
 {
-  "description": "aws 448/600 nodes on 4 shard in 6 regions, reserve 152 nodes for FN",
+  "description": "Pangaea network, 200 nodes/shard * 4 shard, all Harmony-operated or loaned",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
