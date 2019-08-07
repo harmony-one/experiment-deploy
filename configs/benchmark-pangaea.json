@@ -8,14 +8,14 @@
   "leader": {
     "num_vm": 1,
     "type": "t3.small",
-    "regions": "iad,pdx,nrt,dub",
+    "regions": "iad,pdx,cmh,dub",
     "protection": true,
     "root": 50
   },
   "explorer_node": {
     "num_vm": 1,
     "type": "t3.small",
-    "regions": "iad,pdx,nrt,dub",
+    "regions": "iad,pdx,cmh,dub",
     "root": 100,
     "protection": true
   },
