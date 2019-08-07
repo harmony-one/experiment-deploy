@@ -2,19 +2,19 @@
   "description": "Pangaea network, 200 nodes/shard * 4 shard, all Harmony-operated or loaned",
   "client": {
     "num_vm": 0,
-    "type": "t3.medium",
+    "type": "t3.small",
     "regions": "iad"
   },
   "leader": {
     "num_vm": 1,
-    "type": "m5a.large",
+    "type": "t3.small",
     "regions": "iad,pdx,nrt,dub",
     "protection": true,
     "root": 50
   },
   "explorer_node": {
     "num_vm": 1,
-    "type": "m5a.large",
+    "type": "t3.small",
     "regions": "iad,pdx,nrt,dub",
     "root": 100,
     "protection": true

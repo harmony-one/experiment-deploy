@@ -2,7 +2,7 @@
    "launch": [
       {
          "region": "iad",
-         "type": "m5a.large",
+         "type": "t3.small",
          "ondemand": 70,
          "spot": 0,
          "protection": true,
@@ -10,7 +10,7 @@
       },
       {
          "region": "pdx",
-         "type": "m5a.large",
+         "type": "t3.small",
          "ondemand": 70,
          "spot": 0,
          "protection": true,
@@ -18,7 +18,7 @@
       },
       {
          "region": "nrt",
-         "type": "m5a.large",
+         "type": "t3.small",
          "ondemand": 55,
          "spot": 0,
          "protection": true,
@@ -26,7 +26,7 @@
       },
       {
          "region": "dub",
-         "type": "m5a.large",
+         "type": "t3.small",
          "ondemand": 55,
          "spot": 0,
          "protection": true,
@@ -34,7 +34,7 @@
       },
       {
          "region": "sin",
-         "type": "m5a.large",
+         "type": "t3.small",
          "ondemand": 50,
          "spot": 0,
          "protection": true,
@@ -42,7 +42,7 @@
       },
       {
          "region": "sfo",
-         "type": "m5.large",
+         "type": "t3.small",
          "ondemand": 50,
          "spot": 0,
          "protection": true,
@@ -50,7 +50,7 @@
       },
       {
          "region": "fra",
-         "type": "m5a.large",
+         "type": "t3.small",
          "ondemand": 40,
          "spot": 0,
          "protection": true,
@@ -58,7 +58,7 @@
       },
       {
          "region": "cmh",
-         "type": "m5a.large",
+         "type": "t3.small",
          "ondemand": 54,
          "spot": 0,
          "protection": true,
