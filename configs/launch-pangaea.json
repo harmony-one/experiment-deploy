@@ -3,64 +3,64 @@
       {
          "region": "iad",
          "type": "t3.small",
-         "ondemand": 70,
-         "spot": 0,
+         "ondemand": 0,
+         "spot": 99,
          "protection": true,
          "root": 50
       },
       {
          "region": "pdx",
          "type": "t3.small",
-         "ondemand": 70,
-         "spot": 0,
+         "ondemand": 0,
+         "spot": 99,
          "protection": true,
          "root": 50
       },
       {
          "region": "nrt",
          "type": "t3.small",
-         "ondemand": 55,
-         "spot": 0,
+         "ondemand": 0,
+         "spot": 100,
          "protection": true,
          "root": 50
       },
       {
          "region": "dub",
          "type": "t3.small",
-         "ondemand": 55,
-         "spot": 0,
+         "ondemand": 0,
+         "spot": 99,
          "protection": true,
          "root": 50
       },
       {
          "region": "sin",
          "type": "t3.small",
-         "ondemand": 50,
-         "spot": 0,
+         "ondemand": 0,
+         "spot": 100,
          "protection": true,
          "root": 50
       },
       {
          "region": "sfo",
          "type": "t3.small",
-         "ondemand": 50,
-         "spot": 0,
+         "ondemand": 0,
+         "spot": 100,
          "protection": true,
          "root": 50
       },
       {
          "region": "fra",
          "type": "t3.small",
-         "ondemand": 40,
-         "spot": 0,
+         "ondemand": 0,
+         "spot": 100,
          "protection": true,
          "root": 50
       },
       {
          "region": "cmh",
          "type": "t3.small",
-         "ondemand": 54,
-         "spot": 0,
+         "ondemand": 0,
+         "spot": 99,
          "protection": true,
          "root": 50
       }
