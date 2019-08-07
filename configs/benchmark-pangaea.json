@@ -112,7 +112,7 @@
   "flow": {
      "wait_for_launch": 120,
      "reserved_account": "",
-     "rpczone": "t"
+     "rpczone": "p"
   },
   "bls": {
      "pass": "blspass.txt",
