@@ -115,10 +115,10 @@
      "rpczone": "p"
   },
   "bls": {
-     "pass": "blspass.txt",
+     "pass": "blsnopass.txt",
      "bucket": "harmony-secret-keys",
-     "folder": "bls",
-     "keyfile": "blskey.txt"
+     "folder": "bls-pangaea",
+     "keyfile": "pangaea-keys.txt"
   },
   "genesis": "genesis.txt",
   "libp2p": true
