@@ -85,7 +85,7 @@
     "client": false,
     "validator": true,
     "soldier": true,
-    "db": true
+    "db": false
   },
   "dashboard": {
     "name": "1.harmony.one",
