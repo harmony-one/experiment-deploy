@@ -75,7 +75,7 @@
     "attacked_mode": 0,
     "peer_per_shard": 150,
     "minpeer": 101,
-    "log_conn": false,
+    "log_conn": true,
     "even_shard": true,
     "init_retry": false,
     "commit_delay": "2s",
