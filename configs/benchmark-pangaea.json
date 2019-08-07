@@ -9,7 +9,7 @@
     "num_vm": 1,
     "type": "t3.small",
     "regions": "iad,pdx,cmh,dub",
-    "protection": true,
+    "protection": false,
     "root": 50
   },
   "explorer_node": {
@@ -17,7 +17,7 @@
     "type": "t3.small",
     "regions": "iad,pdx,cmh,dub",
     "root": 100,
-    "protection": true
+    "protection": false
   },
   "bootnode": {
      "enable": true,
