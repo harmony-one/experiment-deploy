@@ -95,12 +95,12 @@
   "explorer": {
     "name": "explorer.harmony.one",
     "port": 4444,
-    "reset": "true"
+    "reset": "false"
   },
   "explorer2": {
     "name": "34.220.94.30",
     "port": 4444,
-    "reset": "true"
+    "reset": "false"
   },
   "txgen": {
      "enable": "false",
