@@ -6,7 +6,7 @@
          "ondemand": 0,
          "spot": 99,
          "protection": false,
-         "root": 50
+         "root": 30
       },
       {
          "region": "pdx",
@@ -14,7 +14,7 @@
          "ondemand": 0,
          "spot": 99,
          "protection": false,
-         "root": 50
+         "root": 30
       },
       {
          "region": "nrt",
@@ -22,7 +22,7 @@
          "ondemand": 0,
          "spot": 100,
          "protection": false,
-         "root": 50
+         "root": 30
       },
       {
          "region": "dub",
@@ -30,7 +30,7 @@
          "ondemand": 0,
          "spot": 99,
          "protection": false,
-         "root": 50
+         "root": 30
       },
       {
          "region": "sin",
@@ -38,7 +38,7 @@
          "ondemand": 0,
          "spot": 100,
          "protection": false,
-         "root": 50
+         "root": 30
       },
       {
          "region": "sfo",
@@ -46,7 +46,7 @@
          "ondemand": 0,
          "spot": 100,
          "protection": false,
-         "root": 50
+         "root": 30
       },
       {
          "region": "fra",
@@ -54,7 +54,7 @@
          "ondemand": 0,
          "spot": 100,
          "protection": false,
-         "root": 50
+         "root": 30
       },
       {
          "region": "cmh",
@@ -62,7 +62,7 @@
          "ondemand": 0,
          "spot": 99,
          "protection": false,
-         "root": 50
+         "root": 30
       }
    ],
    "userdata": {
