@@ -34,6 +34,7 @@ This script automates the benchmark test based on profile.
    bootnode          launch bootnode(s) only
    wallet            generate wallet.ini file
    reinit <ip>       re-run init command on hosts (list of ips)
+   replace <ip>      start a new node to replace existing nodes with ip (list of ips)
    all               do everything (default)
 
 
@@ -83,10 +84,30 @@ function do_launch
       -tag_file instance_output-leader.txt \
       -tag ${TAG}-leader \
       -root_volume ${configs[leader.root]} \
+      -protection=${configs[leader.protection]} \
       -launch_profile launch-${PROFILE}.json
       LAUNCH_OPT+=' -l raw_ip-leader.txt'
       num_leader=$(wc -l raw_ip-leader.txt)
       LEADER_IP=( $(cat raw_ip-leader.txt | awk ' { print $1 } ') )
+   fi
+
+   if [ ${configs[explorer_node.num_vm]} -gt 0 ]; then
+      logging launching ${configs[explorer_node.num_vm]} explorer nodes: ${configs[explorer_node.type]}
+      ../bin/instance \
+      -config_dir $CONFIG_DIR \
+      -instance_count ${configs[explorer_node.num_vm]} \
+      -instance_type ${configs[explorer_node.type]} \
+      -launch_region ${configs[explorer_node.regions]} \
+      -ip_file raw_ip-explorer_node.txt \
+      -output instance_ids_output-explorer_node.txt \
+      -tag_file instance_output-explorer_node.txt \
+      -tag ${TAG}-explorer_node \
+      -root_volume ${configs[explorer_node.root]} \
+      -protection=${configs[explorer_node.protection]} \
+      -launch_profile launch-${PROFILE}.json
+      LAUNCH_OPT+=' -e raw_ip-explorer_node.txt'
+      num_explorer_nodes=$(wc -l raw_ip-explorer_node.txt)
+      EXPLORER_NODE_IP=( $(cat raw_ip-explorer_node.txt | awk ' { print $1 } ') )
    fi
 
    ./deploy.sh \
@@ -108,6 +129,12 @@ function do_launch
       cat instance_ids_output-leader.txt >> instance_ids_output.txt
       cat instance_output-leader.txt >> instance_output.txt
       rm instance_ids_output-leader.txt instance_output-leader.txt &
+   fi
+
+   if [ ${configs[explorer_node.num_vm]} -gt 0 ]; then
+      cat instance_ids_output-explorer_node.txt >> instance_ids_output.txt
+      cat instance_output-explorer_node.txt >> instance_output.txt
+      rm instance_ids_output-explorer_node.txt instance_output-explorer_node.txt &
    fi
 
    echo waiting for instances launch ${configs[flow.wait_for_launch]} ...
@@ -153,7 +180,7 @@ function do_launch_bootnode
       BOOTNODE_OPT+=(-K "${CONFIG_DIR}/${configs[${BN}.p2pkey]}")
    fi
    case "${configs[${BN}.log_conn]}" in
-   ""|null) ;;
+   ""|"null"|"false") ;;
    *) BOOTNODE_OPT+=(-L);;
    esac
    ./bootnode.sh -G -p ${configs[${BN}.port]} -f ${FOLDER} -S ${configs[${BN}.server]} -k ${configs[${BN}.key]} -P $PROFILE -n $BN "${BOOTNODE_OPT[@]}"
@@ -166,10 +193,6 @@ function do_run
    logging run benchmark
    local RUN_OPTS=
    local -a NODE_OPTS
-
-   if [ "${configs[benchmark.dashboard]}" == "true" ]; then
-      RUN_OPTS+=" -D ${configs[dashboard.server]}:${configs[dashboard.port]}"
-   fi
 
    if [ "${configs[libp2p]}" == "true" ]; then
       RUN_OPTS+=" -P true"
@@ -190,8 +213,13 @@ function do_run
    esac
    local log_conn="${configs[benchmark.log_conn]:-}"
    case "${log_conn}" in
-   ""|"null") ;;
+   ""|"null"|"false") ;;
    *) NODE_OPTS+=(-L);;
+   esac
+   local network_type="${configs[benchmark.network_type]:-}"
+   case "${network_type}" in
+   ""|"null") ;;
+   *) NODE_OPTS+=(-t "${network_type}");;
    esac
    local rpc_zone="${configs[flow.rpczone]}"
    case "${rpc_zone}" in
@@ -245,25 +273,25 @@ function download_logs
    fi
 
    logging download logs ...
-   ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt version
+   ./dl-soldier-logs.sh -p $PROFILE -g leader version
 
    if [ "${configs[logs.leader]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt benchmark
-      ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt soldier
+      ./dl-soldier-logs.sh -p $PROFILE -g leader benchmark
+      ./dl-soldier-logs.sh -p $PROFILE -g validator soldier
    fi
    if [[ "${configs[logs.client]}" == "true" && ${configs[client.num_vm]} -gt 0 ]]; then
-      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/client.config.txt soldier
-      ./dl-soldier-logs.sh -s $TS -g client -D logs/$TS/client.config.txt benchmark
+      ./dl-soldier-logs.sh -p $PROFILE -g client -D logs/$PROFILE/client.config.txt soldier
+      ./dl-soldier-logs.sh -p $PROFILE -g client -D logs/$PROFILE/client.config.txt benchmark
    fi
    if [ "${configs[logs.validator]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt benchmark
+      ./dl-soldier-logs.sh -p $PROFILE -g validator benchmark
    fi
    if [ "${configs[logs.soldier]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt soldier &
+      ./dl-soldier-logs.sh -p $PROFILE -g leader oldier &
    fi
    if [ "${configs[logs.db]}" == "true" ]; then
-      ./dl-soldier-logs.sh -s $TS -g leader -D logs/$TS/distribution_config.txt db &
-      ./dl-soldier-logs.sh -s $TS -g validator -D logs/$TS/distribution_config.txt db &
+      ./dl-soldier-logs.sh -p $PROFILE -g leader db &
+      ./dl-soldier-logs.sh -p $PROFILE -g validator db &
    fi
    wait
    expense download
@@ -280,8 +308,8 @@ function analyze_logs
       TS=$(cat $SESSION_FILE | $JQ .sessionID)
    fi
 
-   find logs/$TS -name leader-*.log > logs/$TS/all-leaders.txt
-   find logs/$TS -name validator-*.log > logs/$TS/all-validators.txt
+   find logs/$TS/leader -name zerolog-validator-*.log > logs/$TS/all-leaders.txt
+   find logs/$TS/validator -name validator-*.log > logs/$TS/all-validators.txt
    logging analyzing logs in $(cat logs/$TS/all-leaders.txt)
    ${THEPWD}/cal_tps.sh logs/$TS/all-leaders.txt logs/$TS/all-validators.txt | tee ${THEPWD}/logs/$TS/tps.txt
    expense analysis
@@ -324,34 +352,27 @@ function do_deinit
    [ -e ${THEPWD}/logs/$TS/tps.txt ] && cat ${THEPWD}/logs/$TS/tps.txt
 }
 
-function do_reset
+function do_reset_explorer
 {
-   if [ "${configs[dashboard.reset]}" == "true" ]; then
-      echo "resetting dashboard ..."
-      echo curl -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H "content-type: application/json" -d '{"secret":"426669"}'
-      cat > explorer.reset.json<<EOT
-{
-   "secret":"426669"
-}
-EOT
-      curl -X POST https://${configs[dashboard.name]}:${configs[dashboard.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
-   fi
-   if [ "${configs[explorer.reset]}" == "true" ]; then
+   explorer=${1:-explorer}
+
+   if [ "${configs[${explorer}.reset]}" == "true" ]; then
       echo "resetting explorer ..."
-      echo curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H "content-type: application/json" -d '{"secret":"426669", "leaderIp":""}'
-      for l in "${LEADER_IP[@]}"; do
-         leaders+="\"$l:5000\"",
+      for l in "${EXPLORER_NODE_IP[@]}"; do
+         explorer_nodes+="\"$l:5000\"",
       done
-      leaders=$(echo $leaders | sed s/,$//)
+      explorer_nodes=$(echo $explorer_nodes | sed s/,$//)
       cat > explorer.reset.json<<EOT
 {
    "secret":"426669",
-   "leaders":[$leaders]
+   "leaders":[$explorer_nodes]
 }
 EOT
-      curl -X POST https://${configs[explorer.name]}:${configs[explorer.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+      echo curl -m 3 -X POST https://${configs[${explorer}.name]}:${configs[${explorer}.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+      curl -m 3 -X POST https://${configs[${explorer}.name]}:${configs[${explorer}.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+
+      [ -e explorer.reset.json ] && cp explorer.reset.json logs/$TS
    fi
-   [ -e explorer.reset.json ] && mv -f explorer.reset.json logs/$TS
 }
 
 function do_wallet_ini
@@ -421,13 +442,14 @@ reinit_ip() {
    local ip pfx f ok
    ip="${1}"
    ok=false
-   for pfx in init leader.init
+   for pfx in init leader.init explorer.init
    do
       f="logs/${TS}/init/${pfx}-${ip}.json"
       [ -f "${f}" ] || continue
+      sed -i s/dns=false/dns=true/ ${f}
       ok=true
-      echo curl -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
-      curl -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
+      echo curl -m 3 -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
+      curl -m 3 -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${f}"
    done
    ${ok} || echo "WARNING: could not find init JSON file for ${ip}; skipped it" >&2
 }
@@ -454,13 +476,73 @@ function do_reinit
    fi
 }
 
+launch_instance() {
+   local ip region launch_opt
+   ip="${1}"
+   region=${REGIONS[$RANDOM % ${#REGIONS[@]}]}
+
+   logging launching one new node in $region
+
+   ../bin/instance \
+   -config_dir $CONFIG_DIR \
+   -instance_count 1 \
+   -instance_type m5.large \
+   -launch_region ${region} \
+   -ip_file raw_ip-newnode-${ip}.txt \
+   -output instance_ids_output-newnode-${ip}.txt \
+   -tag_file instance_output-newnode-${ip}.txt \
+   -tag ${TAG}-newnode \
+   -root_volume ${configs[leader.root]} \
+   -protection=true \
+   -launch_profile launch-${PROFILE}.json
+
+   awk ' { print $1, 9000, "newnode", 0, $2 } ' < raw_ip-newnode-${ip}.txt > dist-${ip}.txt
+   sleep 60
+}
+
+# replace existing nodes with new nodes
+function do_replace
+{
+   soldiers=$*
+
+   [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+   TS=$(cat $SESSION_FILE | $JQ .sessionID)
+
+   for s in $soldiers; do
+      ok=false
+      launch_instance "${s}"
+      ip=$(cat raw_ip-newnode-${s}.txt | cut -f1 -d' ')
+      cat dist-$s.txt >> logs/${TS}/distribution_config.txt
+      for pfx in init leader.init
+      do
+         f="logs/${TS}/init/${pfx}-${s}.json"
+         [ -f "${f}" ] || continue
+         sed -i s/dns=false/dns=true/ ${f}
+         fn="logs/${TS}/init/${pfx}-${ip}.json"
+         sed -e "s/${s}/${ip}/" ${f} > ${fn}
+         bls=$(grep -o 'blskey_file.*.key' ${f} | cut -f2 -d' ')
+         ./node_ssh.sh -d logs/$TS ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
+         sleep 15
+         ok=true
+         echo curl -m 3 -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${fn}"
+         curl -m 3 -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${fn}"
+      done
+      ${ok} || echo "WARNING: could not find init JSON file for ${s}; skipped it" >&2
+   done
+
+#   do_sync_logs
+}
+
 function do_all
 {
    do_launch_bootnode
    do_launch_bootnode bootnode1
+   do_launch_bootnode bootnode3
+   do_launch_bootnode bootnode4
    do_launch
    do_run
-   do_reset
+   do_reset_explorer
+   do_reset_explorer explorer2
    download_logs
    analyze_logs
    do_sync_logs
@@ -522,8 +604,21 @@ case $ACTION in
    all)  
          do_all ;;
    bootnode)
-         do_launch_bootnode
-         do_launch_bootnode bootnode1 ;;
+      case "$1" in
+         "")
+            do_launch_bootnode
+            do_launch_bootnode bootnode1
+            do_launch_bootnode bootnode3
+            do_launch_bootnode bootnode4
+            ;;
+         "bootnode1"|"bootnode2"|"bootnode3"|"bootnode4")
+            do_launch_bootnode $1
+            ;;
+         *)
+            echo "parameter has to be bootnode[1-4]"
+            ;;
+      esac
+      ;;
    launch)
          do_launch ;;
    run)  
@@ -537,11 +632,17 @@ case $ACTION in
    deinit)
          do_deinit ;;
    reset)
-         do_reset ;;
+         do_reset_explorer
+         do_reset_explorer explorer2 ;;
    wallet)
          do_wallet_ini ;;
    reinit)
          do_reinit $* ;;
+   replace)
+         do_replace $* ;;
+   *)
+      echo "unknown action! \"$ACTION\""
+      ;;
 esac
 
 exit 0

@@ -3,43 +3,65 @@
       {
          "region": "iad",
          "type": "m5a.large",
-         "ondemand": 1,
-         "spot": 100,
+         "ondemand": 70,
+         "spot": 0,
+         "protection": true,
          "root": 50
       },
       {
          "region": "pdx",
          "type": "m5a.large",
-         "ondemand": 1,
-         "spot": 100,
+         "ondemand": 70,
+         "spot": 0,
+         "protection": true,
          "root": 50
       },
       {
          "region": "nrt",
          "type": "m5a.large",
-         "ondemand": 1,
-         "spot": 70,
+         "ondemand": 55,
+         "spot": 0,
+         "protection": true,
          "root": 50
       },
       {
          "region": "dub",
          "type": "m5a.large",
-         "ondemand": 1,
-         "spot": 70,
-         "root": 50
-      },
-      {
-         "region": "cmh",
-         "type": "m5a.large",
-         "ondemand": 0,
-         "spot": 50,
+         "ondemand": 55,
+         "spot": 0,
+         "protection": true,
          "root": 50
       },
       {
          "region": "sin",
          "type": "m5a.large",
-         "ondemand": 0,
-         "spot": 50,
+         "ondemand": 50,
+         "spot": 0,
+         "protection": true,
+         "root": 50
+      },
+      {
+         "region": "sfo",
+         "type": "m5.large",
+         "ondemand": 50,
+         "spot": 0,
+         "protection": true,
+         "root": 50
+      },
+      {
+         "region": "fra",
+         "type": "m5a.large",
+         "ondemand": 40,
+         "spot": 0,
+         "protection": true,
+         "root": 50
+      },
+      {
+         "region": "cmh",
+         "type": "m5a.large",
+         "ondemand": 54,
+         "spot": 0,
+         "protection": true,
          "root": 50
       }
    ],
@@ -47,5 +69,5 @@
       "name": "http",
       "file": "userdata-soldier-http.sh.aws"
    },
-   "batch": 100
+   "batch": 500
 }

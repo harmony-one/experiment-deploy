@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -67,7 +66,6 @@ type sessionInfo struct {
 }
 
 const (
-	bucketName      = "richard-bucket-test"
 	logFolderPrefix = "../tmp_log/"
 )
 
@@ -84,23 +82,20 @@ var (
 	}
 
 	inited = false
+	pid    = -1
 )
 
 func printVersion(me string) {
-	fmt.Fprintf(os.Stderr, "Harmony (C) 2018. %v, version %v-%v (%v %v)\n", path.Base(me), version, commit, builtBy, builtAt)
+	fmt.Fprintf(os.Stderr, "Harmony (C) 2019. %v, version %v-%v (%v %v)\n", path.Base(me), version, commit, builtBy, builtAt)
 	os.Exit(0)
 }
 
-func killPort(port string) error {
-	if runtime.GOOS == "windows" {
-		command := fmt.Sprintf("(Get-NetTCPConnection -LocalPort %s).OwningProcess -Force", port)
-		return utils.RunCmd(nil, "Stop-Process", "-Id", command)
-	}
+func killPort(port string) (int, error) {
 	command := fmt.Sprintf("lsof -i tcp:%s | grep LISTEN | awk '{print $2}' | xargs kill -9", port)
 	return utils.RunCmd(nil, "/bin/bash", "-c", command)
 }
 
-func runInstance(role string) error {
+func runInstance(role string) (int, error) {
 	os.MkdirAll(globalSession.logFolder, os.ModePerm)
 
 	if role == "client" {
@@ -109,7 +104,7 @@ func runInstance(role string) error {
 	return runNode()
 }
 
-func runNode() error {
+func runNode() (int, error) {
 	log.Println("running instance")
 	args :=
 		append([]string{"-ip", setting.ip, "-port", setting.port, "-log_folder", globalSession.logFolder}, globalSession.nodeAdditionalArgs...)
@@ -117,7 +112,7 @@ func runNode() error {
 	return utils.RunCmd([]string{"LD_LIBRARY_PATH=."}, "./harmony", args...)
 }
 
-func runClient() error {
+func runClient() (int, error) {
 	log.Println("running client")
 	args :=
 		append([]string{"-ip", setting.ip, "-port", setting.port, "-log_folder", globalSession.logFolder}, globalSession.txgenAdditionalArgs...)
@@ -125,29 +120,14 @@ func runClient() error {
 	return utils.RunCmd([]string{"LD_LIBRARY_PATH=."}, "./txgen", args...)
 }
 
-func startWallet(command string) error {
+func startWallet(command string) (int, error) {
 	log.Println("starting wallet")
 	return utils.RunCmd(nil, "/bin/bash", "-c", command)
 }
 
-// Index ...
-func Index(vs []string, t string) int {
-	for i, v := range vs {
-		if v == t {
-			return i
-		}
-	}
-	return -1
-}
-
-// Include ...
-func Include(vs []string, t string) bool {
-	return Index(vs, t) >= 0
-}
-
 func initHandler(w http.ResponseWriter, r *http.Request) {
 	if inited {
-		io.WriteString(w, "Inited")
+		io.WriteString(w, fmt.Sprintf("Inited: %v\n", utils.Pid))
 	}
 
 	var res string
@@ -178,11 +158,11 @@ func initHandler(w http.ResponseWriter, r *http.Request) {
 
 	globalSession.txgenAdditionalArgs = append(globalSession.txgenAdditionalArgs, strings.Split(init.TxgenArgs, " ")...)
 	globalSession.nodeAdditionalArgs = append(globalSession.nodeAdditionalArgs, strings.Split(init.BenchmarkArgs, " ")...)
-	if err := runInstance(init.Role); err == nil {
-		res = "Succeeded"
+	if pid, err := runInstance(init.Role); err == nil {
+		res = fmt.Sprintf("Succeeded: %d", utils.Pid)
 		inited = true
 	} else {
-		res = fmt.Sprintf("Failed init %v", err)
+		res = fmt.Sprintf("Failed init: %v/%v", err, pid)
 	}
 	io.WriteString(w, res)
 }
@@ -240,7 +220,7 @@ func killHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Println("Kill Handler")
-	if err := killPort(setting.port); err == nil {
+	if _, err := killPort(setting.port); err == nil {
 		res = "Succeeded"
 	} else {
 		res = "Failed"
@@ -272,7 +252,7 @@ func walletHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cmd := fmt.Sprintf("./beat_tx_node.sh -i %v -n %v -c %v -s %v -W %v", wallet.Interval, wallet.Number, wallet.Loop, wallet.Shards, wallet.URL)
-	if err := startWallet(cmd); err == nil {
+	if _, err := startWallet(cmd); err == nil {
 		res = "Succeeded"
 	} else {
 		res = "Failed"
@@ -299,16 +279,16 @@ func httpServer() {
 	log.Println("Supported API:")
 	log.Println("/ping\t\t\tI'm alive!")
 	log.Println("/init\t\t\tStart Benchmark/Txgen")
-	log.Println("/update\t\t\tDownload/Update binary")
-	log.Println("/kill\t\t\tKill Running Benchmark/Txgen")
-	log.Println("/wallet\t\t\tStart Wallet Process")
+	//	log.Println("/update\t\t\tDownload/Update binary")
+	//	log.Println("/kill\t\t\tKill Running Benchmark/Txgen")
+	//	log.Println("/wallet\t\t\tStart Wallet Process")
 
 	log.Fatalf(fmt.Sprintf("http server error: %v", s.ListenAndServe()))
 }
 
 func main() {
 	ip := flag.String("ip", "127.0.0.1", "IP of the node.")
-	port := flag.String("port", "9000", "port of the node.")
+	port := flag.String("port", "9000", "base port of the node.")
 	versionFlag := flag.Bool("version", false, "Output version info")
 
 	flag.Parse()

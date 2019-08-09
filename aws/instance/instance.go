@@ -13,7 +13,7 @@ package main
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	//	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
@@ -59,6 +59,8 @@ type Limit struct {
 	T3medium int `json:"t3.medium"`
 	T3large  int `json:"t3.large"`
 	T2micro  int `json:"t2.micro"`
+	M5alarge int `json:"m5a.large"`
+	M5large  int `json:"m5a.large"`
 }
 
 // Region is the struct containg AWS Region info
@@ -106,6 +108,7 @@ type InstanceConfig struct {
 	Spot       int    `json:"spot"`
 	AmiName    string `json:"ami",omitempty`
 	Root       int64  `json:"root",omitempty`
+	Protection bool   `json:"protection",omitempty`
 }
 
 // LaunchConfig is the struct having all launch configuration
@@ -157,6 +160,7 @@ var (
 	instanceCount = flag.Int("instance_count", 0, "number of instance to be launched in each region, will override profile")
 	launchRegion  = flag.String("launch_region", "pdx", "list of regions, separated by ',', will override profile")
 	rootVolume    = flag.Int64("root_volume", 0, "the size of the root volume in GB, will override profile")
+	protection    = flag.Bool("protection", false, "protect on-demand instance from termination")
 
 	userDataString string
 
@@ -311,6 +315,10 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 							Key:   aws.String("Name"),
 							Value: aws.String(tagValue),
 						},
+						{
+							Key:   aws.String("Profile"),
+							Value: aws.String(*tag),
+						},
 					},
 				},
 			},
@@ -352,6 +360,10 @@ func getInstancesInput(reg *Region, i *InstanceConfig, regs *AWSRegions, instTyp
 						{
 							Key:   aws.String("Name"),
 							Value: aws.String(tagValue),
+						},
+						{
+							Key:   aws.String("Profile"),
+							Value: aws.String(*tag),
 						},
 					},
 				},
@@ -449,9 +461,31 @@ func launchInstances(i *InstanceConfig, regs *AWSRegions, instType instType) err
 				fmt.Printf("describe instances next token: %v\n", token)
 			}
 		*/
+
 		for _, r := range result.Reservations {
 			for _, inst := range r.Instances {
 				if inst != nil && inst.PublicIpAddress != nil && *inst.PublicIpAddress != "" {
+					if instType == onDemand && (*protection || i.Protection) { // only protect the on-demand instance
+						input := &ec2.ModifyInstanceAttributeInput{
+							InstanceId: inst.InstanceId,
+							DisableApiTermination: &ec2.AttributeBooleanValue{
+								Value: aws.Bool(true),
+							},
+						}
+						_, err := svc.ModifyInstanceAttribute(input)
+						if err != nil {
+							if aerr, ok := err.(awserr.Error); ok {
+								switch aerr.Code() {
+								default:
+									fmt.Println(aerr.Error())
+								}
+							} else {
+								// Print the error, cast err to awserr.Error to get the Code and
+								// Message from an error.
+								fmt.Println(err.Error())
+							}
+						}
+					}
 					if _, ok := myInstances.Load(*inst.PublicIpAddress); !ok {
 						for _, t := range inst.Tags {
 							if *t.Key == "Name" {
@@ -565,6 +599,8 @@ func main() {
 				Number:     *instanceCount,
 				Spot:       0,
 				AmiName:    "default",
+				Root:       *rootVolume,
+				Protection: *protection,
 			}
 			wg.Add(1)
 			go launchInstances(&rc, regions, onDemand)

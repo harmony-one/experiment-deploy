@@ -2,12 +2,13 @@
 
 # set -x
 
+source ./common.sh
+
 GREP='grep -E'
 DIR=$(pwd)
-DC=distribution_config.txt
 CFG=configuration.txt
-SCP='scp -o StrictHostKeyChecking=no -o LogLevel=error'
-SSH='ssh -o StrictHostKeyChecking=no -o LogLevel=error'
+SCP='scp -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
+SSH='ssh -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
 UNAME=ec2-user
 
 function usage
@@ -19,11 +20,13 @@ Usage: $ME [OPTIONS] ACTIONS
 
 OPTIONS:
    -h             print this help
-   -s session     set the session id (mandatory)
+   -p profile     specify the benchmark profile in $CONFIG_DIR directory (default: $PROFILE)
+                  supported profiles (${PROFILES[@]})
    -u user        set the user name to login to nodes (default: $UNAME)
-   -p parallel    parallelize num of jobs (default: $PARALLEL)
+   -P parallel    parallelize num of jobs (default: $PARALLEL)
    -g group       set group name (leader, validator, client, all)
    -D filename    specify the distribution configuration file (default: $DC)
+   -R retention   retention days of logs (default: $DAYS)
 
 ACTIONS:
    benchmark      download benchmark logs
@@ -80,7 +83,8 @@ function download_logs
             ${SCP} -r ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
          else
             key=$(${GREP} ^$r ${CFG} | cut -f 3 -d ,)
-            ${SCP} -i $DIR/../keys/$key.pem -r ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
+            # echo rsync -rav -e ${SSSH} -i $DIR/../keys/$key.pem ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node
+            rsync -avz -e "${SSH} -i $DIR/../keys/$key.pem" ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
          fi
          (( count++ ))
       done
@@ -160,11 +164,21 @@ function run_cmd
 ########################################
 
 PARALLEL=100
+PROFILE=tiny
+PROFILES=( $(ls $CONFIG_DIR/benchmark-*.json | sed -e "s,$CONFIG_DIR/benchmark-,,g" -e 's/.json//g') )
+SESSION_FILE=$CONFIG_DIR/profile-${PROFILE}.json
+BENCHMARK_FILE=$CONFIG_DIR/benchmark-${PROFILE}.json
+NODE=leader
 
-while getopts "hs:p:g:D:" option; do
+while getopts "hs:p:P:g:D:" option; do
    case $option in
-      s) SESSION=$OPTARG ;;
-      p) PARALLEL=$OPTARG ;;
+      p)
+         PROFILE=$OPTARG
+         SESSION_FILE=$CONFIG_DIR/profile-${PROFILE}.json
+         BENCHMARK_FILE=$CONFIG_DIR/benchmark-${PROFILE}.json
+         [ ! -e $BENCHMARK_FILE ] && errexit "can't find benchmark config file : $BENCHMARK_FILE"
+         ;;
+      P) PARALLEL=$OPTARG ;;
       g) NODE=$OPTARG ;;
       D) DC=$OPTARG ;;
       h|?) usage ;;
@@ -173,9 +187,11 @@ done
 
 shift $(($OPTIND-1))
 
-if [ -z "$SESSION" ]; then
-   usage
-fi
+read_profile $BENCHMARK_FILE
+
+[ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+SESSION=$(cat $SESSION_FILE | $JQ .sessionID)
+DC=logs/$SESSION/distribution_config.txt
 
 ACTION=$@
 

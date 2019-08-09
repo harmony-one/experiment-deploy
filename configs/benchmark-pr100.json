@@ -1,5 +1,5 @@
 {
-  "description": "aws 464 nodes on 4 shards, 2 regions, run 300 seconds",
+  "description": "aws 448 nodes on 4 shards, 2 regions, run 300 seconds",
   "client": {
     "num_vm": 1,
     "type": "t3.medium",

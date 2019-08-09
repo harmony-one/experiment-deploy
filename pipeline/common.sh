@@ -17,6 +17,8 @@ declare -A managednodes
 declare -a genesis
 declare -a blskey
 
+REGIONS=( nrt sfo iad pdx fra sin cmh dub )
+
 function expense
 {
    local step=$1
@@ -55,21 +57,27 @@ function read_profile
 
    keys=(
       description libp2p genesis aws.profile azure.num_vm azure.regions
-      leader.regions leader.num_vm leader.type leader.root
+      leader.regions leader.num_vm leader.type leader.root leader.protection
+      explorer_node.regions explorer_node.num_vm explorer_node.type explorer_node.root explorer_node.protection
       client.regions client.num_vm client.type
       benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx
       benchmark.attacked_mode benchmark.init_retry
       logs.leader logs.client logs.validator logs.soldier logs.db
-      parallel dashboard.server dashboard.name dashboard.port dashboard.reset
+      parallel
       userdata flow.wait_for_launch flow.reserved_account flow.rpczone
       benchmark.minpeer benchmark.even_shard benchmark.peer_per_shard
-      benchmark.commit_delay benchmark.log_conn
-      explorer.server explorer.name explorer.port explorer.reset
+      benchmark.commit_delay benchmark.log_conn benchmark.network_type
+      explorer.name explorer.port explorer.reset
+      explorer2.name explorer2.port explorer2.reset
       txgen.ip txgen.port txgen.enable
       bootnode.port bootnode.server bootnode.key bootnode.enable bootnode.p2pkey
       bootnode.log_conn
       bootnode1.port bootnode1.server bootnode1.key bootnode1.enable
       bootnode1.p2pkey bootnode1.log_conn
+      bootnode3.port bootnode3.server bootnode3.key bootnode3.enable
+      bootnode3.p2pkey bootnode3.log_conn
+      bootnode4.port bootnode4.server bootnode4.key bootnode4.enable
+      bootnode4.p2pkey bootnode4.log_conn
       wallet.enable
       benchmark.bls bls.pass bls.bucket bls.folder bls.keyfile
    )
@@ -80,6 +88,10 @@ function read_profile
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_PROFILE)
    done
+
+   # set some default value
+   [ "${configs[leader.protection]}" == "null" ] && configs[leader.protection]=false
+   [ "${configs[explorer_ndoe.protection]}" == "null" ] && configs[explorer_node.protection]=false
 
    nodes_num=$($JQ " $managednodekey | length " $BENCHMARK_PROFILE)
    configs[managednodes.num]=$nodes_num
@@ -98,6 +110,7 @@ function read_profile
    if [ "${configs[bls.keyfile]}" != "null" ]; then
       blskey=( $(cat $CONFIG_DIR/${configs[bls.keyfile]}) )
    fi
+
 }
 
 function gen_userdata

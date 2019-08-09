@@ -4,29 +4,9 @@
          "region": "iad",
          "type": "t3.micro",
          "ondemand": 2,
-         "spot": 184,
-         "root": 20
-      },
-      {
-         "region": "pdx",
-         "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 184,
-         "root": 20
-      },
-      {
-         "region": "sin",
-         "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 184,
-         "root": 20
-      },
-      {
-         "region": "fra",
-         "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 184,
-         "root": 20
+         "spot": 400,
+         "protection": false,
+         "root": 10
       }
    ],
    "userdata": {
