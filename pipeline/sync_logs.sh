@@ -11,6 +11,7 @@ esac
 
 . "${progdir}/msg.sh"
 . "${progdir}/usage.sh"
+. "${progdir}/common_opts.sh"
 . "${progdir}/util.sh"
 . "${progdir}/log.sh"
 
@@ -19,36 +20,36 @@ log_define -v sync_logs_log_level -l DEBUG sl
 : ${WHOAMI=`id -un`}
 export WHOAMI
 
-unset -v default_bucket default_profile default_owner
+unset -v default_bucket default_owner
 default_bucket=unique-bucket-bin
 default_owner="${WHOAMI}"
-default_profile="${WHOAMI}"
 
 print_usage() {
 	cat <<- ENDEND
-		usage: ${progname} [-q] [-o owner] [-p profile] [-b bucket] [-f folder]
+		usage: ${progname} ${common_usage} [-q] [-o owner] [-b bucket] [-f folder]
+
+		${common_usage_desc}
 
 		options:
 		-q		quick mode; do not download logs or databases
 		-o owner	owner name (default: ${default_owner})
-		-p profile	profile name (default: ${default_profile})
 		-b bucket	bucket to configure into profile json (default: ${default_bucket})
 		-f folder	folder to configure into profile json (default: same as owner)
 	ENDEND
 }
 
-unset -v bucket folder profile owner quick
+unset -v bucket folder owner quick
 quick=false
 
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":b:f:p:o:q" opt
+while getopts ":b:f:o:q${common_getopts_spec}" opt
 do
+	! process_common_opts "${opt}" || continue
 	case "${opt}" in
 	'?') usage "unrecognized option -${OPTARG}";;
 	':') usage "missing argument for -${OPTARG}";;
 	o) owner="${OPTARG}";;
-	p) profile="${OPTARG}";;
 	b) bucket="${OPTARG}";;
 	f) folder="${OPTARG}";;
 	q) quick=true;;
@@ -56,9 +57,9 @@ do
 	esac
 done
 shift $((${OPTIND} - 1))
+default_common_opts
 
 : ${owner="${default_owner}"}
-: ${profile="${default_profile}"}
 : ${bucket="${default_bucket}"}
 : ${folder="${owner}"}
 
