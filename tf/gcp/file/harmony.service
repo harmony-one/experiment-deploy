@@ -1,0 +1,15 @@
+[Unit]
+Description=harmony service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=gce-user
+WorkingDirectory=/home/gce-user
+ExecStart=/home/gce-user/node.sh -1 -S -p /home/gce-user/bls.pass -k /home/gce-user/bls.key
+
+[Install]
+WantedBy=multi-user.target
