@@ -5,7 +5,7 @@
 export WHOAMI
 
 unset -v default_profile
-default_profile="${WHOAMI}"
+default_profile="${HMY_PROFILE-"${WHOAMI}"}"
 
 unset -v common_usage common_usage_desc
 common_usage="[-h] [-d logdir] [-p profile]"
