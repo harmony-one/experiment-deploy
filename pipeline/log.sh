@@ -96,6 +96,15 @@ log_define() {
 			}
 		"
 	done
+	eval "
+		${func_prefix}_fatal() {
+			local code
+			code=\"\${1-1}\"
+			shift 1 2> /dev/null || :
+			${func_prefix}_crit \"\$@\"
+			exit \"\${code}\"
+		}
+	"
 }
 
 log_define -v log_level log
