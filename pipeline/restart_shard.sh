@@ -37,6 +37,7 @@ do
 	esac
 done
 shift $((${OPTIND} - 1))
+default_common_opts
 
 backup_dir="${1}"
 shift 1

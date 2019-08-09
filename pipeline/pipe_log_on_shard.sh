@@ -37,6 +37,7 @@ do
 	esac
 done
 shift $((${OPTIND} - 1))
+default_common_opts
 
 case $# in
 0) usage "missing shell command";;

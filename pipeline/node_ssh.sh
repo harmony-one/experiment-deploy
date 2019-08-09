@@ -54,6 +54,7 @@ do
 	esac
 done
 shift $((${OPTIND} - 1))
+default_common_opts
 
 unset -v userip user ip cmd_quoted
 userip="${1-}"
