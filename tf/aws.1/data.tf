@@ -3,7 +3,7 @@ data "aws_ami" "harmony-node-ami" {
   owners      = ["amazon"]
   filter {
     name   = "name"
-    values = ["*amzn2-ami-*"]
+    values = ["*amzn2-ami-hvm-*"]
   }
   filter {
     name   = "architecture"
