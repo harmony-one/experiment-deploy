@@ -25,7 +25,7 @@ resource "google_compute_firewall" "default" {
 // A single Google Cloud Engine instance
 resource "google_compute_instance" "default" {
  name         = "flask-vm-${random_id.instance_id.hex}"
- machine_type = "f1-micro"
+ machine_type = "n1-standard-1"
  zone         = "us-west1-a"
 
  boot_disk {
@@ -46,6 +46,18 @@ resource "google_compute_instance" "default" {
      // Include this section to give the VM an external ip address
    }
  }
+
+    provisioner "file" {
+        source = "files/bls.key"
+        destination = "/home/gce-user/bls.key"
+        connection {
+            host = "${google_compute_instance.default.network_interface.0.access_config.0.nat_ip}"
+            type = "ssh"
+            user = "gce-user"
+            private_key = "${file("~/.ssh/id_rsa")}"
+        }
+    }
+
 
     provisioner "file" {
         source = "files/bls.pass"
@@ -71,6 +83,9 @@ resource "google_compute_instance" "default" {
 
     provisioner "remote-exec" {
         inline = [
+        "sudo apt update",
+        "sudo apt-get install -y psmisc",
+        "sudo apt-get install -y dnsutils",
         "curl -LO https://harmony.one/node.sh",
         "chmod +x node.sh",
         "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
