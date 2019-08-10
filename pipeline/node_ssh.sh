@@ -13,6 +13,9 @@ esac
 . "${progdir}/usage.sh"
 . "${progdir}/common_opts.sh"
 . "${progdir}/util.sh"
+. "${progdir}/log.sh"
+
+log_define node_ssh
 
 print_usage() {
 	cat <<- ENDEND
@@ -74,7 +77,7 @@ unset -v dist_config line shard name_tag
 dist_config="${logdir}/distribution_config.txt"
 line=$(awk -v ip="${ip}" '$1 == ip { print $4, $5; }' "${dist_config}" | head -1)
 case "${line}" in
-"") err 69 "${ip} not found in ${dist_config}";;
+"") node_ssh_fatal 69 "${ip} not found in ${dist_config}";;
 esac
 shard="${line%% *}"
 name_tag="${line#* }"
@@ -84,7 +87,7 @@ region_code="${name_tag%%-*}"
 region_config="${progdir}/configuration.txt"
 key_name=$(awk -F , -v code="${region_code}" '$1 == code { print $3; }' "${region_config}" | head -1)
 case "${key_name}" in
-"") err 69 "region code ${region_code} not found in ${region_config}";;
+"") node_ssh_fatal 69 "region code ${region_code} not found in ${region_config}";;
 esac
 key_file="${progdir}/../keys/${key_name}.pem"
 
