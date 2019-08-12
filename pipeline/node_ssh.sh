@@ -118,6 +118,8 @@ fi
 if [ -f "${key_file}" ]
 then
 	set -- "$@" -i "${key_file}"
+else
+	node_ssh_info "key file does not exist; proceeding without one"
 fi
 
 if ${exit_mux_first}
