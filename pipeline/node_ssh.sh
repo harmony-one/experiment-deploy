@@ -97,7 +97,7 @@ then
 fi
 
 unset -v known_hosts_file
-known_hosts_file="${logdir}/known_hosts_${shard}"
+known_hosts_file="${logdir}/known_hosts"
 
 set -- \
 	-F /dev/null \
