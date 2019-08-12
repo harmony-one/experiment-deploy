@@ -73,23 +73,29 @@ case "${userip}" in
 esac
 cmd_quoted=$(shell_quote "$@")
 
-unset -v dist_config line shard name_tag
+unset -v key_file
+key_file="${progdir}/../keys/harmony-node.pem"
+
+unset -v dist_config line name_tag
 dist_config="${logdir}/distribution_config.txt"
 line=$(awk -v ip="${ip}" '$1 == ip { print $4, $5; }' "${dist_config}" | head -1)
 case "${line}" in
-"") node_ssh_fatal 69 "${ip} not found in ${dist_config}";;
+"")
+	node_ssh_info "${ip} not found in ${dist_config}; assuming it is a Terraform-deployed node"
+	;;
+*)
+	name_tag="${line#* }"
+	unset -v region_code region_config key_name
+	region_code="${name_tag%%-*}"
+	region_config="${progdir}/configuration.txt"
+	key_name=$(awk -F , -v code="${region_code}" '$1 == code { print $3; }' "${region_config}" | head -1)
+	case "${key_name}" in
+	"") node_ssh_fatal 69 "region code ${region_code} not found in ${region_config}";;
+	esac
+	key_file="${progdir}/../keys/${key_name}.pem"
+	;;
 esac
-shard="${line%% *}"
-name_tag="${line#* }"
-
-unset -v region_code region_config key_name key_file
-region_code="${name_tag%%-*}"
-region_config="${progdir}/configuration.txt"
-key_name=$(awk -F , -v code="${region_code}" '$1 == code { print $3; }' "${region_config}" | head -1)
-case "${key_name}" in
-"") node_ssh_fatal 69 "region code ${region_code} not found in ${region_config}";;
-esac
-key_file="${progdir}/../keys/${key_name}.pem"
+node_ssh_info "autodetected key file $(shell_quote "${key_file}")"
 
 if ${use_ssh_mux}
 then
