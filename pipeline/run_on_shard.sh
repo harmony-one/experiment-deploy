@@ -114,19 +114,17 @@ case "${cmd}" in
 esac
 cmd=$(cat "${outdir}/cmd")
 
-shard_awk() {
-	awk -v shard="${shard}" '$4 == shard { '"${1}"' }' \
-		"${logdir}/distribution_config.txt"
-}
+unset -v shard_ip_file
+shard_ip_file="${logdir}/shard${shard}.txt"
 
 unset -v known_hosts_file
 known_hosts_file="${logdir}/known_hosts_${shard}"
 if [ ! -f "${known_hosts_file}" ]
 then
 	msg "collecting SSH host keys"
-	shard_awk 'print $1;' | ssh-keyscan -f- > "${known_hosts_file}"
+	ssh-keyscan -f "${shard_ip_file}" > "${known_hosts_file}"
 fi
-shard_awk 'print $1;' | (
+(
 	unset -v ip
 	while read -r ip
 	do (
@@ -148,11 +146,11 @@ shard_awk 'print $1;' | (
 		[ -s "${outdir}/${ip}.err" ] || rm -f "${outdir}/${ip}.err"
 	) & done
 	wait
-)
+) < "${shard_ip_file}"
 
 if ! ${quiet}
 then
-	shard_awk 'print $1;' | (
+	(
 		unset -v out err status
 		while read -r ip
 		do
@@ -176,7 +174,7 @@ then
 				echo "${ip} returned status $(cat ${status})"
 			fi
 		done
-	)
+	) < "${shard_ip_file}"
 fi
 
 if ${remove}
