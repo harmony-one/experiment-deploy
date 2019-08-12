@@ -9,6 +9,7 @@
     "num_vm": 2,
     "type": "t3.medium",
     "regions": "iad,pdx",
+    "protection": false,
     "root": 8
   },
   "bootnode": {

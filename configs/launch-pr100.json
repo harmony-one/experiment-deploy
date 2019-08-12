@@ -5,6 +5,7 @@
          "type": "t3.micro",
          "ondemand": 2,
          "spot": 220,
+         "protection": false,
          "root": 8
       },
       {
@@ -12,6 +13,7 @@
          "type": "t3.micro",
          "ondemand": 2,
          "spot": 220,
+         "protection": false,
          "root": 8
       }
 
