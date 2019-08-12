@@ -82,7 +82,7 @@ default_common_opts
 : ${folder="${default_folder}"}
 
 node_ssh() {
-	"${progdir}/node_ssh.sh" -d "${logdir}" "$@"
+	"${progdir}/node_ssh.sh" -p "${profile}" -d "${logdir}" "$@"
 }
 
 case "${timeout}" in
