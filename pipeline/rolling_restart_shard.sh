@@ -23,12 +23,12 @@ default_stride=4
 
 print_usage() {
 	cat <<- ENDEND
-		usage: ${progname} ${common_usage} [-v] [-s STRIDE] shard [shard ...]
+		usage: ${progname} ${common_usage} [-v] [-s stride] shard [shard ...]
 
 		${common_usage_desc}
 
 		options:
-		-s STRIDE	restart STRIDE nodes at a time (default: ${default_stride})
+		-s stride	restart STRIDE nodes at a time (default: ${default_stride})
 		-v		print stdout/stderr from restart_node.sh (default: just save)
 
 		arguments:
