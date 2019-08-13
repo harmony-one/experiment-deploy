@@ -132,15 +132,18 @@ rn_notice "node to restart is ${ip}"
 
 unset -v dns_zone
 get_dns_zone() {
+	rn_info "getting DNS zone with which to restart nodes"
 	local rpczone
 	rpczone=$(jq -r '.flow.rpczone // ""' < "${progdir}/../configs/benchmark-${profile}.json")
 	case "${rpczone}" in
 	?*) dns_zone="${rpczone}.hmny.io";;
 	esac
+	rn_info "DNS zone is ${dns_zone-'<unset>'}"
 }
 
 unset -v logfile zerologfile initfile is_explorer
 find_initfile() {
+	rn_info "looking for init file"
 	local prefix
 	for prefix in init leader.init explorer.init
 	do
@@ -151,6 +154,7 @@ find_initfile() {
 			explorer.init-*) is_explorer=true;;
 			*) is_explorer=false;;
 			esac
+			rn_info "init file is ${initfile}"
 			return 0
 		fi
 	done
@@ -160,6 +164,7 @@ find_initfile() {
 
 unset -v launch_args
 get_launch_params() {
+	rn_info "getting launch arguments from init file"
 	local port sid args
 	port="$(jq -r .port < "${initfile}")"
 	sid="$(jq -r .sessionID < "${initfile}")"
@@ -169,9 +174,11 @@ get_launch_params() {
 	set) set -- "$@" "-dns_zone=${dns_zone}";;
 	esac
 	launch_args=$(shell_quote "$@")
+	rn_info "launch arguments are: ${launch_args}"
 }
 
 get_logfile() {
+	rn_info "getting log filename"
 	local logfiledir
 	logfiledir=$(node_ssh "${ip}" '
 		ls -td ../tmp_log/log-* | head -1
@@ -182,7 +189,9 @@ get_logfile() {
 		return 1
 	fi
 	logfile="${logfiledir}/validator-${ip}-9000.log"
+	rn_info "log file is ${logfile}"
 	zerologfile="${logfiledir}/zerolog-validator-${ip}-9000.log"
+	rn_info "zerolog file is ${zerologfile}"
 }
 
 unset -v s3_folder
@@ -190,12 +199,14 @@ s3_folder="s3://${bucket}/${folder}"
 rn_debug "s3_folder=$(shell_quote "${s3_folder}")"
 
 fetch_binaries() {
+	rn_info "fetching upgrade binaries"
 	node_ssh "${ip}" "
 		aws s3 sync $(shell_quote "${s3_folder}") staging
 	"
 }
 
 kill_harmony() {
+	rn_info "killing harmony process"
 	local status
 	status=0
 	node_ssh "${ip}" 'sudo pkill harmony' || status=$?
@@ -206,6 +217,7 @@ kill_harmony() {
 }
 
 wait_for_harmony_process_to_exit() {
+	rn_info "waiting for harmony process to exit (if any)"
 	local deadline now sleep status
 	now=$(date +%s)
 	deadline=$((${now} + 15))
@@ -239,6 +251,7 @@ wait_for_harmony_process_to_exit() {
 }
 
 upgrade_binaries() {
+	rn_info "upgrading node software"
 	node_ssh "${ip}" '
 		set -eu
 		unset -v f
@@ -257,6 +270,7 @@ upgrade_binaries() {
 
 unset -v logsize zerologsize
 _get_logfile_size() {
+	rn_info "getting logfile size"
 	local size file var
 	file="${1}"
 	var="${2}"
@@ -271,6 +285,7 @@ _get_logfile_size() {
 		rn_warning "cannot get size of log file ${file}"
 		return 1
 	fi
+	rn_info "${file} is ${size} bytes"
 	eval "${var}=\"\${size}\""
 }
 
@@ -280,6 +295,7 @@ get_logfile_size() {
 }
 
 start_harmony() {
+	rn_info "restarting harmony process"
 	node_ssh -o-n "${ip}" 'sudo sh -c '\''
 		LD_LIBRARY_PATH=.
 		export LD_LIBRARY_PATH
@@ -297,6 +313,7 @@ wait_for_consensus() {
 		rn_info "${ip} is an explorer node; no need to wait for consensus"
 		return
 	fi
+	rn_info "waiting for consensus to start"
 	local bingo now deadline
 	now=$(date +%s)
 	deadline=$((${now} + ${timeout}))
@@ -334,18 +351,10 @@ wait_for_consensus() {
 
 # HERE BE DRAGONS
 
-rn_info "getting DNS zone with which to restart nodes"
 get_dns_zone
-rn_info "DNS zone is ${dns_zone-'<unset>'}"
-rn_info "looking for init file"
 find_initfile
-rn_info "init file is ${initfile}"
-rn_info "getting launch arguments from init file"
 get_launch_params
-rn_info "launch arguments are: ${launch_args}"
-rn_info "getting log filename"
 run_with_retries get_logfile
-rn_info "log file is ${logfile}"
 unset -v cycles_left cycle_ok
 cycles_left=${cycle_retries}
 while :
@@ -355,24 +364,16 @@ do
 		cycle_ok=false
 		if ${upgrade}
 		then
-			rn_info "fetching upgrade binaries"
 			run_with_retries fetch_binaries || break
 		fi
-		rn_info "killing harmony process"
 		run_with_retries kill_harmony || break
-		rn_info "waiting for harmony process to exit (if any)"
 		run_with_retries wait_for_harmony_process_to_exit || break
 		if ${upgrade}
 		then
-			rn_info "upgrading node software"
 			run_with_retries upgrade_binaries || break
 		fi
-		rn_info "getting logfile size"
 		run_with_retries get_logfile_size || break
-		rn_info "log file is ${logsize} bytes"
-		rn_info "restarting harmony process"
 		run_with_retries start_harmony || break
-		rn_info "waiting for consensus to start"
 		wait_for_consensus || break
 		break 2
 	done
