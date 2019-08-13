@@ -287,7 +287,7 @@ function download_logs
       ./dl-soldier-logs.sh -p $PROFILE -g validator benchmark
    fi
    if [ "${configs[logs.soldier]}" == "true" ]; then
-      ./dl-soldier-logs.sh -p $PROFILE -g leader oldier &
+      ./dl-soldier-logs.sh -p $PROFILE -g leader soldier &
    fi
    if [ "${configs[logs.db]}" == "true" ]; then
       ./dl-soldier-logs.sh -p $PROFILE -g leader db &
