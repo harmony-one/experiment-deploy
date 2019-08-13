@@ -141,10 +141,12 @@ get_dns_zone() {
 	rn_info "DNS zone is ${dns_zone-'<unset>'}"
 }
 
-unset -v logfile zerologfile initfile is_explorer
+unset -v logfile zerologfile initfile is_explorer is_tf
 find_initfile() {
 	rn_info "looking for init file"
 	local prefix
+	is_explorer=false
+	is_tf=false
 	for prefix in init leader.init explorer.init
 	do
 		initfile="${logdir}/init/${prefix}-${ip}.json"
@@ -152,18 +154,22 @@ find_initfile() {
 		then
 			case "${initfile##*/}" in
 			explorer.init-*) is_explorer=true;;
-			*) is_explorer=false;;
 			esac
 			rn_info "init file is ${initfile}"
 			return 0
 		fi
 	done
-	rn_crit "cannot find init file for ${ip}!"
-	exit 78  # EX_CONFIG
+	rn_info "cannot find init file for ${ip}; assuming a Terraform-provisioned node"
+	is_tf=true
 }
 
 unset -v launch_args
 get_launch_params() {
+	if ${is_tf}
+	then
+		rn_info "proceeding without launch arguments (not applicable for Terraform-provisioned nodes)"
+		return
+	fi
 	rn_info "getting launch arguments from init file"
 	local port sid args
 	port="$(jq -r .port < "${initfile}")"
@@ -180,9 +186,14 @@ get_launch_params() {
 get_logfile() {
 	rn_info "getting log filename"
 	local logfiledir
-	logfiledir=$(node_ssh "${ip}" '
-		ls -td ../tmp_log/log-* | head -1
-	') || return $?
+	if ${is_tf}
+	then
+		logfiledir='latest'
+	else
+		logfiledir=$(node_ssh "${ip}" '
+			ls -td ../tmp_log/log-* | head -1
+		') || return $?
+	fi
 	if [ -z "${logfiledir}" ]
 	then
 		rn_warning "cannot find log directory"
@@ -199,6 +210,12 @@ s3_folder="s3://${bucket}/${folder}"
 rn_debug "s3_folder=$(shell_quote "${s3_folder}")"
 
 fetch_binaries() {
+	if ${is_tf}
+	then
+		# Terraform-provisioned nodes run node.sh which automatically
+		# fetches latest binaries.
+		return
+	fi
 	rn_info "fetching upgrade binaries"
 	node_ssh "${ip}" "
 		aws s3 sync $(shell_quote "${s3_folder}") staging
@@ -209,10 +226,15 @@ kill_harmony() {
 	rn_info "killing harmony process"
 	local status
 	status=0
-	node_ssh "${ip}" 'sudo pkill harmony' || status=$?
-	case "${status}" in
-	1) status=0;;  # it is OK if no processes have been found
-	esac
+	if ${is_tf}
+	then
+		node_ssh "${ip}" 'sudo systemctl stop harmony.service' || status=$?
+	else
+		node_ssh "${ip}" 'sudo pkill harmony' || status=$?
+		case "${status}" in
+		1) status=0;;  # it is OK if no processes have been found
+		esac
+	fi
 	return ${status}
 }
 
@@ -252,6 +274,12 @@ wait_for_harmony_process_to_exit() {
 
 upgrade_binaries() {
 	rn_info "upgrading node software"
+	if ${is_tf}
+	then
+		# Terraform-provisioned nodes run node.sh which automatically
+		# upgrades to latest binaries.
+		return
+	fi
 	node_ssh "${ip}" '
 		set -eu
 		unset -v f
@@ -296,15 +324,20 @@ get_logfile_size() {
 
 start_harmony() {
 	rn_info "restarting harmony process"
-	node_ssh -o-n "${ip}" 'sudo sh -c '\''
-		LD_LIBRARY_PATH=.
-		export LD_LIBRARY_PATH
-		exec < /dev/null > /dev/null 2>> harmony.err
-		echo "running: ./harmony $*" >&2
-		./harmony "$@" &
-		echo "harmony is running, pid=$!" >&2
-		echo $! > harmony.pid
-	'\'' sh '"${launch_args}"
+	if ${is_tf}
+	then
+		node_ssh -o-n "${ip}" 'sudo systemctl start harmony.service'
+	else
+		node_ssh -o-n "${ip}" 'sudo sh -c '\''
+			LD_LIBRARY_PATH=.
+			export LD_LIBRARY_PATH
+			exec < /dev/null > /dev/null 2>> harmony.err
+			echo "running: ./harmony $*" >&2
+			./harmony "$@" &
+			echo "harmony is running, pid=$!" >&2
+			echo $! > harmony.pid
+		'\'' sh '"${launch_args}"
+	fi
 }
 
 wait_for_consensus() {
