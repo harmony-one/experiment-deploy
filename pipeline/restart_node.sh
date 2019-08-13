@@ -139,7 +139,7 @@ get_dns_zone() {
 	esac
 }
 
-unset -v logfile initfile is_explorer
+unset -v logfile zerologfile initfile is_explorer
 find_initfile() {
 	local prefix
 	for prefix in init leader.init explorer.init
@@ -182,6 +182,7 @@ get_logfile() {
 		return 1
 	fi
 	logfile="${logfiledir}/validator-${ip}-9000.log"
+	zerologfile="${logfiledir}/zerolog-validator-${ip}-9000.log"
 }
 
 unset -v s3_folder
@@ -254,19 +255,28 @@ upgrade_binaries() {
 	'
 }
 
-unset -v logsize
-get_logfile_size() {
-	logsize=$(node_ssh "${ip}" '
+unset -v logsize zerologsize
+_get_logfile_size() {
+	local size file var
+	file="${1}"
+	var="${2}"
+	size=$(node_ssh "${ip}" '
 		unset -v logfile
-		logfile='"$(shell_quote "${logfile}")"'
+		logfile='"$(shell_quote "${file}")"'
 		[ -f "${logfile}" ] || sudo touch "${logfile}"
 		stat -c %s '"$(shell_quote "${logfile}")"'
 	') || return $?
-	if [ -z "${logsize}" ]
+	if [ -z "${size}" ]
 	then
-		rn_warning "cannot get size of log file ${logfile}"
+		rn_warning "cannot get size of log file ${file}"
 		return 1
 	fi
+	eval "${var}=\"\${size}\""
+}
+
+get_logfile_size() {
+	_get_logfile_size "${logfile}" logsize
+	_get_logfile_size "${zerologfile}" zerologsize
 }
 
 start_harmony() {
@@ -294,8 +304,16 @@ wait_for_consensus() {
 	do
 		rn_debug "checking for bingo"
 		bingo=$(node_ssh "${ip}" '
-			tail -c+'"$((${logsize} + 1)) $(shell_quote "${logfile}")"' |
-			jq -c '\''select(.msg | test("HOORAY|BINGO"))'\'' | head -1
+			get_bingo() { # FILE SIZE MSGVAR
+				local file size var
+				file="${1}"
+				size="${2}"
+				var="${3}"
+				tail -c"+${size}" "${file}" |
+				jq -c '\''select(.'\''"${var}"'\'' | test("HOORAY|BINGO"))'\'' | head -1
+			}
+			get_bingo '"$(shell_quote "${logfile}" "${logsize}" msg)"'
+			get_bingo '"$(shell_quote "${zerologfile}" "${zerologsize}" message)"'
 		')
 		case "${bingo}" in
 		?*)
