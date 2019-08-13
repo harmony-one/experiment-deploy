@@ -230,9 +230,15 @@ make_restart_order() {
 	local leader_ip
 	leader_ip=$(
 		./run_on_shard.sh -d "${logdir}" -rT "${shard}" '
-			tail -1000 ../tmp_log/log-*/*.log |
+			(
+				for f in ../tmp_log/log-*/*.log latest/*.log
+				do
+					[ -f "${f}" ] || continue
+					tail -1000 "${f}"
+				done
+			) |
 			jq -cr '\''
-				select(.msg | contains("HOORAY")) |
+				select((.msg // .message // "") | contains("HOORAY")) |
 				[(.ViewId | tostring), .ip] | join(" ")
 			'\'' | tail -1
 		' | sort -nk1,2 | tail -1 | cut -d' ' -f2
