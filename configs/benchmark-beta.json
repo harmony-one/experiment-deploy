@@ -6,14 +6,14 @@
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 2,
+    "num_vm": 1,
     "type": "t3.medium",
     "regions": "iad,pdx",
     "protection": false,
     "root": 15
   },
   "explorer_node": {
-    "num_vm": 2,
+    "num_vm": 1,
     "type": "t3.medium",
     "regions": "iad,pdx",
     "root": 30,
@@ -56,7 +56,7 @@
     ]
   },
   "benchmark": {
-    "shards": 4,
+    "shards": 2,
     "duration": 300,
     "dashboard": false,
     "crosstx": 30,
@@ -65,6 +65,7 @@
     "minpeer": 101,
     "even_shard": true,
     "init_retry": false,
+    "network_type": "testnet",
     "bls": true
   },
   "logs": {
@@ -99,10 +100,10 @@
      "rpczone": "b"
   },
   "bls": {
-     "pass": "blspass.txt",
+     "pass": "blsnopass.txt",
      "bucket": "harmony-secret-keys",
-     "folder": "bls",
-     "keyfile": "blskey.txt"
+     "folder": "bls-test",
+     "keyfile": "blskey-test.txt"
   },
   "genesis": "genesis.txt",
   "libp2p": true

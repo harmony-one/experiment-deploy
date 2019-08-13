@@ -3,16 +3,16 @@
       {
          "region": "iad",
          "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 222,
+         "ondemand": 0,
+         "spot": 149,
          "protection": false,
          "root": 15
       },
       {
          "region": "pdx",
          "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 222,
+         "ondemand": 0,
+         "spot": 149,
          "protection": false,
          "root": 15
       }
