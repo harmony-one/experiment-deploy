@@ -50,7 +50,7 @@ use_ssh_mux=false
 exit_mux_first=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts :d:t:o:qTOESrMh opt
+while getopts :${common_getopts_spec}t:o:qTOESrM opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
