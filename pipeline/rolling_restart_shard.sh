@@ -23,25 +23,27 @@ default_stride=4
 
 print_usage() {
 	cat <<- ENDEND
-		usage: ${progname} ${common_usage} [-v] [-s stride] shard [shard ...]
+		usage: ${progname} ${common_usage} [-v] [-s stride] [-f iplist] shard [shard ...]
 
 		${common_usage_desc}
 
 		options:
 		-s stride	restart STRIDE nodes at a time (default: ${default_stride})
 		-v		print stdout/stderr from restart_node.sh (default: just save)
+		-f iplist	use the given file as the list of nodes to restart
+		 		(default: use shardX.txt)
 
 		arguments:
 		shard		the shard number, such as 0
 	ENDEND
 }
 
-unset -v stride verbose
+unset -v stride verbose iplist
 verbose=false
 
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}s:v" opt
+while getopts ":${common_getopts_spec}s:vf:" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -49,6 +51,7 @@ do
 	':') usage "missing argument for -${OPTARG}";;
 	s) stride="${OPTARG}";;
 	v) verbose=true;;
+	f) iplist="${OPTARG}";;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -196,7 +199,11 @@ make_node_list() {
 	[ ! -f "${output}" ] || return 0
 	rollupg_info "making node list for shard ${shard}"
 	mkdir -p "${output%/*}"
-	if [ -f "${logdir}/shard${shard}.txt" ]
+	if [ "${iplist+set}" = "set" ]
+	then
+		rollupg_debug "using the given IP list file ${iplist}"
+		cat "${iplist}"
+	elif [ -f "${logdir}/shard${shard}.txt" ]
 	then
 		rollupg_debug "using master list"
 		cat "${logdir}/shard${shard}.txt"
