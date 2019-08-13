@@ -306,7 +306,7 @@ _get_logfile_size() {
 		unset -v logfile
 		logfile='"$(shell_quote "${file}")"'
 		[ -f "${logfile}" ] || sudo touch "${logfile}"
-		stat -c %s '"$(shell_quote "${logfile}")"'
+		stat -c %s ${logfile}
 	') || return $?
 	if [ -z "${size}" ]
 	then
