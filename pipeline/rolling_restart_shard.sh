@@ -194,10 +194,18 @@ make_node_list() {
 	shift 1
 	output="${result_dir}/${shard}/nodes.txt"
 	[ ! -f "${output}" ] || return 0
+	rollupg_info "making node list for shard ${shard}"
 	mkdir -p "${output%/*}"
-	awk -v shard="${shard}" '
-		$4 == shard { print $1; }
-	' "${dist_config}" > "${output}"
+	if [ -f "${logdir}/shard${shard}.txt" ]
+	then
+		rollupg_debug "using master list"
+		cat "${logdir}/shard${shard}.txt"
+	else
+		rollupg_warn "using distribution config; consider fetching master lists"
+		awk -v shard="${shard}" '
+			$4 == shard { print $1; }
+		' "${dist_config}"
+	fi > "${output}"
 }
 
 # make_restart_order ${shard}
