@@ -8,27 +8,37 @@ function usage
 {
    ME=$(basename $0)
    cat<<EOT
-Usage: $ME [OPTIONS] ACTIONS
+Usage: $ME [OPTIONS] ACTIONS SHARD_ID
 
 This script automates the benchmark test based on profile.
 
 [OPTIONS]
-   -h                      print this help message
-   -p profile              specify the profile (default: $PROFILE)
-   -v                      verbose output
-   -d logdir               the log directory
+   -h                            print this help message
+   -p profile                    specify the profile (default: $PROFILE)
+   -v                            verbose output
+   -d logdir                     the log directory
+   -w workdir                    the workdir (default: $WORKDIR)
 
 [ACTIONS]
 
-   r53                     generate the r53 script based on shard{0..3}.txt files
-   log                     download the pangaea logs
-   block                   print out the latest block number
-   find                    find the internal node based on blskey
+   log                           download the pangaea logs
+   block                         print out the latest block number
+   r53 [shard] [file]            generate the r53 script based on [file]
+   find [shard] [file]           find the internal node based on blskey in [file]
+   exclude [shard] [file]        exclude the IP in [file]
+   peer [shard]                  find the external peers in [shard]
+   offline [shard] [file]        find all the offline bls keys in the shard excluding [file]
+   ma [shard]                    find a list of multiaddresses in the shard
 
+
+[SHARD_ID]
+
+   the shard id, 0, 1, 2, 3
 
 [EXAMPLES]
 
-   $ME -p $PROFILE r53
+# generate r53 update script for shard 0
+   $ME -p $PROFILE -w pang/0815 r53 0
 
 EOT
    exit 0
@@ -58,18 +68,6 @@ function errexit
    exit -1
 }
 
-function do_launch
-{
-   logging launching instances ...
-   expense launch
-}
-
-function do_run
-{
-   logging run benchmark
-   expense run
-}
-
 function download_logs
 {
    logging download logs ...
@@ -94,48 +92,88 @@ function cal_block
 # generate the r53 update script
 function generate_r53_script
 {
+   local shard=$1
+   local file=${2:-$LOGDIR/shard${shard}.txt}
    NUM_IP=25
-   for shard in $(seq 0 3); do
-      local file=$LOGDIR/shard${shard}.txt
-      echo python3 r53update.py p $shard $(sort -R $file | head -n $NUM_IP | tr "\n" " ")
-   done
+   echo python3 r53update.py p $shard $(sort -R $file | head -n $NUM_IP | tr "\n" " ")
 }
 
 # find internal IP based on blskey
-function find_int_ip {
+function find_int_ip
+{
    local shard=$1
+   local file=${2:-online-ext-keys-sorted-${shard}.txt}
    rm -f s${shard}.stop.ip
-   for key in $(cat $PROFILE/online-ext-keys-sorted-${shard}.txt); do
+   for key in $(cat $file); do
       soldier=$(grep -l $key $LOGDIR/validator/soldier-*.log)
       intip=$(basename $soldier | sed 's,soldier-\(.*\).log,\1,' )
       echo $intip >> s${shard}.stop.ip
    done
 }
 
-function main
+# exclude some IP
+function exclude_ip
 {
-   read_profile
-   do_launch
-   do_run
-   download_logs
-   analyze_logs
-   do_deinit
+   local shard=$1
+   local file=${2:-s${shard}.stop.ip}
+   while read ip; do
+      if ! grep -q $ip $file; then
+         echo $ip
+      fi
+   done<$LOGDIR/shard${shard}.txt
+}
+
+# find all peers from log files
+function find_peer
+{
+   local shard=$1
+   ./peer_log.sh -p $PROFILE -d logs/$PROFILE $shard
+   ./ext_peers.sh $shard
+}
+
+function find_offline_keys
+{
+   local shard=$1
+   local file=${2:-online-ext-keys-sorted-${shard}.txt}
+   i=0
+   while read bls; do
+      key=$(echo $bls | cut -f1 -d\.)
+      shardid=$( expr $i % 4 )
+      if [ $shardid == $shard ]; then
+         if ! grep -q $key $file; then
+            echo $i =\> $key is offline
+         fi
+      fi
+      (( i++ ))
+   done<"../configs/pangaea-keys.txt"
+}
+
+function find_ma_address
+{
+   local shard=$1
+   while read ip; do
+      vlog="$LOGDIR/validator/tmp_log/*/validator-$ip-9000.log"
+      ma=$(grep -F -m 1 multiaddress $vlog | $JQ .multiaddress)
+      echo $ma
+   done<"$LOGDIR/shard${shard}.txt"
 }
 
 ######### VARIABLES #########
 PROFILE=pangaea
 CONFIG=configs
 LOGDIR=logs/$PROFILE
+WORKDIR=pangaea/$(date +%Y%m%d.%H%M%S)
 VERBOSE=
 THEPWD=$(pwd)
 JQ='jq -r -M'
 
-while getopts "hp:vd:" option; do
+while getopts "hp:vd:w:" option; do
    case $option in
       h) usage ;;
       p) PROFILE=$OPTARG ;;
       v) VERBOSE=1 ;;
       d) LOGDIR=$OPTARG ;;
+      w) WORKDIR=$OPTARG ;;
    esac
 done
 
@@ -149,11 +187,15 @@ if [ -z "$ACTION" ]; then
 fi
 
 case $ACTION in
-   run) do_run ;;
    log) download_logs ;;
-   r53) generate_r53_script $* ;;
    block) cal_block ;;
+   r53) generate_r53_script $* ;;
    find) find_int_ip $* ;;
+   exclude) exclude_ip $* ;;
+   peer) find_peer $* ;;
+   offline) find_offline_keys $* ;;
+   ma) find_ma_address $* ;;
+   *) usage ;;
 esac
 
 exit 0
