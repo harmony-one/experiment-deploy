@@ -23,6 +23,7 @@ This script automates the benchmark test based on profile.
 
    log                           download the pangaea logs
    block                         print out the latest block number
+   status                        check pangaea network status (log && block)
    r53 [shard] [file]            generate the r53 script based on [file]
    find [shard] [file]           find the internal node based on blskey in [file]
    exclude [shard] [file]        exclude the IP in [file]
@@ -158,6 +159,20 @@ function find_ma_address
    done<"$LOGDIR/shard${shard}.txt"
 }
 
+function check_leader_status
+{
+   s=0
+   echo current time: $(date)
+   echo ==========================================
+   echo shard : block num : block time
+   for ip in ${shard_ip[@]}; do
+      block=$(./node_ssh.sh -p pangaea ec2-user@$ip 'tac /home/tmp_log/*/zerolog-validator-*.log | grep -m 1 -F HOORAY | jq .BlockNum')
+      time=$(./node_ssh.sh -p pangaea ec2-user@$ip 'tac /home/tmp_log/*/zerolog-validator-*.log | grep -m 1 -F HOORAY | jq .time')
+      (( s++ ))
+      echo $s : $block : $time
+   done
+}
+
 ######### VARIABLES #########
 PROFILE=pangaea
 CONFIG=configs
@@ -189,6 +204,7 @@ fi
 case $ACTION in
    log) download_logs ;;
    block) cal_block ;;
+   status) check_leader_status ;;
    r53) generate_r53_script $* ;;
    find) find_int_ip $* ;;
    exclude) exclude_ip $* ;;
