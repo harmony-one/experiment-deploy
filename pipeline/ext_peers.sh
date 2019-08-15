@@ -53,9 +53,16 @@ do
 	sort "${logdir}/shard${shard}.txt" |
 		join -v1 -t '	' "all-peers-${shard}.txt" - \
 		> "ext-peers-${shard}.txt"
-	cut < "ext-peers-${shard}.txt" -d '	' -f2 |
-		sort -u \
-		> "ext-keys-${shard}.txt"
-	num_keys=$(($(wc -l < "ext-keys-${shard}.txt") + 0))
+
+   rm -f "online-ext-keys-${shard}.txt"
+   while read line; do
+      ip=$(echo $line | awk '  { print $1 } ')
+      key=$(echo $line | awk '  { print $2 } ')
+      if nc -w 3 -vz $ip 6000; then
+         echo $key >> "online-ext-keys-${shard}.txt"
+      fi
+   done<"ext-peers-${shard}.txt"
+   sort -u "online-ext-keys-${shard}.txt" > "online-ext-keys-sorted-${shard}.txt"
+	num_keys=$(($(wc -l < "online-ext-keys-sorted-${shard}.txt") + 0))
 	echo ${shard} ${num_keys}
 done
