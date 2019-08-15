@@ -115,7 +115,7 @@ esac
 cmd=$(cat "${outdir}/cmd")
 
 unset -v shard_ip_file
-shard_ip_file="${logdir}/shard${shard}.txt"
+shard_ip_file="${logdir}/validator/shard${shard}.txt"
 
 unset -v known_hosts_file
 known_hosts_file="${logdir}/known_hosts_${shard}"
