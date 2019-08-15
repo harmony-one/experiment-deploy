@@ -121,7 +121,7 @@ function exclude_ip
       if ! grep -q $ip $file; then
          echo $ip
       fi
-   done<$LOGDIR/shard${shard}.txt
+   done<$LOGDIR/origin/shard${shard}.txt
 }
 
 # find all peers from log files
@@ -168,8 +168,8 @@ function check_leader_status
    for ip in ${shard_ip[@]}; do
       block=$(./node_ssh.sh -p pangaea ec2-user@$ip 'tac /home/tmp_log/*/zerolog-validator-*.log | grep -m 1 -F HOORAY | jq .BlockNum')
       time=$(./node_ssh.sh -p pangaea ec2-user@$ip 'tac /home/tmp_log/*/zerolog-validator-*.log | grep -m 1 -F HOORAY | jq .time')
-      (( s++ ))
       echo $s : $block : $time
+      (( s++ ))
    done
 }
 
