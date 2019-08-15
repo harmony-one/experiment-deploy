@@ -212,7 +212,7 @@ make_node_list() {
 		awk -v shard="${shard}" '
 			$4 == shard { print $1; }
 		' "${dist_config}"
-	fi > "${output}"
+	fi | grep -v '^$' > "${output}" || :
 }
 
 # make_restart_order ${shard}

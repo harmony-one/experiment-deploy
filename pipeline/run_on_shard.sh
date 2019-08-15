@@ -128,6 +128,7 @@ grep -v '^$' < "${shard_ip_file}" | (
 	unset -v ip
 	while read -r ip
 	do (
+		[ -n "${ip}" ] || exit 0
 		set --
 		if ${use_ssh_mux}
 		then
@@ -154,6 +155,7 @@ then
 		unset -v out err status
 		while read -r ip
 		do
+			[ -n "${ip}" ] || continue
 			out="${outdir}/${ip}.out"
 			if ${print_stdout} && [ -f "${out}" ]
 			then
