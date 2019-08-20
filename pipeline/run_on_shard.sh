@@ -124,7 +124,7 @@ then
 	msg "collecting SSH host keys"
 	ssh-keyscan -f "${shard_ip_file}" > "${known_hosts_file}"
 fi
-(
+grep -v '^$' < "${shard_ip_file}" | (
 	unset -v ip
 	while read -r ip
 	do (
@@ -146,7 +146,7 @@ fi
 		[ -s "${outdir}/${ip}.err" ] || rm -f "${outdir}/${ip}.err"
 	) & done
 	wait
-) < "${shard_ip_file}"
+)
 
 if ! ${quiet}
 then

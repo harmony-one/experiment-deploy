@@ -203,10 +203,10 @@ make_node_list() {
 	then
 		rollupg_debug "using the given IP list file ${iplist}"
 		cat "${iplist}"
-	elif [ -f "${logdir}/validator/shard${shard}.txt" ]
+	elif [ -f "${logdir}/shard${shard}.txt" ]
 	then
 		rollupg_debug "using master list"
-		cat "${logdir}/validator/shard${shard}.txt"
+		cat "${logdir}/shard${shard}.txt"
 	else
 		rollupg_warning "using distribution config; consider fetching master lists"
 		awk -v shard="${shard}" '
