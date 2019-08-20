@@ -4,7 +4,7 @@
          "region": "iad",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 99,
+         "spot": 124,
          "protection": false,
          "root": 30
       },
@@ -12,7 +12,7 @@
          "region": "pdx",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 99,
+         "spot": 124,
          "protection": false,
          "root": 30
       },
@@ -20,7 +20,7 @@
          "region": "nrt",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 100,
+         "spot": 125,
          "protection": false,
          "root": 30
       },
@@ -28,7 +28,7 @@
          "region": "dub",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 99,
+         "spot": 124,
          "protection": false,
          "root": 30
       },
@@ -36,7 +36,7 @@
          "region": "sin",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 100,
+         "spot": 125,
          "protection": false,
          "root": 30
       },
@@ -44,7 +44,7 @@
          "region": "sfo",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 100,
+         "spot": 125,
          "protection": false,
          "root": 30
       },
@@ -52,7 +52,7 @@
          "region": "fra",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 100,
+         "spot": 125,
          "protection": false,
          "root": 30
       },
@@ -60,7 +60,7 @@
          "region": "cmh",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 99,
+         "spot": 124,
          "protection": false,
          "root": 30
       }
@@ -69,5 +69,5 @@
       "name": "http",
       "file": "userdata-soldier-http.sh.aws"
    },
-   "batch": 500
+   "batch": 100
 }

@@ -1,5 +1,5 @@
 {
-  "description": "Pangaea network, 200 nodes/shard * 4 shard, all Harmony-operated or loaned",
+  "description": "Pangaea network, 250 nodes/shard * 4 shard, 920 Harmony-operated or loaned, 80 Harmony-reserved",
   "client": {
     "num_vm": 0,
     "type": "t3.small",
