@@ -109,7 +109,7 @@ function list_ids
    } & done
    wait
    num=$(wc -l *.ids | tail -n 1)
-   echo $num running instances found with name fileter: \"$FILTER\"
+   echo $num running instances found with name filter: \"$FILTER\"
 }
 
 ############################### GLOBAL VARIABLES ###############################
