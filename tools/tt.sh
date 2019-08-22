@@ -37,6 +37,7 @@ NUM=5
 SECOND=1
 ACCOUNT_FILE=accounts.txt
 SHARDS=2
+CROSS=false
 
 function usage
 {
@@ -58,6 +59,7 @@ This script generates transaction and can be used as a test of token transfer.
    -k             skip download (default: $SKIP_DOWNLOAD)
    -P parallel    run wallet in parallel (default: $PARALLEL)
    -N network     specify the network type (default: $NETWORK)
+   -C             enable cross shard tx (default: $CROSS)
 
 [ACTIONS]
    download       download the latest wallet from release
@@ -144,7 +146,12 @@ function do_beat
          while [ $s -lt $SHARDS ]; do
             v=0.000$RANDOM
             echo transfering from $from to $to on shard $s - amount: $v
-            ${WALLET} transfer --from $from --to $to --amount $v --shardID $s --inputData $(shuf -n5 /usr/share/dict/words | tr '\n' ' ' | base64) --pass file:empty.txt &
+            if [ "$CROSS" == "true" ]; then
+               tos=$(expr $SHARDS - $s - 1)
+               echo ${WALLET} transfer --from $from --to $to --amount $v --shardID $s --toShardID $tos --inputData $(shuf -n5 /usr/share/dict/words | tr '\n' ' ' | base64) --pass file:empty.txt
+            else
+               ${WALLET} transfer --from $from --to $to --amount $v --shardID $s --inputData $(shuf -n5 /usr/share/dict/words | tr '\n' ' ' | base64) --pass file:empty.txt &
+            fi
             sleep 1
             ((s++))
          done
@@ -218,7 +225,7 @@ function do_list
    ${WALLET} list | grep -oE one1[0-9a-z]*$ | tee $ACCOUNT_FILE
 }
 
-while getopts "hp:vi:t:f:c:n:s:kP:N:" option; do
+while getopts "hp:vi:t:f:c:n:s:kP:N:C" option; do
    case $option in
       h) usage ;;
       p) PROFILE=$OPTARG ;;
@@ -232,6 +239,7 @@ while getopts "hp:vi:t:f:c:n:s:kP:N:" option; do
       k) SKIP_DOWNLOAD=true ;;
       P) PARALLEL=$OPTARG ;;
       N) NETWORK=$OPTARG ;;
+      C) CROSS=true ;;
    esac
 done
 
