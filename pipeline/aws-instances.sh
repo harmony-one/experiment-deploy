@@ -64,7 +64,7 @@ function terminate_ids
 {
    for r in ${REGIONS[@]}; do {
       [ ! -e $r.ids ] && continue
-      NUM=$(wc -l $r.ids | cut -f 1 -d ' ')
+      NUM=$(cat $r.ids | cut -f 1 | sort -u | wc -l)
       echo terminating instances in $r: $NUM instances
       if [ $NUM -gt 500 ]; then
          split -l 300 --additional-suffix=.ids $r.ids $r-split-
@@ -101,14 +101,14 @@ function list_ids
          echo Listing running instance with name filter \"$FILTER\" at $r ...
          $AWS --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running" | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | [.id, .type, .tag.Value ] | @tsv ' | grep -E $FILTER | sort > $r.ids
       fi
-      NUM_INST=$(wc -l $r.ids | cut -f1 -d' ')
+      NUM_INST=$(cat $r.ids | cut -f 1 | sort -u | wc -l)
       echo ${NUM_INST} running instances found in $r
       if [ ${NUM_INST} == 0 ]; then
          rm -f $r.ids
       fi
    } & done
    wait
-   num=$(wc -l *.ids | tail -n 1)
+   num=$(cat *.ids | cut -f 1 | sort -u |wc -l)
    echo $num running instances found with name filter: \"$FILTER\"
 }
 

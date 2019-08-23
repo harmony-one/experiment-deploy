@@ -21,8 +21,8 @@
   },
   "bootnode": {
      "enable": true,
-     "server": "54.213.43.194",
-     "name": "b2.harmony.one",
+     "server": "52.40.84.2",
+     "name": "b6.harmony.one",
      "port": 9867,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
@@ -31,32 +31,12 @@
   },
   "bootnode1": {
      "enable": true,
-     "server": "100.26.90.187",
-     "name": "b1.harmony.one",
+     "server": "54.86.126.90",
+     "name": "b5.harmony.one",
      "port": 9867,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
      "p2pkey": "b1-9874.key",
-     "log_conn": true
-  },
-  "bootnode3": {
-     "enable": true,
-     "server": "13.113.101.219",
-     "name": "b3.harmony.one",
-     "port": 9867,
-     "user": "ec2-user",
-     "key": "tokyo-key-benchmark.pem",
-     "p2pkey": "b3-12019.key",
-     "log_conn": true
-  },
-  "bootnode4": {
-     "enable": true,
-     "server": "99.81.170.167",
-     "name": "b4.harmony.one",
-     "port": 9867,
-     "user": "ec2-user",
-     "key": "ireland-key-benchmark.pem",
-     "p2pkey": "b4-12019.key",
      "log_conn": true
   },
   "azure": {
