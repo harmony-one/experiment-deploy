@@ -1,5 +1,5 @@
 {
-  "description": "aws 448 nodes on 4 shards, 2 regions, run 300 seconds",
+  "description": "aws 300 nodes on 2 shards, 2 regions",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
@@ -82,13 +82,13 @@
     "reset": "false"
   },
   "explorer": {
-    "server": "34.222.41.95",
-    "name": "0.harmony.one",
-    "port": 4444,
-    "reset": "false"
+    "server": "34.223.59.182",
+    "name": "explorer.beta.harmony.one",
+    "port": 8888,
+    "reset": "true"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },
