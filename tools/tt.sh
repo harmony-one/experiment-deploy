@@ -62,13 +62,13 @@ This script generates transaction and can be used as a test of token transfer.
    -C             enable cross shard tx (default: $CROSS)
 
 [ACTIONS]
-   download       download the latest wallet from release
-   reset          remove all local accounts
-   beat           do beat transaction only
-   new            create new accounts in $ACCOUNT_FILE file
-   list           list all accounts in $ACCOUNT_FILE file
-   fund           fund a list of accounts ${NEWACC[@]}
-   balance        check the balances
+   download                   download the latest wallet from release
+   reset                      remove all local accounts
+   beat                       do beat transaction only
+   new                        create new accounts in $ACCOUNT_FILE file
+   list                       list all accounts in $ACCOUNT_FILE file
+   fund $amount               fund a list of accounts ${NEWACC[@]} with $amount
+   balance [beta|newacc]      check the balances of beta account or newacc
 
 
 [EXAMPLES]
@@ -148,7 +148,7 @@ function do_beat
             echo transfering from $from to $to on shard $s - amount: $v
             if [ "$CROSS" == "true" ]; then
                tos=$(expr $SHARDS - $s - 1)
-               echo ${WALLET} transfer --from $from --to $to --amount $v --shardID $s --toShardID $tos --inputData $(shuf -n5 /usr/share/dict/words | tr '\n' ' ' | base64) --pass file:empty.txt
+               ${WALLET} transfer --from $from --to $to --amount $v --shardID $s --toShardID $tos --inputData $(shuf -n5 /usr/share/dict/words | tr '\n' ' ' | base64) --pass file:empty.txt
             else
                ${WALLET} transfer --from $from --to $to --amount $v --shardID $s --inputData $(shuf -n5 /usr/share/dict/words | tr '\n' ' ' | base64) --pass file:empty.txt &
             fi
@@ -168,13 +168,15 @@ function do_beat
 
 function do_fund
 {
+   amount=${1:-100}
    mv .hmy/keystore .hmy/keystore.new
    mv .hmy/keystore.beta .hmy/keystore
    for acc in ${BETA[@]}; do
       for newacc in ${NEWACC[@]}; do
          local s=0
          while [ $s -lt $SHARDS ]; do
-            ${WALLET} transfer --from $acc --to $newacc --amount 100 --inputData $(shuf -n5 /usr/share/dict/words | tr '\n' ' ' | base64) --shardID $s --pass file:empty.txt &
+            tos=$(expr $SHARDS - $s - 1)
+            ${WALLET} transfer --from $acc --to $newacc --amount $amount --inputData $(shuf -n5 /usr/share/dict/words | tr '\n' ' ' | base64) --shardID $s --toShardID $tos --pass file:empty.txt &
             sleep 1
             ((s++))
          done
@@ -273,7 +275,7 @@ case $ACTION in
    new) do_new_account ;;
    download) do_download_wallet ;;
    reset) do_reset ;;
-   fund) do_fund ;;
+   fund) do_fund $* ;;
    list) do_list ;;
    balance) do_balance $* ;;
    *) errexit "unknown action: '$ACTION'" ;;
