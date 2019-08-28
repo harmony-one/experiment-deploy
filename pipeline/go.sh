@@ -415,9 +415,14 @@ function do_wallet_ini
       echo >> $INI
       echo "[$SECTION.shard$n.rpc]" >> $INI
       t=$(( n + 1 ))
+      # leader node
       leader=$(grep leader ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' | head -n $t | tail -n 1)
       echo "rpc = $leader:$RPC_PORT" >> $INI
       RPCS[$n]="$leader"
+      # explorer node
+      explorer=$(grep explorer_node ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' | head -n $t | tail -n 1)
+      RPCS[$n]+=" $explorer"
+      # validator nodes
       grep -l node/shard/$n ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log | awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' > ${THEPWD}/logs/$TS/validator/shard$n.txt
       # randomly choose some validators
       # TODO: choose the running nodes
