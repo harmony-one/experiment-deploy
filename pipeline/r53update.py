@@ -62,6 +62,7 @@ def get_rrsets(client, zone_id, name, rrtype=None):
 
 DEFAULT_SHARD_FORMAT = 's{shard}'
 DEFAULT_LEADER_FORMAT = 'l{shard}'
+DEFAULT_EXPLORER_FORMAT = 'e{shard}'
 DEFAULT_ZONE_FORMAT = '{network}.hmny.io.'
 
 
@@ -127,6 +128,9 @@ def main():
     parser.add_argument('--leader-format', metavar='F',
                         help=f"""leader DNS name format in zone
                                  (default: {DEFAULT_LEADER_FORMAT})""")
+    parser.add_argument('--explorer-format', metavar='F',
+                        help=f"""explorer node DNS name format in zone
+                                 (default: {DEFAULT_EXPLORER_FORMAT})""")
     parser.add_argument('--aws-profile', metavar='NAME',
                         help=f"""AWS config/credential profile name""")
     parser.add_argument('network', metavar='NETWORK',
@@ -134,10 +138,11 @@ def main():
     parser.add_argument('shard', type=int, metavar='SHARD',
                         help="shard ID (example: 0)")
     parser.add_argument('nodes', type=ipaddress.ip_address, nargs='*',
-                        metavar='NODE', help="node IP (first is leader)")
+                        metavar='NODE', help="node IP (first is leader, second is explorer node)")
     parser.set_defaults(zone_format=DEFAULT_ZONE_FORMAT,
                         shard_format=DEFAULT_SHARD_FORMAT,
-                        leader_format=DEFAULT_LEADER_FORMAT)
+                        leader_format=DEFAULT_LEADER_FORMAT,
+                        explorer_format=DEFAULT_EXPLORER_FORMAT)
     args = parser.parse_args()
 
     # retrieve/sanitize cmdline args
@@ -199,6 +204,7 @@ def main():
 
     shard_label = fmt(args.shard_format)
     leader_label = fmt(args.leader_format)
+    explorer_label = fmt(args.explorer_format)
 
     def schedule_removal(label):
         for rrtype in rrtype_by_version.values():
@@ -212,6 +218,7 @@ def main():
 
     schedule_removal(shard_label)
     schedule_removal(leader_label)
+    schedule_removal(explorer_label)
 
     # classify by rrtype
     nodes = {}
@@ -231,7 +238,7 @@ def main():
             },
         })
 
-    if node_ips:
+    if len(node_ips) > 1:
         leader = node_ips[0]
         batch.append({
             'Action': 'CREATE',
@@ -242,6 +249,17 @@ def main():
                 'ResourceRecords': [{'Value': str(leader)}],
             },
         })
+        explorer = node_ips[1]
+        batch.append({
+            'Action': 'CREATE',
+            'ResourceRecordSet': {
+                'Name': f'{explorer_label}.{zone_name}',
+                'Type': rrtype_by_version[explorer.version],
+                'TTL': 60,
+                'ResourceRecords': [{'Value': str(explorer)}],
+            },
+        })
+
 
     if not batch:
         logger.info(f"nothing to do; exiting")
