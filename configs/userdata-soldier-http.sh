@@ -20,7 +20,7 @@ cd /home/ec2-user
 BUCKET=unique-bucket-bin
 FOLDER=leo/
 
-TESTBIN=( soldier harmony libbls384_256.so libmcl.so )
+TESTBIN=( soldier harmony libbls384_256.so libbls384.so libmcl.so )
 
 for bin in "${TESTBIN[@]}"; do
    curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
