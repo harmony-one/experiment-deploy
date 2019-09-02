@@ -45,7 +45,7 @@ EOF
 
 function _do_download
 {
-   FILES=( bootnode libbls384_256.so libmcl.so )
+   FILES=( bootnode libbls384_256.so libbls384.so libmcl.so )
 	FN=go-bootnode-$PORT.sh
 
    echo "#!/bin/bash" > $FN
