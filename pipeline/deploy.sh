@@ -165,7 +165,7 @@ ROOTDIR=$(dirname $0)/..
 CONFIGDIR=$(realpath $ROOTDIR)/configs
 TS=$(date +%Y%m%d.%H%M%S)
 USERDATA=$CONFIGDIR/userdata-soldier-http.sh
-PYTHON=python
+PYTHON=python3
 REGIONS=
 
 while getopts "hnc:C:s:t:P:f:b:i:r:u:l:e:" option; do
