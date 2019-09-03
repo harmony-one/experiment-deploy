@@ -358,9 +358,15 @@ function do_reset_explorer
 
    if [ "${configs[${explorer}.reset]}" == "true" ]; then
       echo "resetting explorer ..."
-      for l in "${EXPLORER_NODE_IP[@]}"; do
-         explorer_nodes+="\"$l:5000\"",
-      done
+      if [ ${#EXPLORER_NODE_IP[@]} -gt 0 ]; then
+         for l in "${EXPLORER_NODE_IP[@]}"; do
+            explorer_nodes+="\"$l:5000\"",
+         done
+      else
+         for l in "${LEADER_IP[@]}"; do
+            explorer_nodes+="\"$l:5000\"",
+         done
+      fi
       explorer_nodes=$(echo $explorer_nodes | sed s/,$//)
       cat > explorer.reset.json<<EOT
 {
