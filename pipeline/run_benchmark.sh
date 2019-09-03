@@ -3,7 +3,6 @@
 #TODO: parameter validation
 
 set -o pipefail
-# set -x
 source ./common.sh
 
 function usage
@@ -103,6 +102,8 @@ function do_simple_cmd
       benchmarkArgs="$BOOTNODES -min_peers $MINPEER"
       if [ "${configs[benchmark.bls]}" == "true" ]; then
          benchmarkArgs+=" -blspass file:${configs[bls.pass]} -blskey_file BLSKEY"
+      else
+         benchmarkArgs+=" -account_index ACC_INDEX -is_genesis"
       fi
       case "${commit_delay+set}" in
       set)
@@ -123,7 +124,10 @@ function do_simple_cmd
          benchmarkArgs+=" $DASHBOARD"
       fi
       # Disable DNS for the initial launch
-      benchmarkArgs+=" -dns=false"
+      case "${dns_zone+set}" in
+      set)
+         benchmarkArgs+=" -dns=false"
+      esac
       if [ "$CLIENT" == "true" ]; then
          CLIENT_JSON=',"role":"client"'
       fi
@@ -207,6 +211,9 @@ EOT
                sed "s/BLSKEY/$bls/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
                # download bls private key files to each leader
                ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
+            else
+               local index=$(( ${configs[benchmark.peer_per_shard]} * ( $n - 1 ) ))
+               sed "s/ACC_INDEX/$index/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
             fi
             CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd-$ip.json"
             (( start_index ++ ))
@@ -214,30 +221,32 @@ EOT
       esac
 
       echo $n =\> $CMD
-      echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log" >> $cmd_file
+      echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$ip.log" >> $cmd_file
    done
 
+   if [ ${configs[explorer_node.num_vm]} -gt 0 ]; then
 # send commands to explorers at second
-   local explorer_shard_id=0
-   local explorer_start_index=$((${configs[benchmark.shards]} + 1))
-   local explorer_end_index=$((${configs[benchmark.shards]} * 2))
-   for n in $(seq $explorer_start_index $explorer_end_index); do
-      local ip=${NODEIPS[$n]}
-      CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
+      local explorer_shard_id=0
+      local explorer_start_index=$((${configs[benchmark.shards]} + 1))
+      local explorer_end_index=$((${configs[benchmark.shards]} * 2))
+      for n in $(seq $explorer_start_index $explorer_end_index); do
+         local ip=${NODEIPS[$n]}
+         CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
 
-      case $cmd in
-         init|update|wallet)
-            sed "s/SHARDID/$explorer_shard_id/" $LOGDIR/$cmd/explorer.$cmd.json > $LOGDIR/$cmd/explorer.$cmd-$ip.json
-            CMD+=$" -d@$LOGDIR/$cmd/explorer.$cmd-$ip.json"
-            (( explorer_shard_id ++ ))
-            ;;
-      esac
+         case $cmd in
+            init|update|wallet)
+               sed "s/SHARDID/$explorer_shard_id/" $LOGDIR/$cmd/explorer.$cmd.json > $LOGDIR/$cmd/explorer.$cmd-$ip.json
+               CMD+=$" -d@$LOGDIR/$cmd/explorer.$cmd-$ip.json"
+               (( explorer_shard_id ++ ))
+               ;;
+         esac
 
-      echo $n =\> $CMD
-      echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log" >> $cmd_file
-   done
+         echo $n =\> $CMD
+         echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$ip.log" >> $cmd_file
+      done
+   fi
 
-   start_index=${configs[benchmark.shards]} * 2
+   local index=1
    while [ $end -lt $NUM_NODES ]; do
       start=$(( $PARALLEL * $group + ${configs[benchmark.shards]} * 2 + 1))
       end=$(( $PARALLEL + $start - 1 ))
@@ -246,7 +255,7 @@ EOT
          end=$NUM_NODES
       fi
 
-      echo processing group: $group \($start to $end\)
+      echo processing validators group: $group \($start to $end\)
 
       for n in $(seq $start $end); do
          local ip=${NODEIPS[$n]}
@@ -254,12 +263,17 @@ EOT
 
          case $cmd in
             init|update|wallet)
-               index=$start_index
                if [ "${configs[benchmark.bls]}" == "true" ]; then
                   bls=${blskey[$start_index]}
                   sed "s/BLSKEY/$bls/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
                   # download bls private key files to each node
                   ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls" &
+               else
+                  if [ $(( $index % ${configs[benchmark.peer_per_shard]} )) == 0 ]; then
+                     (( index ++ ))
+                  fi
+                  sed "s/ACC_INDEX/$index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+                  (( index ++ ))
                fi
 
                CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
@@ -268,7 +282,7 @@ EOT
          esac
 
          [ -n "$VERBOSE" ] && echo $n =\> $CMD
-         echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$n.$ip.log &" >> $cmd_file
+         echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$ip.log &" >> $cmd_file
       done 
       wait
       echo "wait" >> $cmd_file
@@ -397,7 +411,8 @@ while getopts "hf:i:a:n:vD:A:C:m:cN:P:p:d:Lz:t:" option; do
       i) IPS=$OPTARG ;;
       a) APP=$OPTARG ;;
       n) PARALLEL=$OPTARG ;;
-      v) VERBOSE=true ;;
+      v) VERBOSE=true
+         set -x ;;
       D) DASHBOARD="-metrics_report_url http://$OPTARG/report" ;;
       A) ATTACK=$OPTARG ;;
       C) CROSSTX=$OPTARG ;;
