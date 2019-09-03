@@ -133,3 +133,7 @@ if [ "$(uname -s)" == "Darwin" ]; then
 else
    TIMEOUT=timeout
 fi
+
+if [ "$WHOAMI" == "ec2-user" ]; then
+   errexit "please set WHOAMI variable, can't use ec2-user"
+fi

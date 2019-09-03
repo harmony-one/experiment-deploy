@@ -3,7 +3,7 @@
 #TODO: parameter validation
 
 set -o pipefail
-source ./common.sh
+source ./common.sh || exit 1
 
 function usage
 {
