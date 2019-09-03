@@ -3,7 +3,7 @@
 #set -euxo pipefail
 # set -x
 
-source ./common.sh
+source ./common.sh || exit 1
 
 RETRY_LAUNCH_TIME=10
 

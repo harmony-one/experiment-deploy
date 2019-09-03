@@ -2,7 +2,7 @@
 
 # set -x
 
-source ./common.sh
+source ./common.sh || exit 1
 
 GREP='grep -E'
 DIR=$(pwd)
