@@ -24,9 +24,9 @@ if __name__ == "__main__":
                         dest='region_config', default='configuration.txt')
 
     parser.add_argument('--shard_number', type=int, dest='shard_number', default=1)
-    parser.add_argument('--explorer_number', type=int, dest='explorer_number', default=1)
-    parser.add_argument('--client_number', type=int, dest='client_number', default=1)
-    parser.add_argument('--commander_number', type=int, dest='commander_number', default=1)
+    parser.add_argument('--explorer_number', type=int, dest='explorer_number', default=0)
+    parser.add_argument('--client_number', type=int, dest='client_number', default=0)
+    parser.add_argument('--commander_number', type=int, dest='commander_number', default=0)
     parser.add_argument('--distribution_config', type=str,
                         dest='distribution_config', default='distribution_config.txt')
     args = parser.parse_args()
