@@ -1,7 +1,7 @@
 {
    "launch": [
       {
-         "region": "iad",
+         "region": "cmh",
          "type": "t3.micro",
          "ondemand": 2,
          "spot": 220,
@@ -9,7 +9,7 @@
          "root": 8
       },
       {
-         "region": "pdx",
+         "region": "sfo",
          "type": "t3.micro",
          "ondemand": 2,
          "spot": 220,
