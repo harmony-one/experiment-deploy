@@ -130,7 +130,11 @@ function generate_distribution
    awk ' { print $1 } ' raw_ip.txt > logs/$TS/hosts.txt
 
    echo "Generate distribution_config"
-   $PYTHON ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --explorer_number $SHARD_NUM --client_number $CLIENT_NUM --commander_number $COMMANDER_NUM
+   if [ -f "$EXPLORER_NODES" ]; then
+      $PYTHON ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --explorer_number $SHARD_NUM --client_number $CLIENT_NUM
+   else
+      $PYTHON ./generate_distribution_config.py --ip_list_file raw_ip.txt --shard_number $SHARD_NUM --client_number $CLIENT_NUM
+   fi
 
    cp distribution_config.txt logs/$TS
    cat>$CONFIGDIR/profile-${LAUNCH_PROFILE}.json<<EOT
@@ -151,8 +155,7 @@ function upload_to_s3
 AWS_VM=2
 AZ_VM=0
 SHARD_NUM=2
-CLIENT_NUM=1
-COMMANDER_NUM=0
+CLIENT_NUM=0
 SLEEP_TIME=10
 RUN_PROFILE=tiny
 LEADERS=
@@ -165,7 +168,7 @@ ROOTDIR=$(dirname $0)/..
 CONFIGDIR=$(realpath $ROOTDIR)/configs
 TS=$(date +%Y%m%d.%H%M%S)
 USERDATA=$CONFIGDIR/userdata-soldier-http.sh
-PYTHON=python
+PYTHON=python3
 REGIONS=
 
 while getopts "hnc:C:s:t:P:f:b:i:r:u:l:e:" option; do

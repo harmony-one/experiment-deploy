@@ -1,37 +1,36 @@
 {
-  "description": "aws 448 nodes on 4 shards, 2 regions, run 300 seconds",
+  "description": "aws 50 nodes on 2 shards in 2 region",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 2,
-    "type": "t3.medium",
-    "regions": "cmh,sfo",
-    "protection": false,
-    "root": 8
+    "num_vm": 1,
+    "type": "t3.large",
+    "regions": "iad,pdx",
+    "root": 20
   },
   "explorer_node": {
-     "num_vm": 0
+    "num_vm": 0
   },
   "bootnode": {
      "enable": true,
      "server": "54.213.43.194",
      "name": "b2.harmony.one",
-     "port": 9871,
+     "port": 9872,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
-     "p2pkey": "b2-9871.key"
+     "p2pkey": "b2-9872.key"
   },
   "bootnode1": {
      "enable": true,
      "server": "100.26.90.187",
      "name": "b1.harmony.one",
-     "port": 9871,
+     "port": 9872,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
-     "p2pkey": "b1-9871.key"
+     "p2pkey": "b1-9872.key"
   },
   "azure": {
     "num_vm": 0,
@@ -42,53 +41,44 @@
     ]
   },
   "benchmark": {
-    "shards": 4,
-    "duration": 300,
+    "shards": 2,
+    "duration": 60,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 150,
-    "minpeer": 101,
-    "even_shard": true,
+    "peer_per_shard": 25,
+    "minpeer": 18,
     "init_retry": false,
-    "bls": true
+    "archival": ""
   },
   "logs": {
     "leader": true,
-    "client": true,
+    "client": false,
     "validator": true,
-    "soldier": true,
-    "db": false
+    "soldier": true
   },
   "dashboard": {
     "server": "34.222.41.95",
-    "name": "0.harmony.one",
+    "name": "explorer2.harmony.one",
     "port": 3000,
     "reset": "false"
   },
   "explorer": {
     "server": "34.222.41.95",
-    "name": "0.harmony.one",
+    "name": "explorer2.harmony.one",
     "port": 4444,
-    "reset": "false"
+    "reset": "true"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },
-  "parallel": 80,
+  "parallel": 100,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
-     "wait_for_launch": 120,
+     "wait_for_launch": 90,
      "reserved_account": ""
   },
-  "bls": {
-     "pass": "blspass.txt",
-     "bucket": "harmony-secret-keys",
-     "folder": "bls",
-     "keyfile": "blskey.txt"
-  },
-  "genesis": "genesis.txt",
   "libp2p": true
 }

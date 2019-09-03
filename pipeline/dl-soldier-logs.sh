@@ -2,7 +2,7 @@
 
 # set -x
 
-source ./common.sh
+source ./common.sh || exit 1
 
 GREP='grep -E'
 DIR=$(pwd)
@@ -84,7 +84,7 @@ function download_logs
          else
             key=$(${GREP} ^$r ${CFG} | cut -f 3 -d ,)
             # echo rsync -rav -e ${SSSH} -i $DIR/../keys/$key.pem ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node
-            rsync -avz -e "${SSH} -i $DIR/../keys/$key.pem" ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
+            rsync -a -e "${SSH} -i $DIR/../keys/$key.pem" ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
          fi
          (( count++ ))
       done
