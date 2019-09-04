@@ -123,11 +123,11 @@ function do_simple_cmd
       if [ -n "$DASHBOARD" ]; then
          benchmarkArgs+=" $DASHBOARD"
       fi
-      # Disable DNS for the initial launch
-      case "${dns_zone+set}" in
-      set)
+      # Disable DNS for the initial launch, only for bls enabled network
+      # For older version like cello, we don't have -dns option support
+      if [ "${configs[benchmark.bls]}" == "true" ]; then
          benchmarkArgs+=" -dns=false"
-      esac
+      fi
       if [ "$CLIENT" == "true" ]; then
          CLIENT_JSON=',"role":"client"'
       fi
