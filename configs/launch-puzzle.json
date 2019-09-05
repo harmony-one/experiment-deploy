@@ -1,14 +1,14 @@
 {
    "launch": [
       {
-         "region": "iad",
+         "region": "cmh",
          "type": "t3.micro",
          "ondemand": 0,
          "spot": 24,
          "root": 20
       },
       {
-         "region": "pdx",
+         "region": "sfo",
          "type": "t3.micro",
          "ondemand": 0,
          "spot": 24,
