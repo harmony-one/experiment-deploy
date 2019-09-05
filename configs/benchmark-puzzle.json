@@ -8,7 +8,7 @@
   "leader": {
     "num_vm": 1,
     "type": "t3.large",
-    "regions": "iad,pdx",
+    "regions": "cmh,sfo",
     "root": 20
   },
   "explorer_node": {
