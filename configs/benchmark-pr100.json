@@ -48,7 +48,7 @@
     "crosstx": 30,
     "attacked_mode": 0,
     "peer_per_shard": 150,
-    "minpeer": 101,
+    "minpeer": 32,
     "even_shard": true,
     "init_retry": false,
     "bls": true
