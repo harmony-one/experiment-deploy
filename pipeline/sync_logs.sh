@@ -18,6 +18,11 @@ esac
 log_define -v sync_logs_log_level -l DEBUG sl
 
 : ${WHOAMI=`id -un`}
+
+if [ "$WHOAMI" == "ec2-user" ]; then
+   msg_exit 33 "please set WHOAMI variable, can't use ec2-user"
+fi
+
 export WHOAMI
 
 unset -v default_bucket default_owner
