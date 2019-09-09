@@ -2,32 +2,22 @@
 
 export LD_LIBRARY_PATH=$(pwd)
 
-PARALLEL=10
-COUNT=10
-SECOND=1
-SLEEP=10
+PARALLEL=4
+COUNT=200
+SECOND=10
+SLEEP=20
 SHARDS=2
-NET=cm
+NET=beta
 
 
-NUM_ACC=10
+NUM_ACC=4
 declare -A ADDR
 
-ADDR["0"]=one17ccz029r57ulyxsqcsjduhgqsgvjpxltpt4lm3
-ADDR["1"]=one1vzaz49jzumxx9p066stnt6p5c3jczkawjq098f
-ADDR["2"]=one1n4fy844gv4rdlcquuueveavtu6zsqdf9et9yn7
-ADDR["3"]=one13uyq3pvyee7jh84n87wn6ffwgl63d7lgnq7kvz
-ADDR["4"]=one1dn430dcq0yd4x34x330pevve8pkla9ayp7v259
-ADDR["5"]=one13nttw7ucw23fwnanj04tv26uj5xpvha4jazeum
-ADDR["6"]=one17nhypqtfk88v6suutntjcy84lwrdyckdpz5sz0
-ADDR["7"]=one1kuyxefj99lhc3yn3nmn6m48jhthzul45r6xpha
-ADDR["8"]=one1mqcy64xeaeyrxp2gyq8a9tjreqzg9xyvwhqllr
-ADDR["9"]=one1rq5a7j2g7aa355ywm2zzjm2hew7f43hg2ym89y
-#ADDR["10"]=one1shzkj8tty2wu230wsjc7lp9xqkwhch2ea7sjhc
-#ADDR["11"]=one1vjywuur8ckddmc4dsyx6qdgf590eu07ag9fg4a
-#ADDR["12"]=one1wh4p0kuc7unxez2z8f82zfnhsg4ty6dupqyjt2
-#ADDR["13"]=one1yc06ghr2p8xnl2380kpfayweguuhxdtupkhqzw
-
+ADDR["0"]=one1u2huc4ktjgf3qkpc2ph29l72jh2yh0d8hqjwy3
+ADDR["1"]=one1hzxfgd7kvnwj86s8gfgjv8kg5d67kvjgpkegcu
+ADDR["2"]=one1arv4kd462zk07ypuc0k5j78ky5cqhs85xts5n5
+ADDR["3"]=one1m26snycwt4m9kzqrhmj2ul7s32spcj7l7kt8ft
+#ADDR["4"]=one1yc06ghr2p8xnl2380kpfayweguuhxdtupkhqzw
 
 function usage
 {
@@ -133,7 +123,8 @@ function stress_test
    while [ $i -lt $COUNT ]; do
       local p=0
       while [ $p -lt $PARALLEL ]; do
-         from=${ADDR[$(expr $RANDOM % $NUM_ACC)]}
+         #from=${ADDR[$(expr $RANDOM % $NUM_ACC)]}
+         from=${ADDR[$p]}
          to=${ADDR[$(expr $RANDOM % $NUM_ACC)]}
          fid=$(expr $RANDOM % $SHARDS)
          tid=$(expr $RANDOM % $SHARDS)
@@ -146,6 +137,8 @@ function stress_test
       done
       wait
       sleep $SECOND
+      # wallet process will create dht folder; remove it after test
+      rm -r .dht-*
       ((i++))
    done
 
