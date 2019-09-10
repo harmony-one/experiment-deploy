@@ -1,29 +1,29 @@
 {
-  "description": "Pangaea network, 250 nodes/shard * 4 shard, 920 Harmony-operated or loaned, 80 Harmony-reserved",
+  "description": "aws 448/600 nodes on 4 shard in 6 regions, reserve 152 nodes for FN",
   "client": {
     "num_vm": 0,
-    "type": "t3.small",
+    "type": "t3.medium",
     "regions": "iad"
   },
   "leader": {
     "num_vm": 1,
-    "type": "t3.small",
-    "regions": "iad,pdx,cmh,dub",
-    "protection": false,
+    "type": "m5a.large",
+    "regions": "iad,pdx,nrt,dub",
+    "protection": true,
     "root": 50
   },
   "explorer_node": {
     "num_vm": 1,
-    "type": "t3.small",
-    "regions": "iad,pdx,cmh,dub",
+    "type": "m5a.large",
+    "regions": "iad,pdx,nrt,dub",
     "root": 100,
-    "protection": false
+    "protection": true
   },
   "bootnode": {
      "enable": true,
-     "server": "52.40.84.2",
-     "name": "b6.harmony.one",
-     "port": 9889,
+     "server": "54.213.43.194",
+     "name": "b2.harmony.one",
+     "port": 9874,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
      "p2pkey": "b2-9874.key",
@@ -31,12 +31,32 @@
   },
   "bootnode1": {
      "enable": true,
-     "server": "54.86.126.90",
-     "name": "b5.harmony.one",
-     "port": 9889,
+     "server": "100.26.90.187",
+     "name": "b1.harmony.one",
+     "port": 9874,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
      "p2pkey": "b1-9874.key",
+     "log_conn": true
+  },
+  "bootnode3": {
+     "enable": true,
+     "server": "13.113.101.219",
+     "name": "b3.harmony.one",
+     "port": 12019,
+     "user": "ec2-user",
+     "key": "tokyo-key-benchmark.pem",
+     "p2pkey": "b3-12019.key",
+     "log_conn": true
+  },
+  "bootnode4": {
+     "enable": true,
+     "server": "99.81.170.167",
+     "name": "b4.harmony.one",
+     "port": 12019,
+     "user": "ec2-user",
+     "key": "ireland-key-benchmark.pem",
+     "p2pkey": "b4-12019.key",
      "log_conn": true
   },
   "azure": {
@@ -54,11 +74,11 @@
     "crosstx": 30,
     "attacked_mode": 0,
     "peer_per_shard": 150,
-    "minpeer": 32,
-    "log_conn": true,
+    "minpeer": 101,
+    "log_conn": false,
     "even_shard": true,
     "init_retry": false,
-    "network_type": "pangaea",
+    "commit_delay": "2s",
     "bls": true
   },
   "logs": {
@@ -66,16 +86,21 @@
     "client": false,
     "validator": true,
     "soldier": true,
-    "db": false
+    "db": true
   },
   "dashboard": {
-    "name": "explorer.pangaea.harmony.one",
+    "name": "1.harmony.one",
     "port": 3000,
     "reset": "false"
   },
   "explorer": {
-    "name": "explorer.pangaea.harmony.one",
-    "port": 8888,
+    "name": "explorer.harmony.one",
+    "port": 4444,
+    "reset": "true"
+  },
+  "explorer2": {
+    "name": "34.220.94.30",
+    "port": 4444,
     "reset": "true"
   },
   "txgen": {
@@ -88,13 +113,13 @@
   "flow": {
      "wait_for_launch": 120,
      "reserved_account": "",
-     "rpczone": "p"
+     "rpczone": "t"
   },
   "bls": {
-     "pass": "blsnopass.txt",
+     "pass": "blspass.txt",
      "bucket": "harmony-secret-keys",
-     "folder": "bls-pangaea",
-     "keyfile": "pangaea-keys.txt"
+     "folder": "bls",
+     "keyfile": "blskey.txt"
   },
   "genesis": "genesis.txt",
   "libp2p": true

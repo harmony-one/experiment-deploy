@@ -6,21 +6,21 @@
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 1,
+    "num_vm": 0,
     "type": "t3.small",
-    "regions": "iad,pdx,cmh,dub",
+    "regions": "",
     "protection": false,
-    "root": 50
+    "root": 10
   },
   "explorer_node": {
-    "num_vm": 1,
+    "num_vm": 0,
     "type": "t3.small",
-    "regions": "iad,pdx,cmh,dub",
-    "root": 100,
+    "regions": "",
+    "root": 10,
     "protection": false
   },
   "bootnode": {
-     "enable": true,
+     "enable": false,
      "server": "52.40.84.2",
      "name": "b6.harmony.one",
      "port": 9889,
@@ -30,7 +30,7 @@
      "log_conn": true
   },
   "bootnode1": {
-     "enable": true,
+     "enable": false,
      "server": "54.86.126.90",
      "name": "b5.harmony.one",
      "port": 9889,
@@ -48,7 +48,7 @@
     ]
   },
   "benchmark": {
-    "shards": 4,
+    "shards": 1,
     "duration": 120,
     "dashboard": false,
     "crosstx": 30,
@@ -62,21 +62,11 @@
     "bls": true
   },
   "logs": {
-    "leader": true,
+    "leader": false,
     "client": false,
     "validator": true,
     "soldier": true,
     "db": false
-  },
-  "dashboard": {
-    "name": "explorer.pangaea.harmony.one",
-    "port": 3000,
-    "reset": "false"
-  },
-  "explorer": {
-    "name": "explorer.pangaea.harmony.one",
-    "port": 8888,
-    "reset": "true"
   },
   "txgen": {
      "enable": "false",
@@ -94,7 +84,7 @@
      "pass": "blsnopass.txt",
      "bucket": "harmony-secret-keys",
      "folder": "bls-pangaea",
-     "keyfile": "pangaea-keys.txt"
+     "keyfile": "pga-s0-keys.txt"
   },
   "genesis": "genesis.txt",
   "libp2p": true
