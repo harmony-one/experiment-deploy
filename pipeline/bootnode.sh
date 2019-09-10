@@ -87,7 +87,7 @@ function _do_launch
 
 function _do_get_multiaddr
 {
-   local cmd="pushd $WORKDIR >/dev/null; grep 'BN_MA' run-bootnode.log | awk -F\= ' { print \$2 } ' | tr '\n' ' ' | tr -d ' ' "
+   local cmd="pushd $WORKDIR >/dev/null; grep -oE '\/ip4\/[0-9.\/tcp\/[0-9]+\/p2p\/[a-zA-Z0-9]{46}' run-bootnode.log"
    MA=$($DRYRUN ${SSH} ec2-user@${SERVER} $cmd)
    echo $MA | tee ${BN}-ma.txt
 }
