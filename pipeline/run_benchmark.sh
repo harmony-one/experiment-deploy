@@ -301,7 +301,7 @@ EOT
 
    echo $(date): $cmd succeeded/$succeeded, failed/$failed nodes, $(($duration / 60)) minutes and $(($duration % 60)) seconds
 
-   if [[ $failed -gt 0 && "${configs[benchmark.init_try]}" == "true" ]]; then
+   if [[ $failed -gt 0 && "${configs[benchmark.init_retry]}" == "true" ]]; then
       find $LOGDIR/$cmd/ -name \*.log -size 0 -exec basename {} \; | tee $LOGDIR/$cmd/failed.ips
       echo "==== retrying $(wc -l $LOGDIR/$cmd/failed.ips) nodes ===="
       IPs=$(cat $LOGDIR/$cmd/failed.ips | sed "s/$cmd.\(.*\).log/\1/")

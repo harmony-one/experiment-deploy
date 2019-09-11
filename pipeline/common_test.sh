@@ -2,7 +2,7 @@
 
 source common.sh
 
-PROFILE=${1:-drum}
+PROFILE=${1:-pr100}
 
 read_profile ~/go/src/github.com/harmony-one/experiment-deploy/configs/benchmark-$PROFILE.json
 
@@ -54,7 +54,7 @@ function test_find_available_node_index
    echo $d
 }
 
-test_read_blskey
+# test_read_blskey
 
-# test_read_profile
+test_read_profile
 # test_find_available_node_index
