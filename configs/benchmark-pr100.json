@@ -50,7 +50,7 @@
     "peer_per_shard": 150,
     "minpeer": 32,
     "even_shard": true,
-    "init_retry": false,
+    "init_retry": true,
     "bls": true
   },
   "logs": {
