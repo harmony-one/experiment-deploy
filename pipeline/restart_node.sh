@@ -353,7 +353,7 @@ wait_for_consensus() {
 	while sleep 5
 	do
 		rn_debug "checking for bingo"
-		bingo=$(node_ssh "${ip}" '
+		bingo=$(node_ssh -o-n "${ip}" '
 			get_bingo() { # FILE SIZE MSGVAR
 				local file size var
 				file="${1}"
