@@ -4,7 +4,7 @@
          "region": "iad",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 85,
+         "spot": 84,
          "protection": false,
          "root": 10
       },
@@ -12,7 +12,7 @@
          "region": "pdx",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 85,
+         "spot": 84,
          "protection": false,
          "root": 10
       },
@@ -20,7 +20,7 @@
          "region": "nrt",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 85,
+         "spot": 84,
          "protection": false,
          "root": 10
       },
@@ -28,7 +28,7 @@
          "region": "dub",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 85,
+         "spot": 84,
          "protection": false,
          "root": 10
       },
@@ -36,7 +36,7 @@
          "region": "sin",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 84,
+         "spot": 85,
          "protection": false,
          "root": 10
       },
@@ -44,7 +44,7 @@
          "region": "sfo",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 84,
+         "spot": 85,
          "protection": false,
          "root": 10
       },
@@ -52,7 +52,7 @@
          "region": "fra",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 84,
+         "spot": 85,
          "protection": false,
          "root": 10
       },
@@ -60,7 +60,7 @@
          "region": "cmh",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 84,
+         "spot": 85,
          "protection": false,
          "root": 10
       }

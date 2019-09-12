@@ -1,5 +1,5 @@
 {
-  "description": "CL-test for release candidate testing",
+  "description": "Release candidate testing",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
@@ -74,7 +74,7 @@
     "crosstx": 30,
     "attacked_mode": 0,
     "peer_per_shard": 150,
-    "minpeer": 101,
+    "minpeer": 32,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
@@ -113,7 +113,7 @@
   "flow": {
      "wait_for_launch": 120,
      "reserved_account": "",
-     "rpczone": "cl-test"
+     "rpczone": "r"
   },
   "bls": {
      "pass": "blspass.txt",
