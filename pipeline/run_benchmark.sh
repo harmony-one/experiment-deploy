@@ -133,7 +133,7 @@ function do_simple_cmd
       fi
 
       explorerArgs=$benchmarkArgs
-      explorerArgs+=" -is_explorer=true -shard_id=SHARDID"
+      explorerArgs+=" -node_type=explorer -shard_id=SHARDID"
       cat>$LOGDIR/$cmd/leader.$cmd.json<<EOT
 {
    "ip":"127.0.0.1",
