@@ -194,6 +194,7 @@ EOT
    SECONDS=0
 
    WAIT_FOR_LEADER_LAUNCH=3
+   WAIT_FOR_INIT_RETRY=30
    CURL_TIMEOUT=20s
 
    cmd_file=$LOGDIR/run_init.sh
@@ -303,6 +304,7 @@ EOT
 
    if [[ $failed -gt 0 && "${configs[benchmark.init_retry]}" == "true" ]]; then
       find $LOGDIR/$cmd/ -name \*.log -size 0 -exec basename {} \; | tee $LOGDIR/$cmd/failed.ips
+      sleep $WAIT_FOR_INIT_RETRY
       echo "==== retrying $(wc -l $LOGDIR/$cmd/failed.ips) nodes ===="
       IPs=$(cat $LOGDIR/$cmd/failed.ips | sed "s/$cmd.\(.*\).log/\1/")
       for ip in $IPs; do
