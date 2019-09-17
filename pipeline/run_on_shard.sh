@@ -169,12 +169,12 @@ then
 				echo "--- BEGIN ${ip} stderr ---"
 				cat "${err}"
 				echo "--- END ${ip} stderr ---"
-			fi
+			fi >&2
 			status="${outdir}/${ip}.status"
 			if ${print_status} && [ -f "${status}" ]
 			then
 				echo "${ip} returned status $(cat ${status})"
-			fi
+			fi >&2
 		done
 	) < "${shard_ip_file}"
 fi
