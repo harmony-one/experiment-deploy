@@ -136,4 +136,12 @@ fi
 
 if [ "$WHOAMI" == "ec2-user" ]; then
    errexit "please set WHOAMI variable, can't use ec2-user"
+else
+   echo "WHOAMI = $WHOAMI"
+fi
+
+if [ -z "$HMY_PROFILE" ]; then
+   errexit "please set HMY_PROFILE variable"
+else
+   echo "HMY_PROFILE = $HMY_PROFILE"
 fi

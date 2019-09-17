@@ -4,8 +4,16 @@
 : ${WHOAMI=`id -un`}
 if [ "$WHOAMI" == "ec2-user" ]; then
    msg_exit 33 "please set WHOAMI variable, can't use ec2-user"
+else
+   msg "WHOAMI = $WHOAMI"
 fi
 export WHOAMI
+
+if [ -z "$HMY_PROFILE" ]; then
+   msg_exit 33 "please set HMY_PROFLIE variable"
+else
+   msg "HMY_PROFLIE = $HMY_PROFLIE"
+fi
 
 unset -v default_profile
 default_profile="${HMY_PROFILE-"${WHOAMI}"}"
