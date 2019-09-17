@@ -82,7 +82,7 @@
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 120,
-     "reserved_account": ""
+     "reserved_account": "",
      "rpczone": "t1"
   },
   "bls": {
