@@ -79,7 +79,7 @@ function _do_kill
 
 function _do_launch
 {
-   local cmd="pushd $WORKDIR; nohup sudo LD_LIBRARY_PATH=. ./bootnode -ip $SERVER -port $PORT -key bootnode-$PORT.key ${log_conn_opt}"
+   local cmd="pushd $WORKDIR; nohup sudo sh -c 'ulimit -Hn 4096; ulimit -Sn hard; LD_LIBRARY_PATH=. exec ./bootnode -ip $SERVER -port $PORT -key bootnode-$PORT.key ${log_conn_opt}' sh"
    $DRYRUN ${SSH} ec2-user@${SERVER} "$cmd > run-bootnode.log 2>&1 &"
    echo "bootnode node started, sleeping for 5s ..."
    sleep 5
