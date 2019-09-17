@@ -81,7 +81,7 @@ esac
 sl_info "syncing logs from S3"
 if ${quick}
 then
-	set -- --exclude='*/tmp_log/*' --exclude='*/db-*.tgz' --exclude='*/soldier-*.log'
+	set -- --exclude='*/tmp_log/*' --exclude='*/db-*.tgz' --exclude='*/soldier-*.log' --exclude='init/*.log'
 else
 	set --
 fi
