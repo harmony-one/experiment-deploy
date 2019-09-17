@@ -82,7 +82,7 @@ default_common_opts
 : ${folder="${default_folder}"}
 
 node_ssh() {
-	"${progdir}/node_ssh.sh" -p "${profile}" -d "${logdir}" "$@"
+	"${progdir}/node_ssh.sh" -p "${profile}" -d "${logdir}" -o-n "$@"
 }
 
 case "${timeout}" in
@@ -326,9 +326,9 @@ start_harmony() {
 	rn_info "restarting harmony process"
 	if ${is_tf}
 	then
-		node_ssh -o-n "${ip}" 'sudo systemctl start harmony.service'
+		node_ssh "${ip}" 'sudo systemctl start harmony.service'
 	else
-		node_ssh -o-n "${ip}" 'sudo sh -c '\''
+		node_ssh "${ip}" 'sudo sh -c '\''
 			LD_LIBRARY_PATH=.
 			export LD_LIBRARY_PATH
 			exec < /dev/null > /dev/null 2>> harmony.err
@@ -353,7 +353,7 @@ wait_for_consensus() {
 	while sleep 5
 	do
 		rn_debug "checking for bingo"
-		bingo=$(node_ssh -o-n "${ip}" '
+		bingo=$(node_ssh "${ip}" '
 			get_bingo() { # FILE SIZE MSGVAR
 				local file size var
 				file="${1}"
