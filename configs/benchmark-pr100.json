@@ -1,13 +1,13 @@
 {
-  "description": "aws 448 nodes on 4 shards, 2 regions, run 300 seconds",
+  "description": "aws 300 nodes on 2 shards, 2 regions",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 2,
-    "type": "t3.medium",
+    "num_vm": 1,
+    "type": "t3.small",
     "regions": "cmh,sfo",
     "protection": false,
     "root": 8
@@ -42,7 +42,7 @@
     ]
   },
   "benchmark": {
-    "shards": 4,
+    "shards": 2,
     "duration": 300,
     "dashboard": false,
     "crosstx": 30,
@@ -51,11 +51,12 @@
     "minpeer": 32,
     "even_shard": true,
     "init_retry": true,
+    "network_type": "testnet",
     "bls": true
   },
   "logs": {
     "leader": true,
-    "client": true,
+    "client": false,
     "validator": true,
     "soldier": true,
     "db": false
@@ -73,7 +74,7 @@
     "reset": "false"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },
@@ -82,12 +83,13 @@
   "flow": {
      "wait_for_launch": 120,
      "reserved_account": ""
+     "rpczone": "t1"
   },
   "bls": {
-     "pass": "blspass.txt",
+     "pass": "blsnopass.txt",
      "bucket": "harmony-secret-keys",
-     "folder": "bls",
-     "keyfile": "blskey.txt"
+     "folder": "bls-test",
+     "keyfile": "blskey-test.txt"
   },
   "genesis": "genesis.txt",
   "libp2p": true

@@ -3,16 +3,16 @@
       {
          "region": "cmh",
          "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 220,
+         "ondemand": 0,
+         "spot": 150,
          "protection": false,
          "root": 8
       },
       {
          "region": "sfo",
          "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 220,
+         "ondemand": 0,
+         "spot": 150,
          "protection": false,
          "root": 8
       }
