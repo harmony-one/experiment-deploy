@@ -25,7 +25,7 @@ function do_launch_one {
    region=${REGIONS[$RANDOM % ${#REGIONS[@]}]}
    terraform apply -var "aws_region=$region" -var "blskey_index=$index" -auto-approve || exit
    sleep 1
-   mv terraform.tfstate states/terraform.tfstate.$index
+   mv -f terraform.tfstate states/terraform.tfstate.$index
 }
 
 # _launch_many
