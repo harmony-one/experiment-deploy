@@ -16,12 +16,13 @@ esac
 . "${progdir}/common_opts.sh"
 
 unset -v default_timeout default_step_retries default_cycle_retries \
-	default_bucket default_folder
+	default_bucket default_folder default_public_rpc
 default_timeout=450
 default_step_retries=2
 default_cycle_retries=2
 default_bucket=unique-bucket-bin
 default_folder="${WHOAMI}"
+default_public_rpc=true
 
 print_usage() {
 	cat <<- ENDEND
@@ -47,6 +48,7 @@ print_usage() {
 		 		(default: ${default_bucket})
 		-F FOLDER	fetch upgrade binaries from the given folder
 		 		(default: ${default_folder})
+		-P		disable public RPC
 
 		arguments:
 		ip		the IP address to upgrade
@@ -57,7 +59,7 @@ unset -v timeout step_retries cycle_retries upgrade bucket folder
 upgrade=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}t:r:R:UB:F:" opt
+while getopts ":${common_getopts_spec}t:r:R:UB:F:P" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -69,6 +71,7 @@ do
 	U) upgrade=true;;
 	B) bucket="${OPTARG}";;
 	F) folder="${OPTARG}";;
+	P) public_rpc=false;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -80,6 +83,7 @@ default_common_opts
 : ${cycle_retries="${default_cycle_retries}"}
 : ${bucket="${default_bucket}"}
 : ${folder="${default_folder}"}
+: ${public_rpc="${default_public_rpc}"}
 
 node_ssh() {
 	"${progdir}/node_ssh.sh" -p "${profile}" -d "${logdir}" -o-n "$@"
@@ -171,11 +175,15 @@ get_launch_params() {
 		return
 	fi
 	rn_info "getting launch arguments from init file"
-	local port sid args
+	local port sid args rpc
 	port="$(jq -r .port < "${initfile}")"
 	sid="$(jq -r .sessionID < "${initfile}")"
 	args="$(jq -r .benchmarkArgs < "${initfile}")"
-	set -- -ip "${ip}" -port "${port}" -log_folder "../tmp_log/log-${sid}" ${args}
+	if ${public_rpc}
+	then
+		rpc="-public_rpc"
+	fi
+	set -- -ip "${ip}" -port "${port}" -log_folder "../tmp_log/log-${sid}" $rpc ${args}
 	case "${dns_zone+set}" in
 	set) set -- "$@" "-dns_zone=${dns_zone}";;
 	esac
