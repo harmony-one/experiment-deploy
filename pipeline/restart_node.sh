@@ -175,7 +175,7 @@ get_launch_params() {
 	port="$(jq -r .port < "${initfile}")"
 	sid="$(jq -r .sessionID < "${initfile}")"
 	args="$(jq -r .benchmarkArgs < "${initfile}")"
-	set -- -ip "${ip}" -port "${port}" -log_folder "../tmp_log/log-${sid}" ${args}
+	set -- -ip "${ip}" -port "${port}" -public_ip "${ip}" -log_folder "../tmp_log/log-${sid}" ${args}
 	case "${dns_zone+set}" in
 	set) set -- "$@" "-dns_zone=${dns_zone}";;
 	esac
