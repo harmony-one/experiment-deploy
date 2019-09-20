@@ -69,6 +69,19 @@ resource "aws_spot_instance_request" "foundation-node" {
     }
   }
 
+  provisioner "file" {
+    source      = "files/fast.sh"
+    destination = "/home/ec2-user/fast.sh"
+    connection {
+      host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = "${file(var.private_key_path)}"
+      agent       = true
+    }
+  }
+
+
   provisioner "remote-exec" {
     inline = [
       "curl -LO https://harmony.one/node.sh",

@@ -1,6 +1,8 @@
 #!/bin/bash
 
 source ./regions.sh
+OUTPUT=launch.ip
+rm -f $OUTPUT
 
 function _launch_many {
    local START=592
@@ -24,6 +26,8 @@ function do_launch_one {
 
    region=${REGIONS[$RANDOM % ${#REGIONS[@]}]}
    terraform apply -var "aws_region=$region" -var "blskey_index=$index" -auto-approve || exit
+   IP=$(terraform output | jq -rc '.public_ip.value  | @tsv')
+   echo "$IP" >> $OUTPUT
    sleep 1
    mv -f terraform.tfstate states/terraform.tfstate.$index
 }
@@ -37,5 +41,9 @@ for index in ${INDEX}; do
 done
 
 aws --profile mainnet s3 sync states/ s3://mainnet.log/states/
+
+# fast sync
+# pssh -l ec-user -h $OUTPUT -e fast/err -o fast/log 'nohup /home/ec2-user/fast.sh > fast.log 2> fast.err < /dev/null &'
+
 
 # 455 539
