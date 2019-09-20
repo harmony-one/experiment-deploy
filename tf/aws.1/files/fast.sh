@@ -23,18 +23,19 @@ for s in 3 2 1; do
       shard=${s}
       # download shard db
       ./node2.sh -i ${shard} -b -a ${DB[${shard}]}
+
+      # switch to new shard db
+      mv -f harmony_db_${shard} harmony_db_${shard}.bak
+      mv -f db/harmony_db_${shard} .
+      rm -f db/${DB[${shard}]}
+      rm -rf harmony_db_${shard}.bak
+
       break
    fi
 done
 
 # download beacon chain db anyway
 ./node2.sh -i 0 -b -a ${DB[0]}
-
-# switch to new shard db
-mv -f harmony_db_${shard} harmony_db_${shard}.bak
-mv -f db/harmony_db_${shard} .
-rm -f db/${DB[${shard}]}
-rm -rf harmony_db_${shard}.bak
 
 # switch to new beacon chain db
 mv -f harmony_db_0 harmony_db_0.bak
