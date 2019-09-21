@@ -220,9 +220,10 @@ rn_debug "s3_folder=$(shell_quote "${s3_folder}")"
 fetch_binaries() {
 	if ${is_tf}
 	then
-		# Terraform-provisioned nodes run node.sh which automatically
-		# fetches latest binaries.
-		return
+		rn_info "fetching upgrade binaries on tf node"
+		node_ssh "${ip}" "
+			./node.sh -U upgrade -d
+		"
 	fi
 	rn_info "fetching upgrade binaries"
 	node_ssh "${ip}" "
@@ -282,12 +283,6 @@ wait_for_harmony_process_to_exit() {
 
 upgrade_binaries() {
 	rn_info "upgrading node software"
-	if ${is_tf}
-	then
-		# Terraform-provisioned nodes run node.sh which automatically
-		# upgrades to latest binaries.
-		return
-	fi
 	node_ssh "${ip}" '
 		set -eu
 		unset -v f
