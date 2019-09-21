@@ -286,12 +286,12 @@ upgrade_binaries() {
 	node_ssh "${ip}" '
 		set -eu
 		unset -v f
-		for f in harmony txgen wallet libmcl.so libbls384_256.so
+		for f in harmony libmcl.so libbls384_256.so
 		do
 			rm -f "${f}"
 			cp -p "staging/${f}" "${f}"
 			case "${f}" in
-			harmony|txgen|wallet)
+			harmony)
 				chmod a+x "${f}"
 				;;
 			esac
