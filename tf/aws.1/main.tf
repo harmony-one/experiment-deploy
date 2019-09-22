@@ -30,8 +30,8 @@ resource "aws_spot_instance_request" "foundation-node" {
   }
 
   provisioner "local-exec" {
-   command = "aws s3 cp s3://harmony-secret-keys/bls/${lookup(var.harmony-nodes-blskeys, var.blskey_index, var.default_key)}.key files/bls.key"
-   }
+    command = "aws s3 cp s3://harmony-secret-keys/bls/${lookup(var.harmony-nodes-blskeys, var.blskey_index, var.default_key)}.key files/bls.key"
+  }
 
   provisioner "file" {
     source      = "files/bls.key"

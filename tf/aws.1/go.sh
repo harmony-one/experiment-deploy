@@ -91,40 +91,6 @@ EOF
    exit 0
 }
 
-LOGDIR=logs/$HMY_PROFILE
-DRYRUN=echo
-OUTPUT=$LOGDIR/$(date +%F.%H:%M:%S).log
-
-while getopts "hnvGss:d:" option; do
-   case $option in
-      n) DRYRUN=echo [DRYRUN] ;;
-      v) VERBOSE=-v ;;
-      G) DRYRUN= ;;
-      s) STATEDIR=$OPTARG ;;
-      d) LOGDIR=$OPTARG ;;
-      h|?|*) usage ;;
-   esac
-done
-
-shift $(($OPTIND-1))
-
-CMD="$1"
-shift
-
-if [ "$CMD" = "" ]; then
-   usage
-fi
-
-if [ ! -d $STATEDIR ]; then
-   echo invalid state directory: $STATEDIR
-   exit 0
-fi
-
-if [ ! -d $LOGDIR ]; then
-   echo invalid log directory: $LOGDIR
-   exit 0
-fi
-
 # launch one terraform node based on index
 function _do_launch_one {
    local index=$1
@@ -176,7 +142,7 @@ function _find_index_from_init
    file=$(ls $LOGDIR/init/*init-$ip.json)
    if [ -f "$file" ]; then
       key=$(grep -oE 'blskey_file .*.key' $file | awk ' { print $2 } ' | sed 's/.key//')
-      if [ -n "$key" ]; thebn
+      if [ -n "$key" ]; then
          index=$(grep $key variables.tf | awk ' { print $1 } ' | tr -d \")
          echo $index
       fi
@@ -209,9 +175,43 @@ function fast_sync
 }
 
 ###############################################################################
+LOGDIR=logs/$HMY_PROFILE
+DRYRUN=echo
+OUTPUT=$LOGDIR/$(date +%F.%H:%M:%S).log
+
+while getopts "hnvGss:d:" option; do
+   case $option in
+      n) DRYRUN=echo [DRYRUN] ;;
+      v) VERBOSE=-v ;;
+      G) DRYRUN= ;;
+      s) STATEDIR=$OPTARG ;;
+      d) LOGDIR=$OPTARG ;;
+      h|?|*) usage ;;
+   esac
+done
+
+shift $(($OPTIND-1))
+
+CMD="$1"
+shift
+
+if [ -z "$CMD" ]; then
+   usage
+fi
+
+if [ ! -d $STATEDIR ]; then
+   echo invalid state directory: $STATEDIR
+   exit 0
+fi
+
+if [ ! -d $LOGDIR ]; then
+   echo invalid log directory: $LOGDIR
+   exit 0
+fi
+
 case $CMD in
-   *) usage ;;
    new) new_instance $@ ;;
    replace) replace_instance $@ ;;
    fast) fast_sync $@ ;;
+   *) usage ;;
 esac
