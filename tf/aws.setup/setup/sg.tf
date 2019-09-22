@@ -21,6 +21,30 @@ resource "aws_security_group" "harmony-node-sg" {
   }
 
   ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["35.160.64.190/32"]
+    description = "Enable SSH from devop.hmny.io"
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["52.37.248.195/32"]
+    description = "Enable SSH from Leo H2 Desktop"
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["13.52.173.26/32"]
+    description = "Enable SSH from Leo H3 Desktop"
+  }
+
+  ingress {
     from_port   = 6000
     to_port     = 6000
     protocol    = "tcp"
@@ -37,8 +61,8 @@ resource "aws_security_group" "harmony-node-sg" {
   }
 
   ingress {
-    from_port   = 14555
-    to_port     = 14555
+    from_port   = 9500
+    to_port     = 9500
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
     description = "Harmony RPC Port"
