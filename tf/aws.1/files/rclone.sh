@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+while :; do
+   if command -v rclone; then
+      break
+   else
+      echo waiting for rclone ...
+      sleep 10
+   fi
+done
+
 # stop harmony service
 sudo systemctl stop harmony.service
 
