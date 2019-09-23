@@ -71,7 +71,12 @@ case "${userip}" in
 	ip="${userip}"
 	;;
 esac
-cmd_quoted=$(shell_quote "$@")
+
+if [ "$(uname -s)" == "Darwin" ]; then
+   cmd_quoted="$@"
+else
+   cmd_quoted=$(shell_quote "$@")
+fi
 
 unset -v key_file
 key_file="${progdir}/../keys/harmony-node.pem"
@@ -95,7 +100,7 @@ case "${line}" in
 	key_file="${progdir}/../keys/${key_name}.pem"
 	;;
 esac
-node_ssh_info "autodetected key file $(shell_quote "${key_file}")"
+echo "autodetected key file "${key_file}""
 
 if ${use_ssh_mux}
 then
