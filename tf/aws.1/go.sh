@@ -133,7 +133,7 @@ function new_instance
 function _find_index_from_state
 {
    ip=$1
-   index=$(grep -l $ip $STATEDIR | awk -F. ' { print $3 } ')
+   index=$(grep -l $ip $STATEDIR/terraform.tfstate.* | awk -F. ' { print $3 } ')
    echo $index
 }
 
