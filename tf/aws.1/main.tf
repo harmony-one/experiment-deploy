@@ -70,6 +70,18 @@ resource "aws_spot_instance_request" "foundation-node" {
   }
 
   provisioner "file" {
+    source      = "files/node_exporter.service"
+    destination = "/home/ec2-user/node_exporter.service"
+    connection {
+      host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = "${file(var.private_key_path)}"
+      agent       = true
+    }
+  }
+
+  provisioner "file" {
     source      = "files/fast.sh"
     destination = "/home/ec2-user/fast.sh"
     connection {
@@ -89,6 +101,10 @@ resource "aws_spot_instance_request" "foundation-node" {
       "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
       "sudo systemctl enable harmony.service",
       "sudo systemctl start harmony.service",
+      "sudo mv -f node_exporter.service /etc/systemd/system/node_exporter.service",
+      "sudo systemctl daemon-reload",
+      "sudo systemctl start node_exporter",
+      "sudo systemctl enable node_exporter"
     ]
     connection {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
