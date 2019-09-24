@@ -224,11 +224,12 @@ fetch_binaries() {
 		node_ssh "${ip}" "
 			./node.sh -U upgrade -d
 		"
-	fi
-	rn_info "fetching upgrade binaries"
-	node_ssh "${ip}" "
-		aws s3 sync $(shell_quote "${s3_folder}") staging
-	"
+   else
+      rn_info "fetching upgrade binaries"
+      node_ssh "${ip}" "
+         aws s3 sync $(shell_quote "${s3_folder}") staging
+      "
+   fi
 }
 
 kill_harmony() {
