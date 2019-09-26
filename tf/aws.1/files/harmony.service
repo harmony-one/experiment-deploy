@@ -9,7 +9,7 @@ Restart=always
 RestartSec=1
 User=ec2-user
 WorkingDirectory=/home/ec2-user
-ExecStart=/home/ec2-user/node.sh -1 -S -p /home/ec2-user/bls.pass -k /home/ec2-user/bls.key
+ExecStart=/home/ec2-user/node.sh -1 -S -P -p /home/ec2-user/bls.pass -k /home/ec2-user/bls.key
 
 [Install]
 WantedBy=multi-user.target
