@@ -184,3 +184,24 @@ ere_escape() {
 		;;
 	esac
 }
+
+# declare a map of region name
+declare -A REGION_KEY
+REGION_KEY['us-east-1']='virginia-key-benchmark.pem'
+REGION_KEY['compute-1']='virginia-key-benchmark.pem'
+REGION_KEY['us-east-2']='ohio-key-benchmark.pem'
+REGION_KEY['us-west-1']='california-key-benchmark.pem'
+REGION_KEY['us-west-2']='oregon-key-benchmark.pem'
+REGION_KEY['ap-northeast-1']='tokyo-key-benchmark.pem'
+REGION_KEY['ap-southeast-1']='singapore-key-benchmark.pem'
+REGION_KEY['eu-central-1']='frankfurt-key-benchmark.pem'
+REGION_KEY['eu-west-1']='ireland-key-benchmark.pem'
+
+find_key_from_ip()
+{
+   ip=$1
+   if [ -n "$ip" ]; then
+      host=$(host "$ip" | awk ' { print $NF } ' | awk -F\. ' { print $2 }' )
+      echo ${REGION_KEY[$host]}
+   fi
+}
