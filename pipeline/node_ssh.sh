@@ -74,28 +74,8 @@ esac
 cmd_quoted=$(shell_quote "$@")
 
 unset -v key_file
-key_file="${progdir}/../keys/harmony-node.pem"
-
-unset -v dist_config line name_tag
-dist_config="${logdir}/distribution_config.txt"
-line=$(awk -v ip="${ip}" '$1 == ip { print $4, $5; }' "${dist_config}" | head -1)
-case "${line}" in
-"")
-	node_ssh_info "${ip} not found in ${dist_config}; assuming it is a Terraform-deployed node"
-	;;
-*)
-	name_tag="${line#* }"
-	unset -v region_code region_config key_name
-	region_code="${name_tag%%-*}"
-	region_config="${progdir}/configuration.txt"
-	key_name=$(awk -F , -v code="${region_code}" '$1 == code { print $3; }' "${region_config}" | head -1)
-	case "${key_name}" in
-	"") node_ssh_fatal 69 "region code ${region_code} not found in ${region_config}";;
-	esac
-	key_file="${progdir}/../keys/${key_name}.pem"
-	;;
-esac
-node_ssh_info "autodetected key file $(shell_quote "${key_file}")"
+KEYDIR=${HSSH_KEY_DIR:-${progdir}/../keys}
+key_file=$KEYDIR/$(find_key_from_ip $ip)
 
 if ${use_ssh_mux}
 then
@@ -121,9 +101,11 @@ then
 		-o ControlPersist=yes
 fi
 
+# TODO: add harmony-node.pem for mainnet TF nodes
+# Need to support testnet TF nodes later
 if [ -f "${key_file}" ]
 then
-	set -- "$@" -i "${key_file}"
+	set -- "$@" -i "${key_file}" -i "$KEYDIR/harmony-node.pem"
 else
 	node_ssh_info "key file does not exist; proceeding without one"
 fi
