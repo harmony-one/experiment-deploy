@@ -330,7 +330,7 @@ start_harmony() {
 	rn_info "restarting harmony process"
 	if ${is_tf}
 	then
-		node_ssh "${ip}" 'sudo systemctl start harmony.service'
+		node_ssh "${ip}" 'sudo systemctl daemon-reload; sudo systemctl start harmony.service'
 	else
 		node_ssh "${ip}" 'sudo sh -c '\''
 			LD_LIBRARY_PATH=.
