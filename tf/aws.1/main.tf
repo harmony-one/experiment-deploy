@@ -108,7 +108,7 @@ resource "aws_spot_instance_request" "foundation-node" {
 
   provisioner "remote-exec" {
     inline = [
-      "curl -LO https://harmony.one/node.sh",
+      "curl -L https://harmony.one/node2.sh > node.sh",
       "chmod +x node.sh rclone.sh fast.sh",
       "mkdir -p /home/ec2-user/.config/rclone",
       "mv -f rclone.conf /home/ec2-user/.config/rclone",
