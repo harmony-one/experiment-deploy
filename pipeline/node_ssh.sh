@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -eu
 
@@ -83,6 +83,7 @@ then
 fi
 
 unset -v known_hosts_file
+[ -d "${logdir}" ] || logdir=/tmp
 known_hosts_file="${logdir}/known_hosts"
 
 set -- \
