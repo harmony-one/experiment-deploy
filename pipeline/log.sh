@@ -88,7 +88,7 @@ log_define() {
 			 warning:WARNING notice:NOTICE info:INFO debug:DEBUG 
 	do
 		func="${func_prefix}_${func_prio%:*}"
-		prio="$(shell_quote "${func_prio#*:}")"
+		prio="${func_prio#*:}"
 		eval "
 			${func}() {
 				log \"\${${level_var}-${default_level}}\" \
