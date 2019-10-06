@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -eu
 
@@ -86,7 +86,7 @@ default_common_opts
 : ${public_rpc="${default_public_rpc}"}
 
 node_ssh() {
-	"${progdir}/node_ssh.sh" -p "${profile}" -d "${logdir}" -o-n "$@"
+	"${progdir}/node_ssh.sh" -p "${profile}" -d "${logdir}" -n "$@"
 }
 
 case "${timeout}" in
@@ -103,7 +103,7 @@ case $# in
 0) usage "specify a node IP address to restart";;
 esac
 unset -v ip
-ip="${1}"
+ip="ec2-user@${1}"
 shift 1
 
 log_define -v restart_node_log_level -l INFO rn

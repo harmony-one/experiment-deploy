@@ -28,6 +28,7 @@ print_usage() {
 		-p profile	use specified profile
 		-M		use opportunistic ssh connection multiplexing
 		 		(helps back-to-back invocations); -M -M uses fresh mux
+		-n          run in background
 
 		arguments:
 		user		remote username (default: same as local)
@@ -40,17 +41,18 @@ print_usage() {
 unset -v use_ssh_mux exit_mux_first ssh_opts
 use_ssh_mux=false
 exit_mux_first=false
-ssh_opts="-n"
+ssh_opts=""
 
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":o:M${common_getopts_spec}" opt
+while getopts ":o:Mn${common_getopts_spec}" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
 	'?') usage "unrecognized option -${OPTARG}";;
 	':') usage "missing argument for -${OPTARG}";;
 	o) ssh_opts="${ssh_opts} $(shell_quote "${OPTARG}")";;
+	n) ssh_opts="${ssh_opts} -n";;
 	M) exit_mux_first="${use_ssh_mux}"; use_ssh_mux=true;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
