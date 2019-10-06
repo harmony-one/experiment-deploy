@@ -40,7 +40,7 @@ print_usage() {
 unset -v use_ssh_mux exit_mux_first ssh_opts
 use_ssh_mux=false
 exit_mux_first=false
-ssh_opts=""
+ssh_opts="-n"
 
 unset -v OPTIND OPTARG opt
 OPTIND=1
