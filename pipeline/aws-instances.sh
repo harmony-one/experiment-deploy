@@ -14,6 +14,7 @@ OPTIONS:
    -G          do the real work, not dryrun
    -g filter   grep filter to filter out the instances (default: $FILTER)
    -p profile  find all running instance with specified Profile tag
+   -N network  specify the network (mainnet,testnet; default: $NETWORK)
 
 ACTION:
    list        list all running instances (id,type,name) - default
@@ -130,7 +131,7 @@ function list_tf_nodes
 {
    for r in ${REGIONS[@]}; do {
       query=".Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, ip:.PublicIpAddress} | [.id, .type, .ip] | @tsv "
-      aws --profile mainnet --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running" | jq -r "$query" | sort > $r.ids
+      aws --profile $NETWORK --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running" | jq -r "$query" | sort > $r.ids
       NUM_INST=$(wc -l $r.ids | awk ' { print $1 } ')
       echo ${NUM_INST} running instances found in $r
       if [ ${NUM_INST} == 0 ]; then
@@ -149,14 +150,16 @@ DRYRUN=echo
 AWS=aws
 FILTER=${WHOAMI:-USER}
 PROFILE=
+NETWORK=mainnet
 
 ############################### MAIN FUNCTION    ###############################
-while getopts "hGg:p:" option; do
+while getopts "hGg:p:N:" option; do
    case $option in
       h) usage ;;
       G) DRYRUN= ;;
       g) FILTER=$OPTARG ;;
       p) PROFILE=$OPTARG ;;
+      N) NETWORK=$OPTARG ;;
    esac
 done
 
