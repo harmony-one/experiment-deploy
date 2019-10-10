@@ -121,10 +121,10 @@ function list_ids
       fi
    } & done
    wait
-   cut -f 4 *.ids | sort -u > $FILTER.nodes.txt
+   cut -f 4 *.ids 2>/dev/null | sort -u > $FILTER.nodes.txt 2> /dev/null
    num=$(wc -l $FILTER.nodes.txt)
-   echo $num running instances found with name filter: \"$FILTER\"
    echo List of IP addresses =\> $FILTER.nodes.txt
+   echo $num running instances found with name filter: \"$FILTER\"
 }
 
 function list_tf_nodes
@@ -140,9 +140,9 @@ function list_tf_nodes
    } & done
    wait
    num=$(wc -l *.ids | tail -n 1)
-   cut -f 3 *.ids > tf.nodes.txt
+   cut -f 3 *.ids > tf.$NETWORK.nodes.txt 2> /dev/null
+   echo List of IP addresses =\> tf.$NETWORK.nodes.txt
    echo $num running terraform instances found.
-   echo List of IP addresses =\> tf.nodes.txt
 }
 
 ############################### GLOBAL VARIABLES ###############################

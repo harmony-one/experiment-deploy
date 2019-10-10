@@ -146,7 +146,7 @@ function do_launch
 
    local expected=$(wc -l raw_ip.txt | cut -f 1 -d ' ')
    while [ $r -le $RETRY ]; do
-      local total=$(./aws-instances.sh -g $TAG | tail -n 1 | cut -f 1 -d ' ')
+      local total=$(./aws-instances.sh -g $TAG | tail -n 1 | cut -f 1 -d ' ' 2>/dev/null)
       if [ $prev_total -eq $total ]; then
          echo "no change on number of running instances, breaking retry loop - $r"
          break
