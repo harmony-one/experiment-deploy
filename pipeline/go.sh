@@ -309,7 +309,7 @@ function analyze_logs
    fi
 
    find logs/$TS/leader -name zerolog-validator-*.log > logs/$TS/all-leaders.txt
-   find logs/$TS/validator -name validator-*.log > logs/$TS/all-validators.txt
+   find logs/$TS/validator -name zerolog-validator-*.log > logs/$TS/all-validators.txt
    logging analyzing logs in $(cat logs/$TS/all-leaders.txt)
    ${THEPWD}/cal_tps.sh logs/$TS/all-leaders.txt logs/$TS/all-validators.txt | tee ${THEPWD}/logs/$TS/tps.txt
    expense analysis
