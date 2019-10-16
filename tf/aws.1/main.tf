@@ -117,10 +117,24 @@ resource "aws_spot_instance_request" "foundation-node" {
     }
   }
 
+  provisioner "file" {
+    source      = "files/crontab"
+    destination = "/home/ec2-user/crontab"
+    connection {
+      host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = "${file(var.private_key_path)}"
+      agent       = true
+    }
+  }
+
+
   provisioner "remote-exec" {
     inline = [
       "curl -LO https://harmony.one/node.sh",
       "chmod +x node.sh rclone.sh fast.sh uploadlog.sh",
+      "crontab crontab",
       "mkdir -p /home/ec2-user/.config/rclone",
       "mv -f rclone.conf /home/ec2-user/.config/rclone",
       "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
