@@ -43,6 +43,12 @@ elif [ -d $HOME/../tmp_log/log-20190628.153354 ]; then
    LOGDIR=$HOME/../tmp_log/log-20190628.153354
 fi
 
+RND=$[RANDOM % 90]
+
+echo sleep $RND minutes
+sleep ${RND}m
+
+echo aws --profile uploadlog s3 sync $LOGDIR s3://harmony-benchmark/logs/$NETWORK/${PUB_IP}/
 aws --profile uploadlog s3 sync $LOGDIR s3://harmony-benchmark/logs/$NETWORK/${PUB_IP}/
 
 sudo rm -f $LOGDIR/*.gz
