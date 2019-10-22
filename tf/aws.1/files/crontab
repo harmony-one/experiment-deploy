@@ -1,1 +1,4 @@
-30 0 * * *  bash -c "sleep $[RANDOM % 90]m ; /home/ec2-user/uploadlog.sh"
+SHELL=/usr/bin/bash
+HOME=/home/ec2-user
+
+30 0 * * *  /home/ec2-user/uploadlog.sh >> $HOME/upload.log 2>&1
