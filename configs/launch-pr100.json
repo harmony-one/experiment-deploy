@@ -4,7 +4,7 @@
          "region": "cmh",
          "type": "t3.micro",
          "ondemand": 0,
-         "spot": 150,
+         "spot": 80,
          "protection": false,
          "root": 8
       },
@@ -12,7 +12,15 @@
          "region": "sfo",
          "type": "t3.micro",
          "ondemand": 0,
-         "spot": 150,
+         "spot": 80,
+         "protection": false,
+         "root": 8
+      },
+      {
+         "region": "iad",
+         "type": "t3.micro",
+         "ondemand": 0,
+         "spot": 80,
          "protection": false,
          "root": 8
       }
