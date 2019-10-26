@@ -108,9 +108,14 @@ fi
 # Need to support testnet TF nodes later
 if [ -f "${key_file}" ]
 then
-	set -- "$@" -i "${key_file}" -i "$KEYDIR/harmony-node.pem"
+	set -- "$@" -i "${key_file}"
 else
 	node_ssh_info "key file does not exist; proceeding without one"
+fi
+
+if [ -f "$KEYDIR/harmony-node.pem" ]
+then
+	set -- "$@" -i "$KEYDIR/harmony-node.pem"
 fi
 
 if ${exit_mux_first}
