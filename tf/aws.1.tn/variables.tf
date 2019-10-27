@@ -12,12 +12,12 @@ variable "private_key_path" {
 
 variable "node_volume_size" {
   description = "Root Volume size of the ec2 node instance"
-  default     = 50
+  default     = 25
 }
 
 variable "node_instance_type" {
   description = "Instance type of the ec2 node instance"
-  default     = "t3.small"
+  default     = "t3.micro"
 }
 
 variable "aws_region" {
@@ -32,7 +32,7 @@ variable "node_owner" {
 
 variable "spot_instance_price" {
   description = "The spot instance price"
-  default     = "0.0418"
+  default     = "0.011"
 }
 
 variable "security_groups" {
