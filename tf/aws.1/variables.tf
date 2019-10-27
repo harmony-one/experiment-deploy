@@ -32,7 +32,7 @@ variable "node_owner" {
 
 variable "spot_instance_price" {
   description = "The spot instance price"
-  default     = "0.0418"
+  default     = "0.021"
 }
 
 variable "security_groups" {
