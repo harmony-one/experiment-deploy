@@ -140,6 +140,7 @@ resource "aws_spot_instance_request" "foundation-node" {
       "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
       "sudo systemctl enable harmony.service",
       "sudo systemctl start harmony.service",
+      "echo ${var.blskey_index} > index.txt",
     ]
     connection {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
