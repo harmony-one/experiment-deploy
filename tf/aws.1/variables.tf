@@ -35,6 +35,18 @@ variable "spot_instance_price" {
   default     = "0.021"
 }
 
+variable "spot_type" {
+   type        = "string"
+   description = "(Optional; Default: 'persistent') If set to 'one-time', after the instance is terminated, the spot request will be closed. Also, Terraform can't manage one-time spot requests, just launch them."
+   default     = "persistent"
+}
+
+variable "instance_interruption_behaviour" {
+   type        = "string"
+   description = "Whether a Spot instance stops or terminates when it is interrupted, can be stop or terminate"
+   default     = "stop"
+}
+
 variable "security_groups" {
   type        = map
   description = "Security Group Map"
