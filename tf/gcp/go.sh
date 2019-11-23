@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+SSH='ssh -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
+
 function usage
 {
    local me=$(basename $0)
@@ -13,15 +15,20 @@ PREREQUISITE:
 * make sure you have the json file for gcp and set GOOGLE_CLOUD_KEYFILE_JSON environment variable.
 
 OPTIONS:
-   -h                            print this help message
+   -h                               print this help message
 
 COMMANDS:
-   new [list of index]           list of blskey index
-   rclone [list of ip]           list of IP addresses to run rclone 
+   new [list of index]              list of blskey index
+   rclone [list of ip]              list of IP addresses to run rclone 
+   wait [list of ip]                list of IP addresses to wait until rclone finished, check every minute
+   uptime [list of index:ip pair]   list of index:IP pair to update uptime robot
 
 EXAMPLES:
    $me new 308
    $me rclone 1.2.3.4
+
+   $me wait 1.2.3.4 2.2.2.2
+   $me uptime 308:1.2.3.4 404:2.2.2.2
 
 EOT
 
@@ -85,7 +92,7 @@ function _do_launch_one
 function new_instance
 {
    indexes=$@
-   for i in $indexes; do
+   for i in "$indexes"; do
       _do_launch_one $i
    done
 }
@@ -94,8 +101,52 @@ function new_instance
 function rclone_sync
 {
    ips=$@
-   for ip in $ips; do
-      ssh gce-user@$ip 'nohup /home/gce-user/rclone.sh > rclone.log 2> rclone.err < /dev/null &'
+   for ip in "$ips"; do
+      $SSH gce-user@$ip 'nohup /home/gce-user/rclone.sh > rclone.log 2> rclone.err < /dev/null &'
+   done
+}
+
+function do_wait
+{
+   ips=$@
+   declare -A DONE
+   for ip in "$ips"; do
+      DONE[$ip]=false
+   done
+
+   min=0
+   while true; do
+      for ip in "$ips"; do
+         rc=$($SSH gce-user@$ip 'pgrep -n rclone')
+         if [ -n "$rc" ]; then
+            echo "rclone is running on $ip. pid: $rc."
+         else
+            echo "rclone is not running on $ip."
+         fi
+         hmy=$($SSH gce-user@$ip 'pgrep -n harmony')
+         if [ -n "$hmy" ]; then
+            echo "harmony is running on $ip. pid: $hmy"
+            DONE[$ip]=true
+         else
+            echo "harmony is not running on $ip."
+         fi
+      done
+
+      alldone=true
+      for ip in "$ips"; do
+         if ! ${DONE[$ip]}; then
+            alldone=false
+            break
+         fi
+      done
+
+      if $alldone; then
+         echo All Done!
+         return
+      fi
+      echo "sleeping 60s, $min minutes passed"
+      sleep 60
+      (( min++ ))
    done
 }
 
@@ -121,5 +172,7 @@ get_zones
 case $CMD in
    new) new_instance $@ ;;
    rclone) rclone_sync $@ ;;
+   wait) do_wait $@ ;;
+   uptime) update_uptime $@ ;;
    *) usage ;;
 esac
