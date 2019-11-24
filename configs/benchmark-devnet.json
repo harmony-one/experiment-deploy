@@ -1,34 +1,43 @@
 {
-  "description": "aws 448 nodes on 4 shards, 2 regions, run 300 seconds",
+  "description": "aws 80/100 nodes on 2 shard in 2 regions",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 2,
-    "type": "t3.medium",
+    "num_vm": 1,
+    "type": "t3.small",
     "regions": "iad,pdx",
     "protection": false,
-    "root": 8
+    "root": 20
+  },
+  "explorer_node": {
+    "num_vm": 1,
+    "type": "t3.small",
+    "regions": "iad,pdx",
+    "protection": false,
+    "root": 30
   },
   "bootnode": {
      "enable": true,
-     "server": "54.213.43.194",
-     "name": "b2.harmony.one",
-     "port": 9873,
+     "server": "52.40.84.2",
+     "name": "b6.harmony.one",
+     "port": 9870,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
-     "p2pkey": "b2-9873.key"
+     "p2pkey": "b2-9874.key",
+     "log_conn": false
   },
   "bootnode1": {
      "enable": true,
-     "server": "100.26.90.187",
-     "name": "b1.harmony.one",
-     "port": 9873,
+     "server": "54.86.126.90",
+     "name": "b5.harmony.one",
+     "port": 9870,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
-     "p2pkey": "b1-9873.key"
+     "p2pkey": "b1-9874.key",
+     "log_conn": false
   },
   "azure": {
     "num_vm": 0,
@@ -39,15 +48,18 @@
     ]
   },
   "benchmark": {
-    "shards": 4,
-    "duration": 300,
+    "shards": 2,
+    "duration": 120,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 150,
-    "minpeer": 101,
+    "peer_per_shard": 50,
+    "minpeer": 32,
+    "log_conn": false,
     "even_shard": true,
     "init_retry": false,
+    "commit_delay": "2s",
+    "network_type": "pangaea",
     "bls": true
   },
   "logs": {
@@ -58,33 +70,37 @@
     "db": false
   },
   "dashboard": {
-    "server": "34.222.41.95",
-    "name": "0.harmony.one",
+    "name": "1.harmony.one",
     "port": 3000,
     "reset": "false"
   },
   "explorer": {
-    "server": "34.222.41.95",
-    "name": "0.harmony.one",
+    "name": "explorer.harmony.one",
+    "port": 4444,
+    "reset": "false"
+  },
+  "explorer2": {
+    "name": "34.220.94.30",
     "port": 4444,
     "reset": "false"
   },
   "txgen": {
-     "enable": "true",
+     "enable": "false",
      "ip": "myip",
      "port": 8000
   },
-  "parallel": 80,
+  "parallel": 50,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 120,
-     "reserved_account": ""
+     "reserved_account": "",
+     "rpczone": "p"
   },
   "bls": {
-     "pass": "blspass.txt",
+     "pass": "blsnopass.txt",
      "bucket": "harmony-secret-keys",
-     "folder": "bls",
-     "keyfile": "blskey.txt"
+     "folder": "bls-pangaea",
+     "keyfile": "pangaea-keys.txt"
   },
   "genesis": "genesis.txt",
   "libp2p": true

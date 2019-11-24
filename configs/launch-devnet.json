@@ -2,21 +2,20 @@
    "launch": [
       {
          "region": "iad",
-         "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 220,
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 39,
          "protection": false,
-         "root": 8
+         "root": 20
       },
       {
          "region": "pdx",
-         "type": "t3.micro",
-         "ondemand": 2,
-         "spot": 220,
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 39,
          "protection": false,
-         "root": 8
+         "root": 20
       }
-
    ],
    "userdata": {
       "name": "http",
