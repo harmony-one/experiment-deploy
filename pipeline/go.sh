@@ -166,6 +166,32 @@ function do_launch
    expense launch
 }
 
+function do_dns_setup
+{
+   R53=${THEPWD}/updater53.sh
+   local NUM_RPC=5
+   rm -f $R53
+
+   [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+   TS=$(cat $SESSION_FILE | $JQ .sessionID)
+
+   local n=0
+   local shards=${configs[benchmark.shards]}
+
+   while [ $n -lt $shards ]; do
+# choose the top $NUM_RPC nodes as the rpc end points for state syncing
+      RPCS[$n]=$(grep " $n " ${THEPWD}/logs/$TS/distribution_config.txt | head -n $NUM_RPC | cut -f1 -d' ')
+
+      echo python3 r53update.py ${configs[flow.rpczone]} $n ${RPCS[$n]} | tee -a $R53
+      (( n++ ))
+   done
+   chmod +x $R53
+   cp -f $R53 ${THEPWD}/logs/${TS}/
+
+# execute the r53 command to set dns
+   ${R53}
+}
+
 function do_launch_bootnode
 {
    BN=${1:-bootnode}
@@ -393,7 +419,6 @@ function do_wallet_ini
    TS=$(cat $SESSION_FILE | $JQ .sessionID)
 
    INI=${THEPWD}/logs/$TS/wallet.ini
-   R53=${THEPWD}/updater53.sh
 
    echo "[$SECTION]" > $INI
    for bnf in $(ls ${THEPWD}/logs/$TS/bootnode*-ma.txt); do
@@ -434,14 +459,6 @@ function do_wallet_ini
       (( n++ ))
    done
    echo Please use $INI for your wallet to access the blockchain!
-   n=0
-   rm -f $R53
-   while [ $n -lt $shards ]; do
-      echo python3 r53update.py ${configs[flow.rpczone]} $n ${RPCS[$n]} | tee -a $R53
-      (( n++ ))
-   done
-   chmod +x $R53
-   cp -f $R53 ${THEPWD}/logs/${TS}/
 }
 
 reinit_ip() {
@@ -546,6 +563,7 @@ function do_all
    do_launch_bootnode bootnode3
    do_launch_bootnode bootnode4
    do_launch
+   do_dns_setup
    do_run
    do_reset_explorer
    do_reset_explorer explorer2
@@ -555,7 +573,7 @@ function do_all
    if [ "$KEEP" == "false" ]; then
       do_deinit
    fi
-   do_wallet_ini
+#   do_wallet_ini
    echo all logs are uploaded to
    echo $S3URL
 }
