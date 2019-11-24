@@ -125,8 +125,10 @@ function do_simple_cmd
       fi
       # Disable DNS for the initial launch, only for bls enabled network
       # For older version like cello, we don't have -dns option support
-      if [ "${configs[benchmark.bls]}" == "true" ]; then
+      if [ -z "$dns_zone" ]; then
          benchmarkArgs+=" -dns=false"
+      else
+         benchmarkArgs+=" -dns_zone=$dns_zone"
       fi
       if [ "$CLIENT" == "true" ]; then
          CLIENT_JSON=',"role":"client"'
@@ -328,21 +330,21 @@ EOT
    fi
 
    # add DNS zone option to init json for later restarts
-   case "${cmd}" in
-   init)
-      case "${dns_zone+set}" in
-      set)
-         for initfile in \
-            "${LOGDIR}/${cmd}/leader.${cmd}-"*".json" \
-            "${LOGDIR}/${cmd}/${cmd}-"*".json"
-         do
-            : # $JQ '.benchmarkArgs += " -dns_zone='"${dns_zone}"'"' < "${initfile}" > "${initfile}.new"
-            : # mv -f "${initfile}.new" "${initfile}"
-         done
-         ;;
-      esac
-      ;;
-   esac
+#   case "${cmd}" in
+#   init)
+#      case "${dns_zone+set}" in
+#      set)
+#         for initfile in \
+#            "${LOGDIR}/${cmd}/leader.${cmd}-"*".json" \
+#            "${LOGDIR}/${cmd}/${cmd}-"*".json"
+#         do
+#            $JQ '.benchmarkArgs += " -dns_zone='"${dns_zone}"'"' < "${initfile}" > "${initfile}.new"
+#            cp -f "${initfile}.new" "${initfile}"
+#         done
+#         ;;
+#      esac
+#      ;;
+#   esac
 }
 
 function do_update
