@@ -190,6 +190,9 @@ function do_dns_setup
 
 # execute the r53 command to set dns
    ${R53}
+
+   echo wait for dns records update ... 120s
+   sleep 120
 }
 
 function do_launch_bootnode
