@@ -94,7 +94,7 @@
   "flow": {
      "wait_for_launch": 120,
      "reserved_account": "",
-     "rpczone": "p"
+     "rpczone": "pga"
   },
   "bls": {
      "pass": "blsnopass.txt",
