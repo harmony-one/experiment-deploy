@@ -69,8 +69,14 @@ case "${userip}" in
 	ip="${userip#*@}"
 	;;
 *)
-	user=$(id -un)
 	ip="${userip}"
+   vendor=$(find_cloud_from_ip $ip)
+   case "$vendor" in
+   "aws")
+      userip="ec2-user@${userip}" ;;
+   "gcp")
+      userip="gce-user@${userip}" ;;
+   esac
 	;;
 esac
 cmd_quoted=$(shell_quote "$@")

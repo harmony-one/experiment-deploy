@@ -138,7 +138,7 @@ grep -v '^$' < "${shard_ip_file}" | (
 				set -- "$@" -M
 			fi
 		fi
-		"${progdir}/node_ssh.sh" -d "${logdir}" -n "$@" "ec2-user@${ip}" '
+		"${progdir}/node_ssh.sh" -d "${logdir}" -n "$@" "${ip}" '
 			ts='\'"${ts}"\''
 			ip='\'"${ip}"\''
 			'"${cmd}"'

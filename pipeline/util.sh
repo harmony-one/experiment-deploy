@@ -196,12 +196,36 @@ REGION_KEY['ap-northeast-1']='tokyo-key-benchmark.pem'
 REGION_KEY['ap-southeast-1']='singapore-key-benchmark.pem'
 REGION_KEY['eu-central-1']='frankfurt-key-benchmark.pem'
 REGION_KEY['eu-west-1']='ireland-key-benchmark.pem'
+REGION_KEY['gcp']='harmony-node.pem'
+
+find_cloud_from_ip()
+{
+   ip=$1
+   if [ -n "$ip" ]; then
+      dns=$(host "$ip" | awk ' { print $NF } ' | awk -F\. ' { print $(NF-2) }' )
+      case "$dns" in
+      "amazonaws")
+         vendor=aws ;;
+      "googleusercontent")
+         vendor=gcp ;;
+      esac
+      echo $vendor
+   else
+      echo null
+   fi
+}
 
 find_key_from_ip()
 {
    ip=$1
    if [ -n "$ip" ]; then
-      host=$(host "$ip" | awk ' { print $NF } ' | awk -F\. ' { print $2 }' )
+      vendor=$(find_cloud_from_ip $ip)
+      case "$vendor" in
+      "aws")
+         host=$(host "$ip" | awk ' { print $NF } ' | awk -F\. ' { print $2 }' ) ;;
+      "gcp")
+         host='gcp' ;;
+      esac
       echo ${REGION_KEY[$host]}
    fi
 }
