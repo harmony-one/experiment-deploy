@@ -133,6 +133,9 @@ function do_simple_cmd
       if [ "$CLIENT" == "true" ]; then
          CLIENT_JSON=',"role":"client"'
       fi
+      if $PUBLIC_RPC; then
+         benchmarkArgs+=" -public_rpc"
+      fi
 
       explorerArgs=$benchmarkArgs
       explorerArgs+=" -node_type=explorer -shard_id=SHARDID"
@@ -392,6 +395,7 @@ MINPEER=10
 CLIENT=
 BNMA=
 LIBP2P=false
+PUBLIC_RPC=false
 
 declare -A NODES
 declare -A NODEIPS
@@ -401,7 +405,7 @@ unset -v commit_delay log_conn dns_zone network_type
 log_conn=false
 
 #################### MAIN ####################
-while getopts "hf:i:a:n:vD:A:C:m:cN:P:p:d:Lz:t:" option; do
+while getopts "hf:i:a:n:vD:A:C:m:cN:P:p:d:Lz:t:R" option; do
    case $option in
       p)
          PROFILE=$OPTARG
@@ -426,6 +430,7 @@ while getopts "hf:i:a:n:vD:A:C:m:cN:P:p:d:Lz:t:" option; do
       d) commit_delay="${OPTARG}";;
       L) log_conn=true;;
       z) dns_zone="${OPTARG}";;
+      R) PUBLIC_RPC=true ;;
       t) network_type="${OPTARG}";;
       h|?) usage ;;
    esac

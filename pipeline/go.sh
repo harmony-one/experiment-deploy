@@ -263,7 +263,7 @@ function do_run
 
    [ $VERBOSE ] && RUN_OPTS+=" -v"
 
-   ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} "${NODE_OPTS[@]}" -p $PROFILE init
+   ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} "${NODE_OPTS[@]}" -p $PROFILE -R init
 
 # An example on how to call wallet on each node to generate transactions
 #   if [ "${configs[wallet.enable]}" == "true" ]; then

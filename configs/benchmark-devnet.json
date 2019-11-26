@@ -53,8 +53,8 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 50,
-    "minpeer": 32,
+    "peer_per_shard": 40,
+    "minpeer": 27,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
@@ -89,7 +89,7 @@
      "ip": "myip",
      "port": 8000
   },
-  "parallel": 50,
+  "parallel": 40,
   "userdata": "userdata-soldier-http.sh",
   "flow": {
      "wait_for_launch": 120,
