@@ -38,7 +38,7 @@ variable "spot_instance_price" {
 variable "spot_type" {
    type        = "string"
    description = "(Optional; Default: 'persistent') If set to 'one-time', after the instance is terminated, the spot request will be closed. Also, Terraform can't manage one-time spot requests, just launch them."
-   default     = "persistent"
+   default     = "one-time"
 }
 
 variable "instance_interruption_behaviour" {
