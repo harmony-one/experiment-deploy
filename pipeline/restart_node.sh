@@ -136,6 +136,63 @@ run_with_retries() {
 
 rn_notice "node to restart is ${ip}"
 
+unset -v node_type is_explorer explorer_shard
+is_explorer=false
+
+probe_node_type() {
+	local output
+	if ! output="$(node_ssh "${ip}" '
+		if [ -d ../tmp_log ]
+		then
+			echo exp false n/a
+		elif sudo systemctl is-enabled harmony.service
+		then
+			echo tf false n/a
+		elif [ -f bootnodes.txt ]
+		then
+			echo pga
+			if [ -f bls.key ]
+			then
+				echo false n/a
+			else
+				echo true
+				unset -v shard dbdir
+				for dbdir in harmony_db_*
+				do
+					[ -d "${dbdir}" ] || continue
+					shard="${dbdir#harmony_db_}"
+				done
+				echo "${shard:-unknown}"
+			fi
+		else
+			exit 1
+		fi
+	')"
+	then
+		rn_warning "cannot determine node type"
+		return 1
+	fi
+	set -- ${output}
+	rn_info "node type ${1}; is explorer ${2}; explorer shard ${3}"
+	case "${2}" in
+	false|true)
+		;;
+	*)
+		rn_warning "invalid explorer node indication $(shell_quote "${2}")"
+		return 1
+		;;
+	esac
+	case "${2}:${3}" in
+	true:unknown)
+		rn_warning "cannot get explorer shard"
+		return 1
+		;;
+	esac
+	node_type="${1}"
+	is_explorer="${2}"
+	explorer_shard="${3}"
+}
+
 unset -v dns_zone
 get_dns_zone() {
 	rn_info "getting DNS zone with which to restart nodes"
@@ -147,12 +204,19 @@ get_dns_zone() {
 	rn_info "DNS zone is ${dns_zone-'<unset>'}"
 }
 
-unset -v logfile zerologfile initfile is_explorer is_tf
+unset -v logfile zerologfile initfile
+
 find_initfile() {
+	case "${node_type}" in
+	exp) ;;
+	*)
+		rn_info "${node_type} nodes do not use init file"
+		return
+		;;
+	esac
 	rn_info "looking for init file"
 	local prefix
 	is_explorer=false
-	is_tf=false
 	for prefix in init leader.init explorer.init
 	do
 		initfile="${logdir}/init/${prefix}-${ip}.json"
@@ -165,53 +229,84 @@ find_initfile() {
 			return 0
 		fi
 	done
-	rn_info "cannot find init file for ${ip}; assuming a Terraform-provisioned node"
-	is_tf=true
+	rn_warning "cannot find init file for ${ip}"
+	return 1
 }
 
 unset -v launch_args
 get_launch_params() {
-	if ${is_tf}
-	then
+	case "${node_type}" in
+	tf)
 		rn_info "proceeding without launch arguments (not applicable for Terraform-provisioned nodes)"
 		return
-	fi
-	rn_info "getting launch arguments from init file"
-	local port sid args rpc
-	port="$(jq -r .port < "${initfile}")"
-	sid="$(jq -r .sessionID < "${initfile}")"
-	args="$(jq -r .benchmarkArgs < "${initfile}")"
-	if ${public_rpc}
-	then
-		rpc="-public_rpc"
-	fi
-	set -- -ip "${ip}" -port "${port}" -log_folder "../tmp_log/log-${sid}" $rpc ${args}
-	case "${dns_zone+set}" in
-	set) set -- "$@" "-dns_zone=${dns_zone}";;
+		;;
+	exp)
+		rn_info "getting launch arguments from init file"
+		local port sid args rpc
+		port="$(jq -r .port < "${initfile}")"
+		sid="$(jq -r .sessionID < "${initfile}")"
+		args="$(jq -r .benchmarkArgs < "${initfile}")"
+		if ${public_rpc}
+		then
+			rpc="-public_rpc"
+		fi
+		set -- -ip "${ip}" -port "${port}" -log_folder "../tmp_log/log-${sid}" $rpc ${args}
+		case "${dns_zone+set}" in
+		set) set -- "$@" "-dns_zone=${dns_zone}";;
+		esac
+		launch_args=$(shell_quote "$@")
+		;;
+	pga)
+		set -- \
+			'-bootnodes=$(cat bootnodes.txt)' \
+			-min_peers=32 \
+			-blspass=pass: \
+			-blskey_file=bls.key \
+			-network_type=testnet \
+			-dns_zone=p.hmny.io \
+			-public_rpc
+		if ${is_explorer}
+		then
+			set -- "$@" \
+				-node_type=explorer \
+				-shard_id="$(shell_quote "${explorer_shard}")"
+		fi
+		launch_args="$*"
+		;;
 	esac
-	launch_args=$(shell_quote "$@")
+
 	rn_info "launch arguments are: ${launch_args}"
 }
 
 get_logfile() {
 	rn_info "getting log filename"
-	local logfiledir
-	if ${is_tf}
-	then
-		logfiledir='latest'
-	else
+	local logfiledir logip
+	case "${node_type}" in
+	exp)
 		logfiledir=$(node_ssh "${ip}" '
 			ls -td ../tmp_log/log-* | head -1
 		') || return $?
-	fi
+		;;
+	*)
+		logfiledir='latest'
+		;;
+	esac
+	case "${node_type}" in
+	pga)
+		logip=127.0.0.1
+		;;
+	*)
+		logip="${ip}"
+		;;
+	esac
 	if [ -z "${logfiledir}" ]
 	then
 		rn_warning "cannot find log directory"
 		return 1
 	fi
-	logfile="${logfiledir}/validator-${ip}-9000.log"
+	logfile="${logfiledir}/validator-${logip}-9000.log"
 	rn_info "log file is ${logfile}"
-	zerologfile="${logfiledir}/zerolog-validator-${ip}-9000.log"
+	zerologfile="${logfiledir}/zerolog-validator-${logip}-9000.log"
 	rn_info "zerolog file is ${zerologfile}"
 }
 
@@ -220,33 +315,37 @@ s3_folder="s3://${bucket}/${folder}"
 rn_debug "s3_folder=$(shell_quote "${s3_folder}")"
 
 fetch_binaries() {
-	if ${is_tf}
-	then
+	case "${node_type}" in
+	tf)
 		rn_info "fetching upgrade binaries on tf node"
 		node_ssh "${ip}" "
 			./node.sh -U upgrade -d
 		"
-   else
-      rn_info "fetching upgrade binaries"
-      node_ssh "${ip}" "
-         aws s3 sync $(shell_quote "${s3_folder}") staging
-      "
-   fi
+		;;
+	*)
+		rn_info "fetching upgrade binaries"
+		node_ssh "${ip}" "
+			aws s3 sync $(shell_quote "${s3_folder}") staging
+		"
+		;;
+	esac
 }
 
 kill_harmony() {
 	rn_info "killing harmony process"
 	local status
 	status=0
-	if ${is_tf}
-	then
+	case "${node_type}" in
+	tf)
 		node_ssh "${ip}" 'sudo systemctl stop harmony.service' || status=$?
-	else
+		;;
+	*)
 		node_ssh "${ip}" 'sudo pkill harmony' || status=$?
 		case "${status}" in
 		1) status=0;;  # it is OK if no processes have been found
 		esac
-	fi
+		;;
+	esac
 	return ${status}
 }
 
@@ -289,8 +388,10 @@ upgrade_binaries() {
 	node_ssh "${ip}" '
 		set -eu
 		unset -v f
-		for f in harmony libmcl.so libbls384_256.so
+		for f in staging/*
 		do
+			[ -f "${f}" ] || continue
+			f="${f#staging/}"
 			rm -f "${f}"
 			cp -p "staging/${f}" "${f}"
 			case "${f}" in
@@ -330,10 +431,11 @@ get_logfile_size() {
 
 start_harmony() {
 	rn_info "restarting harmony process"
-	if ${is_tf}
-	then
+	case "${node_type}" in
+	tf)
 		node_ssh "${ip}" 'sudo systemctl daemon-reload; sudo systemctl start harmony.service'
-	else
+		;;
+	*)
 		node_ssh "${ip}" 'sudo sh -c '\''
 			LD_LIBRARY_PATH=.
 			export LD_LIBRARY_PATH
@@ -343,7 +445,8 @@ start_harmony() {
 			echo "harmony is running, pid=$!" >&2
 			echo $! > harmony.pid
 		'\'' sh '"${launch_args}"
-	fi
+		;;
+	esac
 }
 
 wait_for_consensus() {
@@ -390,6 +493,7 @@ wait_for_consensus() {
 
 # HERE BE DRAGONS
 
+run_with_retries probe_node_type
 get_dns_zone
 find_initfile
 get_launch_params
