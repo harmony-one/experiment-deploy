@@ -180,7 +180,10 @@ function do_dns_setup
 
    while [ $n -lt $shards ]; do
 # choose the top $NUM_RPC nodes as the rpc end points for state syncing
-      RPCS[$n]=$(grep " $n " ${THEPWD}/logs/$TS/distribution_config.txt | head -n $NUM_RPC | cut -f1 -d' ')
+      local shard_file=${THEPWD}/logs/$TS/shard${n}.txt
+      grep " $n " ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' > $shard_file
+      RPCS[$n]=$(head -n 1 $shard_file)
+      RPCS[$n]+=$(sort -R $shard_file | head -n ${NUM_RPC})
 
       echo python3 r53update.py ${configs[flow.rpczone]} $n ${RPCS[$n]} | tee -a $R53
       (( n++ ))
