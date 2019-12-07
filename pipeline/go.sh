@@ -205,6 +205,12 @@ function do_launch_bootnode
 
    local -a BOOTNODE_OPT
    logging launch $BN node - $PROFILE profile
+
+   if [ -e $SESSION_FILE ]; then
+      TS=$(cat $SESSION_FILE | $JQ .sessionID)
+      BOOTNODE_OPT+=(-s "$TS")
+   fi
+
    if [ -e ${CONFIG_DIR}/${configs[${BN}.p2pkey]} ]; then
       BOOTNODE_OPT+=(-K "${CONFIG_DIR}/${configs[${BN}.p2pkey]}")
    fi
@@ -212,6 +218,7 @@ function do_launch_bootnode
    ""|"null"|"false") ;;
    *) BOOTNODE_OPT+=(-L);;
    esac
+   echo ./bootnode.sh -G -p ${configs[${BN}.port]} -f ${FOLDER} -S ${configs[${BN}.server]} -k ${configs[${BN}.key]} -P $PROFILE -n $BN "${BOOTNODE_OPT[@]}"
    ./bootnode.sh -G -p ${configs[${BN}.port]} -f ${FOLDER} -S ${configs[${BN}.server]} -k ${configs[${BN}.key]} -P $PROFILE -n $BN "${BOOTNODE_OPT[@]}"
    expense bootnode
    BN_MA+="$(cat ${BN}-ma.txt),"
