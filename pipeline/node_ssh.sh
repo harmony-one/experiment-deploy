@@ -63,27 +63,30 @@ default_common_opts
 unset -v userip user ip cmd_quoted
 userip="${1-}"
 shift 1 2> /dev/null || usage "missing IP address"
+
+unset -v key_file
+KEYDIR=${HSSH_KEY_DIR:-${progdir}/../keys}
+
 case "${userip}" in
 *@*)
 	user="${userip%%@*}"
 	ip="${userip#*@}"
+	key_file=$KEYDIR/$(find_key_from_ip $ip)
 	;;
 *)
 	ip="${userip}"
-   vendor=$(find_cloud_from_ip $ip)
+   hostname=$(host "$ip" | awk ' { print $NF } ')
+   vendor=$(find_cloud_from_host $hostname)
    case "$vendor" in
    "aws")
       userip="ec2-user@${userip}" ;;
    "gcp")
       userip="gce-user@${userip}" ;;
    esac
+   key_file=$KEYDIR/$(find_key_from_host $hostname)
 	;;
 esac
 cmd_quoted=$(shell_quote "$@")
-
-unset -v key_file
-KEYDIR=${HSSH_KEY_DIR:-${progdir}/../keys}
-key_file=$KEYDIR/$(find_key_from_ip $ip)
 
 if ${use_ssh_mux}
 then
