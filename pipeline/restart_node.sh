@@ -396,7 +396,7 @@ upgrade_binaries() {
 	node_ssh "${ip}" '
 		set -eu
 		unset -v f
-		for f in harmony
+		for f in harmony libmcl.so libbls384_256.so
 		do
 			rm -f "${f}"
 			cp -fp "staging/${f}" "${f}"
