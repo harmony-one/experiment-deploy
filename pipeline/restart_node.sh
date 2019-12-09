@@ -145,7 +145,7 @@ probe_node_type() {
 		if [ -d ../tmp_log ]
 		then
 			echo exp false n/a
-		elif sudo systemctl is-enabled harmony.service
+		elif [ "X$(sudo systemctl is-enabled harmony.service)" = "Xenabled" ]
 		then
 			echo tf false n/a
 		elif [ -f bootnodes.txt ]
@@ -385,15 +385,21 @@ wait_for_harmony_process_to_exit() {
 
 upgrade_binaries() {
 	rn_info "upgrading node software"
+# we have to skip md5sum.txt file as a different md5sum.txt will trigger
+# a re-download of harmony binaries from node.sh
+# we are doing upgrade of software and will restart the harmony service
+# so we don't want to re-download the binaries.
+
+# TODO: we are using a hardcoded list of harmony binaries
+# in case we need to update libmcl.so, libbls384_256, we can add them later
+# to simplify, we just upgrade harmony node software atm
 	node_ssh "${ip}" '
 		set -eu
 		unset -v f
-		for f in staging/*
+		for f in harmony
 		do
-			[ -f "${f}" ] || continue
-			f="${f#staging/}"
 			rm -f "${f}"
-			cp -p "staging/${f}" "${f}"
+			cp -fp "staging/${f}" "${f}"
 			case "${f}" in
 			harmony)
 				chmod a+x "${f}"
