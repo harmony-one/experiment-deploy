@@ -1,0 +1,4 @@
+SHELL=/usr/bin/bash
+HOME=/home/ec2-user
+
+30 0 * * *  /home/ec2-user/uploadlog.sh >> $HOME/upload.log 2>&1

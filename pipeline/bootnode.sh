@@ -32,6 +32,7 @@ OPTIONS:
    -n bootnode    the name of the bootnode (default: $BN)
    -K p2pkey      the filename of the p2pkey (default: $P2PKEY)
    -L             log P2P connections
+   -s session     specify session (default: $SESSION)
 
 COMMANDS:
    download       download bootnode binary
@@ -111,11 +112,12 @@ SERVER=${JENKINS}
 PROFILE=
 BN=bootnode
 P2PKEY=bootnode.key
+SESSION=
 
 unset -v log_conn_opt
 log_conn_opt=
 
-while getopts "hvGp:b:f:S:k:P:n:K:L" option; do
+while getopts "hvGp:b:f:S:k:P:n:K:Ls:" option; do
    case $option in
       v) VERBOSE=-v ;;
       G) DRYRUN= ;;
@@ -128,6 +130,7 @@ while getopts "hvGp:b:f:S:k:P:n:K:L" option; do
       n) BN=$OPTARG ;;
       K) P2PKEY=$OPTARG ;;
       L) log_conn_opt="-log_conn" ;;
+      s) SESSION=$OPTARG ;;
       h|?|*) usage ;;
    esac
 done
@@ -143,7 +146,13 @@ fi
 SSH="/usr/bin/ssh -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
 SCP="/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
 
-WORKDIR=/bootnode/bootnode-$FOLDER-$PROFILE-$NOW
+if [ -n "$SESSION" ]; then
+   SUFFIX=$SESSION
+else
+   SUFFIX=$NOW
+fi
+
+WORKDIR=/bootnode/bootnode-$FOLDER-$PROFILE-$SUFFIX
 
 case $CMD in
    download) _do_download ;;

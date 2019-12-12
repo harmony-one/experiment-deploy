@@ -14,17 +14,30 @@ OPTIONS:
    -G          do the real work, not dryrun
    -g filter   grep filter to filter out the instances (default: $FILTER)
    -p profile  find all running instance with specified Profile tag
+   -N network  specify the network (mainnet,testnet; default: $NETWORK)
 
 ACTION:
    list        list all running instances (id,type,name) - default
    delete      delete all running instances
    unprotect   disable termination protection
    unmonitor   disable detailed cloud watch monitor
+   tf          list all terraform instances (NOTE: need to have mainnet profile in ~/.aws/credentials)
 
 
 EXAMPLES:
 
-   $ME -g leo -G
+# list all mainnet legacy nodes
+   $ME -g HARMONY
+
+# list all testnet legacy nodes
+   $ME -g BETA
+
+# list all pangaea legacy nodes
+   $ME -g PANGAEA
+
+# list all mainnet terraform nodes in tf.nodes.txt file
+   $ME tf
+
 EOT
 
    exit 1
@@ -95,11 +108,11 @@ function list_ids
    for r in ${REGIONS[@]}; do {
       if [ -n "$PROFILE" ]; then
          echo Listing running instance with tag: Profile =\> \"$PROFILE\" at $r ...
-         query=".Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | select (.tag.Value | contains (\"-$PROFILE-\")) | [.id, .type, .tag.Value ] | @tsv "
+         query=".Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?, ip:.PublicIpAddress} | select (.tag.Value | contains (\"-$PROFILE-\")) | [.id, .type, .tag.Value, .ip ] | @tsv "
          $AWS --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running" "Name=tag:Profile,Values=${PROFILE}" | jq -r "$query" | sort > $r.ids
       else
          echo Listing running instance with name filter \"$FILTER\" at $r ...
-         $AWS --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running" | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?} | [.id, .type, .tag.Value ] | @tsv ' | grep -E $FILTER | sort > $r.ids
+         $AWS --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running" | jq -r '.Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, tag:.Tags[]?, ip:.PublicIpAddress} | [.id, .type, .tag.Value, .ip ] | @tsv ' | grep -E $FILTER | grep -v " $FILTER " | sort > $r.ids
       fi
       NUM_INST=$(cat $r.ids | cut -f 1 | sort -u | wc -l)
       echo ${NUM_INST} running instances found in $r
@@ -108,8 +121,28 @@ function list_ids
       fi
    } & done
    wait
-   num=$(cat *.ids | cut -f 1 | sort -u |wc -l)
+   cut -f 4 *.ids 2>/dev/null | sort -u > $FILTER.nodes.txt 2> /dev/null
+   num=$(wc -l $FILTER.nodes.txt)
+   echo List of IP addresses =\> $FILTER.nodes.txt
    echo $num running instances found with name filter: \"$FILTER\"
+}
+
+function list_tf_nodes
+{
+   for r in ${REGIONS[@]}; do {
+      query=".Reservations[].Instances[] | {id:.InstanceId, type:.InstanceType, ip:.PublicIpAddress} | [.id, .type, .ip] | @tsv "
+      aws --profile $NETWORK --region $r ec2 describe-instances --no-paginate --filters "Name=instance-state-name,Values=running" | jq -r "$query" | sort > $r.ids
+      NUM_INST=$(wc -l $r.ids | awk ' { print $1 } ')
+      echo ${NUM_INST} running instances found in $r
+      if [ ${NUM_INST} == 0 ]; then
+         rm -f $r.ids
+      fi
+   } & done
+   wait
+   num=$(wc -l *.ids | tail -n 1)
+   cut -f 3 *.ids > tf.$NETWORK.nodes.txt 2> /dev/null
+   echo List of IP addresses =\> tf.$NETWORK.nodes.txt
+   echo $num running terraform instances found.
 }
 
 ############################### GLOBAL VARIABLES ###############################
@@ -117,14 +150,16 @@ DRYRUN=echo
 AWS=aws
 FILTER=${WHOAMI:-USER}
 PROFILE=
+NETWORK=mainnet
 
 ############################### MAIN FUNCTION    ###############################
-while getopts "hGg:p:" option; do
+while getopts "hGg:p:N:" option; do
    case $option in
       h) usage ;;
       G) DRYRUN= ;;
       g) FILTER=$OPTARG ;;
       p) PROFILE=$OPTARG ;;
+      N) NETWORK=$OPTARG ;;
    esac
 done
 
@@ -142,6 +177,11 @@ case "$ACTION" in
       terminate_ids ;;
    "unmonitor")
       disable_monitor ;;
+   "tf")
+      list_tf_nodes
+      exit 0 ;;
+   *)
+      usage ;;
 esac
 
 if [ -n "$DRYRUN" ]; then

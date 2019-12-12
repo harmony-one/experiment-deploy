@@ -1,8 +1,8 @@
 # Security Group with Harmoney Node ports enabled
 
-resource "aws_security_group" "harmony-node-sg" {
-  name        = "Harmony Node Security Group"
-  description = "Security group for Harmony Nodes"
+resource "aws_security_group" "harmony-tn-node-sg" {
+  name        = "Harmony TestNet Node Security Group"
+  description = "Security group for Harmony TestNet Nodes"
 
   ingress {
     from_port   = 22
@@ -35,7 +35,7 @@ resource "aws_security_group" "harmony-node-sg" {
     cidr_blocks = ["52.37.248.195/32"]
     description = "Enable SSH from Leo H2 Desktop"
   }
-
+ 
   ingress {
     from_port   = 22
     to_port     = 22
@@ -43,7 +43,7 @@ resource "aws_security_group" "harmony-node-sg" {
     cidr_blocks = ["13.52.173.26/32"]
     description = "Enable SSH from Leo H3 Desktop"
   }
-
+ 
   ingress {
     from_port   = 6000
     to_port     = 6000
@@ -77,7 +77,7 @@ resource "aws_security_group" "harmony-node-sg" {
   }
 
   tags = {
-    Name    = "Harmony Node Security Group"
+    Name    = "Harmony TestNet Node Security Group"
     Project = "Harmony"
   }
 }

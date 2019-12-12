@@ -25,7 +25,7 @@ VALIDATORS=$2
 FILES=( $(cat $LEADERS) )
 
 if [ -n "$VALIDATORS" ]; then
-   NUM_VALIDATORS=$(wc -l $VALIDATORS | awk ' { print $1 } ')
+   NUM_NODES=$(wc -l $VALIDATORS $LEADERS | tail -n 1 | awk ' { print $1 } ')
 fi
 
 NUM_SHARDS=${#FILES[@]}
@@ -49,7 +49,7 @@ for f in "${FILES[@]}"; do
    SUM=$( expr $SUM + $avg_tps_int )
 done
 
-echo $NUM_SHARDS shards, $NUM_CONSENSUS consensus, $SUM total TPS, $NUM_VALIDATORS nodes
+echo $NUM_SHARDS shards, $NUM_CONSENSUS consensus, $SUM total TPS, $NUM_NODES nodes
 for t in "${!TPS[@]}"; do
    echo $t, ${TPS[$t]}
 done

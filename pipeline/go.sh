@@ -146,7 +146,7 @@ function do_launch
 
    local expected=$(wc -l raw_ip.txt | cut -f 1 -d ' ')
    while [ $r -le $RETRY ]; do
-      local total=$(./aws-instances.sh -g $TAG | tail -n 1 | cut -f 1 -d ' ')
+      local total=$(./aws-instances.sh -g $TAG | tail -n 1 | cut -f 1 -d ' ' 2>/dev/null)
       if [ $prev_total -eq $total ]; then
          echo "no change on number of running instances, breaking retry loop - $r"
          break
@@ -166,6 +166,38 @@ function do_launch
    expense launch
 }
 
+function do_dns_setup
+{
+   R53=${THEPWD}/updater53.sh
+   local NUM_RPC=5
+   rm -f $R53
+
+   [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+   TS=$(cat $SESSION_FILE | $JQ .sessionID)
+
+   local n=0
+   local shards=${configs[benchmark.shards]}
+
+   while [ $n -lt $shards ]; do
+# choose the top $NUM_RPC nodes as the rpc end points for state syncing
+      local shard_file=${THEPWD}/logs/$TS/shard${n}.txt
+      grep " $n " ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' > $shard_file
+      RPCS[$n]=$(head -n 1 $shard_file)
+      RPCS[$n]+=$(sort -R $shard_file | head -n ${NUM_RPC})
+
+      echo python3 r53update.py ${configs[flow.rpczone]} $n ${RPCS[$n]} | tee -a $R53
+      (( n++ ))
+   done
+   chmod +x $R53
+   cp -f $R53 ${THEPWD}/logs/${TS}/
+
+# execute the r53 command to set dns
+   ${R53}
+
+   echo wait for dns records update ... 120s
+   sleep 120
+}
+
 function do_launch_bootnode
 {
    BN=${1:-bootnode}
@@ -176,6 +208,12 @@ function do_launch_bootnode
 
    local -a BOOTNODE_OPT
    logging launch $BN node - $PROFILE profile
+
+   if [ -e $SESSION_FILE ]; then
+      TS=$(cat $SESSION_FILE | $JQ .sessionID)
+      BOOTNODE_OPT+=(-s "$TS")
+   fi
+
    if [ -e ${CONFIG_DIR}/${configs[${BN}.p2pkey]} ]; then
       BOOTNODE_OPT+=(-K "${CONFIG_DIR}/${configs[${BN}.p2pkey]}")
    fi
@@ -183,6 +221,7 @@ function do_launch_bootnode
    ""|"null"|"false") ;;
    *) BOOTNODE_OPT+=(-L);;
    esac
+   echo ./bootnode.sh -G -p ${configs[${BN}.port]} -f ${FOLDER} -S ${configs[${BN}.server]} -k ${configs[${BN}.key]} -P $PROFILE -n $BN "${BOOTNODE_OPT[@]}"
    ./bootnode.sh -G -p ${configs[${BN}.port]} -f ${FOLDER} -S ${configs[${BN}.server]} -k ${configs[${BN}.key]} -P $PROFILE -n $BN "${BOOTNODE_OPT[@]}"
    expense bootnode
    BN_MA+="$(cat ${BN}-ma.txt),"
@@ -234,7 +273,7 @@ function do_run
 
    [ $VERBOSE ] && RUN_OPTS+=" -v"
 
-   ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} "${NODE_OPTS[@]}" -p $PROFILE init
+   ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} "${NODE_OPTS[@]}" -p $PROFILE -R init
 
 # An example on how to call wallet on each node to generate transactions
 #   if [ "${configs[wallet.enable]}" == "true" ]; then
@@ -309,7 +348,7 @@ function analyze_logs
    fi
 
    find logs/$TS/leader -name zerolog-validator-*.log > logs/$TS/all-leaders.txt
-   find logs/$TS/validator -name validator-*.log > logs/$TS/all-validators.txt
+   find logs/$TS/validator -name zerolog-validator-*.log > logs/$TS/all-validators.txt
    logging analyzing logs in $(cat logs/$TS/all-leaders.txt)
    ${THEPWD}/cal_tps.sh logs/$TS/all-leaders.txt logs/$TS/all-validators.txt | tee ${THEPWD}/logs/$TS/tps.txt
    expense analysis
@@ -393,7 +432,6 @@ function do_wallet_ini
    TS=$(cat $SESSION_FILE | $JQ .sessionID)
 
    INI=${THEPWD}/logs/$TS/wallet.ini
-   R53=${THEPWD}/updater53.sh
 
    echo "[$SECTION]" > $INI
    for bnf in $(ls ${THEPWD}/logs/$TS/bootnode*-ma.txt); do
@@ -434,14 +472,6 @@ function do_wallet_ini
       (( n++ ))
    done
    echo Please use $INI for your wallet to access the blockchain!
-   n=0
-   rm -f $R53
-   while [ $n -lt $shards ]; do
-      echo python3 r53update.py ${configs[flow.rpczone]} $n ${RPCS[$n]} | tee -a $R53
-      (( n++ ))
-   done
-   chmod +x $R53
-   cp -f $R53 ${THEPWD}/logs/${TS}/
 }
 
 reinit_ip() {
@@ -546,6 +576,7 @@ function do_all
    do_launch_bootnode bootnode3
    do_launch_bootnode bootnode4
    do_launch
+   do_dns_setup
    do_run
    do_reset_explorer
    do_reset_explorer explorer2
@@ -555,7 +586,7 @@ function do_all
    if [ "$KEEP" == "false" ]; then
       do_deinit
    fi
-   do_wallet_ini
+#   do_wallet_ini
    echo all logs are uploaded to
    echo $S3URL
 }

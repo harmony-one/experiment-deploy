@@ -184,3 +184,62 @@ ere_escape() {
 		;;
 	esac
 }
+
+# declare a map of region name
+declare -A REGION_KEY
+REGION_KEY['us-east-1']='virginia-key-benchmark.pem'
+REGION_KEY['compute-1']='virginia-key-benchmark.pem'
+REGION_KEY['us-east-2']='ohio-key-benchmark.pem'
+REGION_KEY['us-west-1']='california-key-benchmark.pem'
+REGION_KEY['us-west-2']='oregon-key-benchmark.pem'
+REGION_KEY['ap-northeast-1']='tokyo-key-benchmark.pem'
+REGION_KEY['ap-southeast-1']='singapore-key-benchmark.pem'
+REGION_KEY['eu-central-1']='frankfurt-key-benchmark.pem'
+REGION_KEY['eu-west-1']='ireland-key-benchmark.pem'
+REGION_KEY['gcp']='harmony-node.pem'
+
+find_cloud_from_host()
+{
+   local hostname1="$1"
+   if [ -n "$hostname1" ]; then
+      dns=$(echo "$hostname1" | awk -F\. ' { print $(NF-2) }' )
+      case "$dns" in
+      "amazonaws")
+         cloud=aws ;;
+      "googleusercontent")
+         cloud=gcp ;;
+      *)
+         cloud=unknown ;;
+      esac
+      echo $cloud
+   else
+      echo null
+   fi
+}
+
+find_key_from_host()
+{
+   local hostname2="$1"
+   if [ -n "$hostname2" ]; then
+      vendor=$(find_cloud_from_host $hostname2)
+      case "$vendor" in
+      "aws")
+         reg=$(echo "$hostname2" | awk -F\. ' { print $2 }' ) ;;
+      "gcp")
+         reg='gcp' ;;
+      *)
+         echo "ERROR: unknown cloud provider"
+         return
+      esac
+      echo ${REGION_KEY[$reg]}
+   fi
+}
+
+find_key_from_ip()
+{
+   local ip="$1"
+   if [ -n "$ip" ]; then
+      hostname=$(host "$ip" | awk ' { print $NF } ')
+      find_key_from_host $hostname
+   fi
+}

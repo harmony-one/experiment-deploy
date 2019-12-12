@@ -13,12 +13,12 @@ else
    TIMEOUT=timeout
 fi
 
-if [[ -z "$WHOAMI" || "$WHOAMI" == "ec2-user" ]]; then
+if [[ -e "$WHOAMI" || "$WHOAMI" == "ec2-user" ]]; then
    echo WHOAMI is not set or set to ec2-user
    exit 0
 fi
 
-if [ -z "$HMY_PROFILE" ]; then
+if [ -e "$HMY_PROFILE" ]; then
    echo HMY_PROFILE is not set
    exit 0
 fi
@@ -76,7 +76,6 @@ COMMANDS:
    replace [list of ip]       list of IP addresses of the existing node to be replaced, delimited by space
    new [list of index]        list of index of the harmony node in internal/genesis/harmony.go, delimited by space
    fast [list of ip]          list of IP addresses to do fast state syncing using snapshot, delimited by space
-   rclone [list of ip]        list of IP addresses to do rlcone, delimited by space
 
 EXAMPLES:
 
@@ -107,7 +106,6 @@ function _do_launch_one {
 
    region=${REGIONS[$RANDOM % ${#REGIONS[@]}]}
    terraform apply -var "aws_region=$region" -var "blskey_index=$index" -auto-approve || return
-   sleep 3
    IP=$(terraform output | jq -rc '.public_ip.value  | @tsv')
    echo "$IP" >> $OUTPUT
    sleep 1
@@ -116,7 +114,7 @@ function _do_launch_one {
 
 function do_state_sync
 {
-   aws --profile mainnet s3 sync states/ s3://mainnet.log/states/
+   aws --profile betanet s3 sync states/ s3://betanet.log/states/
 }
 
 function new_instance
@@ -133,7 +131,7 @@ function new_instance
 function _find_index_from_state
 {
    ip=$1
-   index=$(grep -l $ip $STATEDIR/terraform.tfstate.* | awk -F. ' { print $3 } ')
+   index=$(grep -l $ip $STATEDIR | awk -F. ' { print $3 } ')
    echo $index
 }
 
@@ -161,13 +159,7 @@ function replace_instance
          index=$(_find_index_from_init $ip)
       fi
       if [ -n "$index" ]; then
-         echo "ready to launch new instance with index: $index (yn)?"
-         read yesno
-         if [[ "$yesno" == "y" || "$yesno" == "Y" ]]; then
-            _do_launch_one $index
-         else
-            return
-         fi
+         _do_launch_one $index
       fi
    done
    do_state_sync
@@ -182,17 +174,8 @@ function fast_sync
    done
 }
 
-# use rclone to sync harmony db
-function rclone_sync
-{
-   ips=$@
-   for ip in $ips; do
-      ssh ec2-user@$ip 'nohup /home/ec2-user/rclone.sh > rclone.log 2> rclone.err < /dev/null &'
-   done
-}
-
 ###############################################################################
-LOGDIR=../../pipeline/logs/$HMY_PROFILE
+LOGDIR=logs/$HMY_PROFILE
 DRYRUN=echo
 OUTPUT=$LOGDIR/$(date +%F.%H:%M:%S).log
 
@@ -230,6 +213,5 @@ case $CMD in
    new) new_instance $@ ;;
    replace) replace_instance $@ ;;
    fast) fast_sync $@ ;;
-   rclone) rclone_sync $@ ;;
    *) usage ;;
 esac

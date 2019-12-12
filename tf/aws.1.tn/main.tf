@@ -1,24 +1,22 @@
 provider "aws" {
   region                  = var.aws_region
   shared_credentials_file = "~/.aws/credentials"
-  profile                 = "mainnet"
+  profile                 = "betanet"
 }
 
 resource "aws_spot_instance_request" "foundation-node" {
   ami                    = "${data.aws_ami.harmony-node-ami.id}"
   spot_price             = "${var.spot_instance_price}"
+  spot_type              = "one-time"
   instance_type          = "${var.node_instance_type}"
   vpc_security_group_ids = ["${lookup(var.security_groups, var.aws_region, var.default_key)}"]
-  key_name               = "harmony-node"
+  key_name               = "harmony-tn-node"
   wait_for_fulfillment   = true
   user_data              = "${file(var.user_data)}"
-  spot_type              = "${var.spot_type}"
-  instance_interruption_behaviour = "${var.instance_interruption_behaviour}"
 
   root_block_device {
     volume_type = "gp2"
     volume_size = "${var.node_volume_size}"
-    delete_on_termination = false
   }
 
   tags = {
@@ -32,7 +30,7 @@ resource "aws_spot_instance_request" "foundation-node" {
   }
 
   provisioner "local-exec" {
-    command = "aws s3 cp s3://harmony-secret-keys/bls/${lookup(var.harmony-nodes-blskeys, var.blskey_index, var.default_key)}.key files/bls.key"
+    command = "aws s3 cp s3://harmony-secret-keys/bls-test-fn/${lookup(var.harmony-tn-fn-nodes-blskeys, var.blskey_index, var.default_key)}.key files/bls.key"
   }
 
   provisioner "file" {
@@ -72,68 +70,8 @@ resource "aws_spot_instance_request" "foundation-node" {
   }
 
   provisioner "file" {
-    source      = "files/node_exporter.service"
-    destination = "/home/ec2-user/node_exporter.service"
-    connection {
-      host        = "${aws_spot_instance_request.foundation-node.public_ip}"
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
-      agent       = true
-    }
-  }
-
-  provisioner "file" {
-    source      = "files/rclone.conf"
-    destination = "/home/ec2-user/rclone.conf"
-    connection {
-      host        = "${aws_spot_instance_request.foundation-node.public_ip}"
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
-      agent       = true
-    }
-  }
-
-  provisioner "file" {
     source      = "files/fast.sh"
     destination = "/home/ec2-user/fast.sh"
-    connection {
-      host        = "${aws_spot_instance_request.foundation-node.public_ip}"
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
-      agent       = true
-    }
-  }
-
-  provisioner "file" {
-    source      = "files/rclone.sh"
-    destination = "/home/ec2-user/rclone.sh"
-    connection {
-      host        = "${aws_spot_instance_request.foundation-node.public_ip}"
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
-      agent       = true
-    }
-  }
-
-  provisioner "file" {
-    source      = "files/uploadlog.sh"
-    destination = "/home/ec2-user/uploadlog.sh"
-    connection {
-      host        = "${aws_spot_instance_request.foundation-node.public_ip}"
-      type        = "ssh"
-      user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
-      agent       = true
-    }
-  }
-
-  provisioner "file" {
-    source      = "files/crontab"
-    destination = "/home/ec2-user/crontab"
     connection {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
@@ -147,21 +85,10 @@ resource "aws_spot_instance_request" "foundation-node" {
   provisioner "remote-exec" {
     inline = [
       "curl -LO https://harmony.one/node.sh",
-      "chmod +x node.sh rclone.sh fast.sh uploadlog.sh",
-      "crontab crontab",
-      "mkdir -p /home/ec2-user/.config/rclone",
-      "mv -f rclone.conf /home/ec2-user/.config/rclone",
+      "chmod +x node.sh",
       "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
       "sudo systemctl enable harmony.service",
       "sudo systemctl start harmony.service",
-<<<<<<< HEAD
-      "sudo mv -f node_exporter.service /etc/systemd/system/node_exporter.service",
-      "sudo systemctl daemon-reload",
-      "sudo systemctl start node_exporter",
-      "sudo systemctl enable node_exporter"
-=======
-      "echo ${var.blskey_index} > index.txt",
->>>>>>> 18769602eddf111aa0e4afc579124e8ace5eba3a
     ]
     connection {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
