@@ -76,6 +76,17 @@ resource "google_compute_instance" "fn" {
     }
 
     provisioner "file" {
+        source = "files/node_exporter.service"
+        destination = "/home/gce-user/node_exporter.service"
+        connection {
+            host = "${google_compute_instance.fn.network_interface.0.access_config.0.nat_ip}"
+            type = "ssh"
+            user = "gce-user"
+            private_key = "${file(var.private_key_path)}"
+        }
+    }
+
+    provisioner "file" {
         source = "files/rclone.conf"
         destination = "/home/gce-user/rclone.conf"
         connection {
