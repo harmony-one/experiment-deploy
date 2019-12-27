@@ -10,12 +10,12 @@ variable "private_key_path" {
 
 variable "node_volume_size" {
   description = "Root Volume size of the GCP node instance"
-  default     = 150
+  default     = 200
 }
 
 variable "node_instance_type" {
   description = "Instance type of the GCP node instance"
-  default     = "n1-standard-2"
+  default     = "n1-standard-1"
 }
 
 variable "region" {

@@ -226,7 +226,7 @@ def main():
             'ResourceRecordSet': {
                 'Name': f'{shard_label}.{zone_name}',
                 'Type': rrtype_by_version[version],
-                'TTL': 60,
+                'TTL': 3600,
                 'ResourceRecords': [{'Value': str(addr)} for addr in addrs],
             },
         })
@@ -238,7 +238,7 @@ def main():
             'ResourceRecordSet': {
                 'Name': f'{leader_label}.{zone_name}',
                 'Type': rrtype_by_version[leader.version],
-                'TTL': 60,
+                'TTL': 3600,
                 'ResourceRecords': [{'Value': str(leader)}],
             },
         })
