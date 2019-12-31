@@ -7,7 +7,7 @@ After=network.target network-online.target
 Type=simple
 User=gce-user
 WorkingDirectory=/home/gce-user
-ExecStart=bash /home/gce-user/node.sh -1 -S -p /home/gce-user/bls.pass -k /home/gce-user/bls.key
+ExecStart=bash /home/gce-user/node.sh -1 -S -p /home/gce-user/bls.pass -k /home/gce-user/bls.key -P
 Restart=always
 
 [Install]
