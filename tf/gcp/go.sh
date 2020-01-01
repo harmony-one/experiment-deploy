@@ -92,8 +92,10 @@ function _do_launch_one
 function new_instance
 {
    indexes=$@
+   rm -f ip.txt
    for i in "$indexes"; do
       _do_launch_one $i
+      echo $IP >> ip.txt
    done
 }
 
