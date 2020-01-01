@@ -93,7 +93,7 @@ function new_instance
 {
    indexes=$@
    rm -f ip.txt
-   for i in "$indexes"; do
+   for i in $indexes; do
       _do_launch_one $i
       echo $IP >> ip.txt
    done
@@ -103,7 +103,7 @@ function new_instance
 function rclone_sync
 {
    ips=$@
-   for ip in "$ips"; do
+   for ip in $ips; do
       $SSH gce-user@$ip 'nohup /home/gce-user/rclone.sh > rclone.log 2> rclone.err < /dev/null &'
    done
 }
@@ -112,13 +112,13 @@ function do_wait
 {
    ips=$@
    declare -A DONE
-   for ip in "$ips"; do
+   for ip in $ips; do
       DONE[$ip]=false
    done
 
    min=0
    while true; do
-      for ip in "$ips"; do
+      for ip in $ips; do
          rc=$($SSH gce-user@$ip 'pgrep -n rclone')
          if [ -n "$rc" ]; then
             echo "rclone is running on $ip. pid: $rc."
@@ -135,7 +135,7 @@ function do_wait
       done
 
       alldone=true
-      for ip in "$ips"; do
+      for ip in $ips; do
          if ! ${DONE[$ip]}; then
             alldone=false
             break
