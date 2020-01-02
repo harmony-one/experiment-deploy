@@ -21,14 +21,14 @@ COMMANDS:
    new [list of index]              list of blskey index
    rclone [list of ip]              list of IP addresses to run rclone 
    wait [list of ip]                list of IP addresses to wait until rclone finished, check every minute
-   uptime [list of index:ip pair]   list of index:IP pair to update uptime robot
+   uptime [list of ip]              list of IP addresses to update uptime robot, will generate uptimerobot.sh cli
 
 EXAMPLES:
    $me new 308
    $me rclone 1.2.3.4
 
    $me wait 1.2.3.4 2.2.2.2
-   $me uptime 308:1.2.3.4 404:2.2.2.2
+   $me uptime 1.2.3.4 2.2.2.2
 
 EOT
 
@@ -149,6 +149,16 @@ function do_wait
       echo "sleeping 60s, $min minutes passed"
       sleep 60
       (( min++ ))
+   done
+}
+
+function update_uptime
+{
+   ips=$@
+   for ip in $ips; do
+      idx=$($SSH gce-user@$ip 'cat index.txt')
+      shard=$(( $idx % 4 ))
+      echo ./uptimerobot.sh -t n1 -i $idx update m5-$idx $ip $shard
    done
 }
 
