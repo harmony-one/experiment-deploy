@@ -154,14 +154,11 @@ resource "aws_spot_instance_request" "foundation-node" {
       "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
       "sudo systemctl enable harmony.service",
       "sudo systemctl start harmony.service",
-<<<<<<< HEAD
       "sudo mv -f node_exporter.service /etc/systemd/system/node_exporter.service",
       "sudo systemctl daemon-reload",
       "sudo systemctl start node_exporter",
       "sudo systemctl enable node_exporter"
-=======
       "echo ${var.blskey_index} > index.txt",
->>>>>>> 18769602eddf111aa0e4afc579124e8ace5eba3a
     ]
     connection {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
