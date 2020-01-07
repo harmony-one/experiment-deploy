@@ -1,5 +1,5 @@
 {
-  "description": "aws 80/100 nodes on 2 shard in 2 regions",
+  "description": "aws 750 nodes on 3 shard in 4 regions",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
@@ -8,14 +8,14 @@
   "leader": {
     "num_vm": 1,
     "type": "t3.small",
-    "regions": "iad,pdx",
+    "regions": "iad,pdx,sfo",
     "protection": false,
     "root": 20
   },
   "explorer_node": {
     "num_vm": 1,
     "type": "t3.small",
-    "regions": "iad,pdx",
+    "regions": "iad,pdx,sfo",
     "protection": false,
     "root": 30
   },
@@ -48,13 +48,13 @@
     ]
   },
   "benchmark": {
-    "shards": 2,
+    "shards": 3,
     "duration": 120,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 40,
-    "minpeer": 33,
+    "peer_per_shard": 250,
+    "minpeer": 160,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
@@ -94,13 +94,13 @@
   "flow": {
      "wait_for_launch": 120,
      "reserved_account": "",
-     "rpczone": "t2"
+     "rpczone": "pga"
   },
   "bls": {
      "pass": "blsnopass.txt",
      "bucket": "harmony-secret-keys",
-     "folder": "bls-pangaea",
-     "keyfile": "pangaea-keys.txt"
+     "folder": "bls-test",
+     "keyfile": "blskey-test.txt"
   },
   "genesis": "genesis.txt",
   "libp2p": true

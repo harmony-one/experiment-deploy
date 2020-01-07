@@ -4,7 +4,7 @@
          "region": "iad",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 39,
+         "spot": 170,
          "protection": false,
          "root": 20
       },
@@ -12,7 +12,23 @@
          "region": "pdx",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 39,
+         "spot": 170,
+         "protection": false,
+         "root": 20
+      },
+      {
+         "region": "sfo",
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 170,
+         "protection": false,
+         "root": 20
+      },
+      {
+         "region": "cmh",
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 147,
          "protection": false,
          "root": 20
       }
