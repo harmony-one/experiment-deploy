@@ -35,6 +35,11 @@ variable "default_key" {
   default = ""
 }
 
+variable "shard" {
+  description = "Shard Number"
+  default     = "0"
+}
+
 variable "blskey_index" {
   description = "Index of the Harmony Node BlsKey"
   default     = "0"

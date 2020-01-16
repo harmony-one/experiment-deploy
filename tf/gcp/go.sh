@@ -82,7 +82,10 @@ function _do_launch_one
    zone=${allzones[$RANDOM % ${#allzones[@]}]}
    region=${gzones[$zone]}
 
-   terraform apply -var "blskey_index=$index" -var "region=$region" -var "zone=$zone" -auto-approve || return
+# assuming 4 shard, calculate the shard number based on index number, mod 4
+   shard=$(( $index % 4 ))
+
+   terraform apply -var "blskey_index=$index" -var "region=$region" -var "zone=$zone" -var "shard=$shard" -auto-approve || return
    sleep 3
    IP=$(terraform output | grep 'ip = ' | awk -F= ' { print $2 } ' | tr -d ' ')
    sleep 1
@@ -144,12 +147,17 @@ function do_wait
 
       if $alldone; then
          echo All Done!
-         return
+         break
       fi
       echo "sleeping 60s, $min minutes passed"
       sleep 60
       (( min++ ))
    done
+
+   for ip in $ips; do
+      $SSH gce-user@$ip 'tac latest/zerolog*.log | grep -m 1 BINGO'
+   done
+   date
 }
 
 function update_uptime
@@ -159,6 +167,7 @@ function update_uptime
       idx=$($SSH gce-user@$ip 'cat index.txt')
       shard=$(( $idx % 4 ))
       echo ./uptimerobot.sh -t n1 -i $idx update m5-$idx $ip $shard
+      echo ./uptimerobot.sh -t n1 -i $idx -G update m5-$idx $ip $shard
    done
 }
 

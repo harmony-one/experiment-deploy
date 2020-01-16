@@ -15,7 +15,7 @@ resource "random_id" "instance_id" {
 
 // A single Google Cloud Engine instance
 resource "google_compute_instance" "fn" {
- name         = "node-${var.blskey_index}-${random_id.instance_id.hex}"
+ name         = "node-s${var.shard}-${var.blskey_index}-${random_id.instance_id.hex}"
  machine_type = "${var.node_instance_type}"
  zone         = "${var.zone}"
 
@@ -109,6 +109,7 @@ resource "google_compute_instance" "fn" {
         "sudo systemctl start harmony.service",
         "curl https://rclone.org/install.sh | sudo bash",
         "echo ${var.blskey_index} > index.txt",
+        "echo ${var.shard} > shard.txt",
         ]
         connection {
             host = "${google_compute_instance.fn.network_interface.0.access_config.0.nat_ip}"
