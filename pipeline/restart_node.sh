@@ -88,7 +88,7 @@ default_common_opts
 node_ssh() {
 	local ip=$1
 	shift
-	"${progdir}/node_ssh.sh" -p "${profile}" -d "${logdir}" -n "ec2-user@$ip" "$@"
+	"${progdir}/node_ssh.sh" -p "${profile}" -d "${logdir}" -n $ip "$@"
 }
 
 case "${timeout}" in
