@@ -672,7 +672,7 @@ case $ACTION in
          do_reset_explorer
          do_reset_explorer explorer2 ;;
    wallet)
-         do_wallet_ini ;;
+         do_dns_setup ;;
    reinit)
          do_reinit $* ;;
    replace)
