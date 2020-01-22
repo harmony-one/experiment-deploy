@@ -157,7 +157,7 @@ resource "aws_spot_instance_request" "foundation-node" {
       "sudo mv -f node_exporter.service /etc/systemd/system/node_exporter.service",
       "sudo systemctl daemon-reload",
       "sudo systemctl start node_exporter",
-      "sudo systemctl enable node_exporter"
+      "sudo systemctl enable node_exporter",
       "echo ${var.blskey_index} > index.txt",
     ]
     connection {
