@@ -64,7 +64,7 @@ function read_profile
       benchmark.attacked_mode benchmark.init_retry
       logs.leader logs.client logs.validator logs.soldier logs.db
       parallel
-      userdata flow.wait_for_launch flow.reserved_account flow.rpczone
+      userdata flow.wait_for_launch flow.reserved_account flow.rpczone flow.rpcnode
       benchmark.minpeer benchmark.even_shard benchmark.peer_per_shard
       benchmark.commit_delay benchmark.log_conn benchmark.network_type
       explorer.name explorer.port explorer.reset

@@ -169,7 +169,10 @@ function do_launch
 function do_dns_setup
 {
    R53=${THEPWD}/updater53.sh
-   local NUM_RPC=5
+   local NUM_RPC=${configs[flow.rpcnode]}
+   if [[ -z "$NUM_RPC" || "$NUM_RPC" == "null" ]]; then
+      NUM_RPC=5
+   fi
    rm -f $R53
 
    [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
