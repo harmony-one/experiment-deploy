@@ -44,7 +44,7 @@ variable "spot_type" {
 variable "instance_interruption_behaviour" {
    type        = "string"
    description = "Whether a Spot instance stops or terminates when it is interrupted, can be stop or terminate"
-   default     = "stop"
+   default     = "terminate"
 }
 
 variable "security_groups" {
