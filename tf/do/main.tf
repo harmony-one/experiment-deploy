@@ -17,6 +17,146 @@ resource "digitalocean_droplet" "harmony_node" {
     volume_ids  = [digitalocean_volume.harmony_data_volume.id]
     resize_disk = "false"
     depends_on = [digitalocean_volume.harmony_data_volume]
+
+
+    # provisioner "local-exec" {
+    #     command = "aws s3 cp s3://harmony-secret-keys/bls/${lookup(var.harmony-nodes-blskeys, var.blskey_index, var.default_key)}.key files/bls.key"
+    # }
+
+    # provisioner "file" {
+    #     source      = "files/bls.key"
+    #     destination = "/home/ec2-user/bls.key"
+    #     connection {
+    #     host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+    #     type        = "ssh"
+    #     user        = "ec2-user"
+    #     private_key = "${file(var.private_key_path)}"
+    #     agent       = true
+    #     }
+    # }
+
+    # provisioner "file" {
+    #     source      = "files/bls.pass"
+    #     destination = "/home/ec2-user/bls.pass"
+    #     connection {
+    #     host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+    #     type        = "ssh"
+    #     user        = "ec2-user"
+    #     private_key = "${file(var.private_key_path)}"
+    #     agent       = true
+    #     }
+    # }
+
+    # provisioner "file" {
+    #     source      = "files/harmony.service"
+    #     destination = "/home/ec2-user/harmony.service"
+    #     connection {
+    #     host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+    #     type        = "ssh"
+    #     user        = "ec2-user"
+    #     private_key = "${file(var.private_key_path)}"
+    #     agent       = true
+    #     }
+    # }
+
+    # provisioner "file" {
+    #     source      = "files/node_exporter.service"
+    #     destination = "/home/ec2-user/node_exporter.service"
+    #     connection {
+    #     host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+    #     type        = "ssh"
+    #     user        = "ec2-user"
+    #     private_key = "${file(var.private_key_path)}"
+    #     agent       = true
+    #     }
+    # }
+
+    # provisioner "file" {
+    #     source      = "files/rclone.conf"
+    #     destination = "/home/ec2-user/rclone.conf"
+    #     connection {
+    #     host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+    #     type        = "ssh"
+    #     user        = "ec2-user"
+    #     private_key = "${file(var.private_key_path)}"
+    #     agent       = true
+    #     }
+    # }
+
+    # provisioner "file" {
+    #     source      = "files/fast.sh"
+    #     destination = "/home/ec2-user/fast.sh"
+    #     connection {
+    #     host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+    #     type        = "ssh"
+    #     user        = "ec2-user"
+    #     private_key = "${file(var.private_key_path)}"
+    #     agent       = true
+    #     }
+    # }
+
+    # provisioner "file" {
+    #     source      = "files/rclone.sh"
+    #     destination = "/home/ec2-user/rclone.sh"
+    #     connection {
+    #     host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+    #     type        = "ssh"
+    #     user        = "ec2-user"
+    #     private_key = "${file(var.private_key_path)}"
+    #     agent       = true
+    #     }
+    # }
+
+    # provisioner "file" {
+    #     source      = "files/uploadlog.sh"
+    #     destination = "/home/ec2-user/uploadlog.sh"
+    #     connection {
+    #     host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+    #     type        = "ssh"
+    #     user        = "ec2-user"
+    #     private_key = "${file(var.private_key_path)}"
+    #     agent       = true
+    #     }
+    # }
+
+    # provisioner "file" {
+    #     source      = "files/crontab"
+    #     destination = "/home/ec2-user/crontab"
+    #     connection {
+    #     host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+    #     type        = "ssh"
+    #     user        = "ec2-user"
+    #     private_key = "${file(var.private_key_path)}"
+    #     agent       = true
+    #     }
+    # }
+
+
+    # provisioner "remote-exec" {
+    #     inline = [
+    #     "curl -LO https://harmony.one/node.sh",
+    #     "chmod +x node.sh rclone.sh fast.sh uploadlog.sh",
+    #     "crontab crontab",
+    #     "mkdir -p /home/ec2-user/.config/rclone",
+    #     "mv -f rclone.conf /home/ec2-user/.config/rclone",
+    #     "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
+    #     "sudo systemctl enable harmony.service",
+    #     "sudo systemctl start harmony.service",
+    #     "sudo mv -f node_exporter.service /etc/systemd/system/node_exporter.service",
+    #     "sudo systemctl daemon-reload",
+    #     "sudo systemctl start node_exporter",
+    #     "sudo systemctl enable node_exporter"
+    #     "echo ${var.blskey_index} > index.txt",
+    #     ]
+    #     connection {
+    #     host        = "${aws_spot_instance_request.foundation-node.public_ip}"
+    #     type        = "ssh"
+    #     user        = "ec2-user"
+    #     private_key = "${file(var.private_key_path)}"
+    #     agent       = true
+    #     }
+    # } 
+
 }
 
 resource "digitalocean_volume" "harmony_data_volume" {
