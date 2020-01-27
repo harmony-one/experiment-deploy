@@ -6,7 +6,7 @@ ME=`basename $0`
 SSH='ssh -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
 
 set -o pipefail
-set -x
+# set -x
 
 if [ "$(uname -s)" == "Darwin" ]; then
    TIMEOUT=gtimeout
@@ -109,7 +109,7 @@ function _do_launch_one {
    region=${REGIONS[$RANDOM % ${#REGIONS[@]}]}
    terraform apply -var "aws_region=$region" -var "blskey_index=$index" -auto-approve || return
    sleep 3
-   IP=$(terraform output | jq -rc '.public_ip.value  | @tsv')
+   IP=$(terraform output -json | jq -rc '.public_ip.value  | @tsv')
    echo "$IP" >> $OUTPUT
    sleep 1
    mv -f terraform.tfstate states/terraform.tfstate.$index
@@ -239,5 +239,7 @@ fi
 case $CMD in
    new) new_instance $@ ;;
    rclone) rclone_sync $@ ;;
+   wait) do_wait $@ ;;
+   uptime) update_uptime $@ ;;
    *) usage ;;
 esac
