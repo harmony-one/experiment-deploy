@@ -19,6 +19,16 @@ resource "digitalocean_droplet" "harmony_node" {
     depends_on = [digitalocean_volume.harmony_data_volume]
 
 
+    # create this path: /home/ec2-user for a droplet 
+    # provisioner "local-exec" {
+    #     command = "mount /dev/sda /mnt"
+    # }
+
+    # install aws cli tool
+
+
+    # hard bone: 
+
     # provisioner "local-exec" {
     #     command = "aws s3 cp s3://harmony-secret-keys/bls/${lookup(var.harmony-nodes-blskeys, var.blskey_index, var.default_key)}.key files/bls.key"
     # }
@@ -145,7 +155,7 @@ resource "digitalocean_droplet" "harmony_node" {
     #     "sudo mv -f node_exporter.service /etc/systemd/system/node_exporter.service",
     #     "sudo systemctl daemon-reload",
     #     "sudo systemctl start node_exporter",
-    #     "sudo systemctl enable node_exporter"
+    #     "sudo systemctl enable node_exporter",
     #     "echo ${var.blskey_index} > index.txt",
     #     ]
     #     connection {
