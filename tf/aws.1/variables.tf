@@ -12,7 +12,7 @@ variable "private_key_path" {
 
 variable "node_volume_size" {
   description = "Root Volume size of the ec2 node instance"
-  default     = 200
+  default     = 20
 }
 
 variable "node_instance_type" {
