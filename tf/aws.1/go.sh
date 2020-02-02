@@ -4,6 +4,7 @@
 source ./regions.sh
 ME=`basename $0`
 SSH='ssh -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
+REGION=
 
 set -o pipefail
 # set -x
@@ -107,10 +108,12 @@ function _do_launch_one {
    fi
 
    region=${REGIONS[$RANDOM % ${#REGIONS[@]}]}
+   REGION=$region
    terraform apply -var "aws_region=$region" -var "blskey_index=$index" -auto-approve || return
    sleep 3
    IP=$(terraform output -json | jq -rc '.public_ip.value  | @tsv')
-   echo "$IP" >> $OUTPUT
+   ID=$(terraform output -json | jq -rc '.instance_id.value  | @tsv')
+   echo "$IP:$ID" >> $OUTPUT
    sleep 1
    mv -f terraform.tfstate states/terraform.tfstate.$index
 }
@@ -127,6 +130,8 @@ function new_instance
    for i in $indexes; do
       _do_launch_one $i
       echo $IP >> ip.txt
+      shard=$(( $i % 4 ))
+      aws --profile mainnet --region $REGION ec2 create-tags --resources $ID --tags "Key=Name,Value=s${shard}-t3-$i" "Key=Shard,Value=${shard}" "Key=Index,Value=$i" "Key=Type,Value=node"
    done
 
    do_state_sync
@@ -196,8 +201,8 @@ function update_uptime
    for ip in $ips; do
       idx=$($SSH ec2-user@$ip 'cat index.txt')
       shard=$(( $idx % 4 ))
-      echo ./uptimerobot.sh -t t3 -i $idx update t3-$idx $ip $shard
-      echo ./uptimerobot.sh -t t3 -i $idx -G update t3-$idx $ip $shard
+      echo ./uptimerobot.sh -t t3 -i $idx update s${shard}-t3-$idx $ip $shard
+      echo ./uptimerobot.sh -t t3 -i $idx -G update s${shard}-t3-$idx $ip $shard
    done
 }
 
