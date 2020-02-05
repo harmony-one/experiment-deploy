@@ -68,7 +68,7 @@ function _do_launch_one
 
    shard=$(( $index % 4 ))
 
-   terraform apply -var "blskey_index=$index" -var "region=$region" -var "shard=$shard" -var "do_token=$DIGITAL_OCEAN_TOKEN" -auto-approve || return
+   terraform apply -var "blskey_index=$index" -var "droplet_region=$region" -var "shard=$shard" -var "do_token=$DIGITAL_OCEAN_TOKEN" -auto-approve || return
    sleep 3
    IP=$(terraform output | grep 'public_ip = ' | awk -F= ' { print $2 } ' | tr -d ' ')
    sleep 1

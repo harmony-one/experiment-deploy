@@ -1,6 +1,6 @@
 variable "do_token" {
   description = "Your DigitalOcean API token"
-  default     = "da616614ccb17b31ef8c0cf993f36885ea084001d626926e1a4ea75f7da68d66"
+  default     = "your_token_from_env_DIGITAL_OCEAN_TOKEN"
 }
 
 variable "ssh_private_key_path" {
@@ -10,7 +10,7 @@ variable "ssh_private_key_path" {
 
 variable "addition_volume_size" {
   description = "The addition volume size of the Droplet"
-  default     = 250
+  default     = 200
 }
 
 variable "droplet_size" {
@@ -20,7 +20,7 @@ variable "droplet_size" {
 
 variable "droplet_system_image" {
   description = "The system image of the Droplet"
-  default     = "centos-6-x64"
+  default     = "centos-8-x64"
 }
 
 variable "droplet_region" {
