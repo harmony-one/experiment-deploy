@@ -1,22 +1,22 @@
 {
-  "description": "aws 30 nodes on 3 shard in one region",
+  "description": "aws 20 nodes on 2 shards in one region",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 3,
+    "num_vm": 2,
     "type": "t3.small",
     "regions": "iad",
     "protection": false,
-    "root": 15
+    "root": 10
   },
   "explorer_node": {
-    "num_vm": 3,
+    "num_vm": 2,
     "type": "t3.small",
     "regions": "iad",
-    "root": 25,
+    "root": 20,
     "protection": false
   },
   "bootnode": {
@@ -48,13 +48,13 @@
     ]
   },
   "benchmark": {
-    "shards": 3,
+    "shards": 2,
     "duration": 120,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
     "peer_per_shard": 10,
-    "minpeer": 7,
+    "minpeer": 6,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
@@ -95,7 +95,7 @@
      "wait_for_launch": 60,
      "reserved_account": "",
      "rpczone": "b2",
-     "rpcnode": 2
+     "rpcnode": 4
   },
   "bls": {
      "pass": "blsnopass.txt",

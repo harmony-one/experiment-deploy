@@ -4,9 +4,9 @@
          "region": "iad",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 27,
+         "spot": 18,
          "protection": false,
-         "root": 15
+         "root": 10
       }
    ],
    "userdata": {
