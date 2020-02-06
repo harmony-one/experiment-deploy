@@ -101,9 +101,11 @@ function do_simple_cmd
       init)
       benchmarkArgs="$BOOTNODES -min_peers $MINPEER"
       if [ "${configs[benchmark.bls]}" == "true" ]; then
-         benchmarkArgs+=" -blspass file:${configs[bls.pass]} -blskey_file BLSKEY"
-      else
-         benchmarkArgs+=" -account_index ACC_INDEX -is_genesis"
+         if [ "${configs[multikey.enable]}" == "true" ]; then
+            benchmarkArgs+=" -blspass file:${configs[bls.pass]} -blsfolder=."
+         else
+            benchmarkArgs+=" -blspass file:${configs[bls.pass]} -blskey_file BLSKEY"
+         fi
       fi
       case "${commit_delay+set}" in
       set)
@@ -139,6 +141,7 @@ function do_simple_cmd
 
       explorerArgs=$benchmarkArgs
       explorerArgs+=" -node_type=explorer -shard_id=SHARDID"
+
       cat>$LOGDIR/$cmd/leader.$cmd.json<<EOT
 {
    "ip":"127.0.0.1",
@@ -207,19 +210,29 @@ EOT
 
 # send commands to leaders at first
    for n in $(seq 1 ${configs[benchmark.shards]}); do
+      shard_index[$(( $n - 1 ))]=1
       local ip=${NODEIPS[$n]}
       CMD=$"curl -X GET -s http://$ip:1${PORT[$ip]}/$cmd -H \"Content-Type: application/json\""
 
       case $cmd in
          init|update|wallet)
             if [ "${configs[benchmark.bls]}" == "true" ]; then
-               bls=${blskey[$start_index]}
-               sed "s/BLSKEY/$bls/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
-               # download bls private key files to each leader
-               ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
-            else
-               local index=$(( ${configs[benchmark.peer_per_shard]} * ( $n - 1 ) ))
-               sed "s/ACC_INDEX/$index/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
+               if [ "${configs[multikey.enable]}" != "true" ]; then
+                  bls=${blskey[$start_index]}
+                  sed "s/BLSKEY/$bls/" $LOGDIR/$cmd/leader.$cmd.json > $LOGDIR/$cmd/leader.$cmd-$ip.json
+                  # download bls private key files to each leader
+                  ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
+               else
+                  # multi-key support
+                  keys=( $(gen_multi_key ${configs[benchmark.shards]} ${configs[benchmark.peer_per_shard]} ${configs[multikey.key_per_node]} $(( $n - 1 )) 0 ) )
+                  cp $LOGDIR/$cmd/leader.$cmd.json $LOGDIR/$cmd/leader.$cmd-$ip.json
+                  for k in ${keys[@]}; do
+                     bls=${blskey[$k]}
+                     echo MK: k =\> $k bls =\> $bls
+# TODO specify multikey directory
+                     ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
+                  done
+               fi
             fi
             CMD+=$" -d@$LOGDIR/$cmd/leader.$cmd-$ip.json"
             (( start_index ++ ))
@@ -270,16 +283,24 @@ EOT
          case $cmd in
             init|update|wallet)
                if [ "${configs[benchmark.bls]}" == "true" ]; then
-                  bls=${blskey[$start_index]}
-                  sed "s/BLSKEY/$bls/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
-                  # download bls private key files to each node
-                  ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls" &
-               else
-                  if [ $(( $index % ${configs[benchmark.peer_per_shard]} )) == 0 ]; then
-                     (( index ++ ))
+                  if [ "${configs[multikey.enable]}" != "true" ]; then
+                     bls=${blskey[$start_index]}
+                     sed "s/BLSKEY/$bls/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
+                     # download bls private key files to each node
+                     ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls" &
+                  else
+                     local shard_num=$(( $start_index % ${configs[benchmark.shards]} ))
+                     # multi-key support
+                     keys=( $(gen_multi_key ${configs[benchmark.shards]} ${configs[benchmark.peer_per_shard]} ${configs[multikey.key_per_node]} $shard_num ${shard_index[$shard_num]} ) )
+                     shard_index[$shard_num]=$(( ${shard_index[$shard_num]} + 1 ))
+                     cp $LOGDIR/$cmd/$cmd.json $LOGDIR/$cmd/$cmd-$ip.json
+                     for k in ${keys[@]}; do
+                        bls=${blskey[$k]}
+                        echo MK: k =\> $k bls =\> $bls
+# TODO specify multikey directory
+                        ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
+                     done
                   fi
-                  sed "s/ACC_INDEX/$index/" $LOGDIR/$cmd/$cmd.json > $LOGDIR/$cmd/$cmd-$ip.json
-                  (( index ++ ))
                fi
 
                CMD+=$" -d@$LOGDIR/$cmd/$cmd-$ip.json"
