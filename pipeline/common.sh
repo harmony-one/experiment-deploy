@@ -80,7 +80,7 @@ function read_profile
       bootnode4.p2pkey bootnode4.log_conn
       wallet.enable
       benchmark.bls bls.pass bls.bucket bls.folder bls.keyfile
-      multikey.enable multikey.key_per_node
+      multikey.enable multikey.keys_per_node
    )
    
    managednodekey=.managednodes.nodes
@@ -142,7 +142,7 @@ function gen_multi_key
 {
    shard=$1
    num_nodes=$2
-   key_per_node=$3
+   keys_per_node=$3
 
    s=$4
    n=$5
@@ -151,10 +151,10 @@ function gen_multi_key
    total=$(( $shard * $num_nodes ))
 
 # gap among multi-key
-   gap=$(( $num_nodes / $key_per_node ))
+   gap=$(( $num_nodes / $keys_per_node ))
 
 # number of multi-key nodes, considering left over nodes
-   if [ $(( $num_nodes % $key_per_node )) -eq 0 ]; then
+   if [ $(( $num_nodes % $keys_per_node )) -eq 0 ]; then
       mk_nodes=$gap
    else
       mk_nodes=$(( $gap + 1 ))
@@ -166,7 +166,7 @@ function gen_multi_key
    lastone=false
    if [[ "$remainder" == "true" && $n -eq $(( $mk_nodes - 1 )) ]]; then
       lastone=true
-      start=$(( $gap * $shard * $key_per_node + $s ))
+      start=$(( $gap * $shard * $keys_per_node + $s ))
    else
       start=$(( $shard * $n + $s ))
    fi
@@ -176,7 +176,7 @@ function gen_multi_key
 # this is not ideal allocation algorithm for the last one though
    i=1
    keys=( $start )
-   while [ $i -lt $key_per_node ]; do
+   while [ $i -lt $keys_per_node ]; do
       if [ "$lastone" == "true" ]; then
          start=$(( $start + $shard ))
       else

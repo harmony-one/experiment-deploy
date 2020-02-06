@@ -224,7 +224,7 @@ EOT
                   ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
                else
                   # multi-key support
-                  keys=( $(gen_multi_key ${configs[benchmark.shards]} ${configs[benchmark.peer_per_shard]} ${configs[multikey.key_per_node]} $(( $n - 1 )) 0 ) )
+                  keys=( $(gen_multi_key ${configs[benchmark.shards]} ${configs[benchmark.peer_per_shard]} ${configs[multikey.keys_per_node]} $(( $n - 1 )) 0 ) )
                   cp $LOGDIR/$cmd/leader.$cmd.json $LOGDIR/$cmd/leader.$cmd-$ip.json
                   for k in ${keys[@]}; do
                      bls=${blskey[$k]}
@@ -291,7 +291,7 @@ EOT
                   else
                      local shard_num=$(( $start_index % ${configs[benchmark.shards]} ))
                      # multi-key support
-                     keys=( $(gen_multi_key ${configs[benchmark.shards]} ${configs[benchmark.peer_per_shard]} ${configs[multikey.key_per_node]} $shard_num ${shard_index[$shard_num]} ) )
+                     keys=( $(gen_multi_key ${configs[benchmark.shards]} ${configs[benchmark.peer_per_shard]} ${configs[multikey.keys_per_node]} $shard_num ${shard_index[$shard_num]} ) )
                      shard_index[$shard_num]=$(( ${shard_index[$shard_num]} + 1 ))
                      cp $LOGDIR/$cmd/$cmd.json $LOGDIR/$cmd/$cmd-$ip.json
                      for k in ${keys[@]}; do
