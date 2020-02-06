@@ -100,7 +100,8 @@
   },
   "multikey": {
      "enable": true,
-     "keys_per_node": 2
+     "keys_per_node": 2,
+     "blskey_folder": ".hmy/blskeys"
   },
   "genesis": "genesis.txt",
   "libp2p": true

@@ -102,7 +102,7 @@ function do_simple_cmd
       benchmarkArgs="$BOOTNODES -min_peers $MINPEER"
       if [ "${configs[benchmark.bls]}" == "true" ]; then
          if [ "${configs[multikey.enable]}" == "true" ]; then
-            benchmarkArgs+=" -blspass file:${configs[bls.pass]} -blsfolder=."
+            benchmarkArgs+=" -blspass file:${configs[bls.pass]} -blsfolder=${configs[multikey.blskey_folder]}"
          else
             benchmarkArgs+=" -blspass file:${configs[bls.pass]} -blskey_file BLSKEY"
          fi
@@ -228,9 +228,8 @@ EOT
                   cp $LOGDIR/$cmd/leader.$cmd.json $LOGDIR/$cmd/leader.$cmd-$ip.json
                   for k in ${keys[@]}; do
                      bls=${blskey[$k]}
-                     echo MK: k =\> $k bls =\> $bls
-# TODO specify multikey directory
-                     ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
+                     echo MK: k =\> $k, bls =\> $bls
+                     ./node_ssh.sh -d $LOGDIR ec2-user@$ip "mkdir -p ${configs[multikey.blskey_folder]} && aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls ${configs[multikey.blskey_folder]}/$bls"
                   done
                fi
             fi
@@ -296,9 +295,8 @@ EOT
                      cp $LOGDIR/$cmd/$cmd.json $LOGDIR/$cmd/$cmd-$ip.json
                      for k in ${keys[@]}; do
                         bls=${blskey[$k]}
-                        echo MK: k =\> $k bls =\> $bls
-# TODO specify multikey directory
-                        ./node_ssh.sh -d $LOGDIR ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
+                        echo MK: k =\> $k, bls =\> $bls
+                        ./node_ssh.sh -d $LOGDIR ec2-user@$ip "mkdir -p ${configs[multikey.blskey_folder]} && aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls ${configs[multikey.blskey_folder]}/$bls"
                      done
                   fi
                fi

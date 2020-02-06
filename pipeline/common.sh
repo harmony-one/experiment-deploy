@@ -80,7 +80,7 @@ function read_profile
       bootnode4.p2pkey bootnode4.log_conn
       wallet.enable
       benchmark.bls bls.pass bls.bucket bls.folder bls.keyfile
-      multikey.enable multikey.keys_per_node
+      multikey.enable multikey.keys_per_node multikey.blskey_folder
    )
    
    managednodekey=.managednodes.nodes
