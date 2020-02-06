@@ -416,8 +416,8 @@ function do_reset_explorer
    "leaders":[$explorer_nodes]
 }
 EOT
-      echo curl -m 3 -X POST https://${configs[${explorer}.name]}:${configs[${explorer}.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
-      curl -m 3 -X POST https://${configs[${explorer}.name]}:${configs[${explorer}.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+      echo curl -m 3 -X POST https://${configs[${explorer}.name]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+      curl -m 3 -X POST https://${configs[${explorer}.name]}/reset -H 'content-type: application/json' -d@explorer.reset.json
 
       [ -e explorer.reset.json ] && cp explorer.reset.json logs/$TS
    fi

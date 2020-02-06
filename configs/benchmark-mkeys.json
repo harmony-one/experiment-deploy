@@ -1,5 +1,5 @@
 {
-  "description": "aws 20 nodes on 2 shards in one region",
+  "description": "aws 20 nodes on 2 shards in one region, 2 key per node, we just need 10 nodes",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
@@ -75,14 +75,9 @@
     "reset": "false"
   },
   "explorer": {
-    "name": "explorer.harmony.one",
-    "port": 4444,
-    "reset": "false"
-  },
-  "explorer2": {
-    "name": "34.220.94.30",
-    "port": 4444,
-    "reset": "false"
+    "name": "explorer.mkeys.b2.hmny.io",
+    "port": 8888,
+    "reset": "true"
   },
   "txgen": {
      "enable": "false",
@@ -95,13 +90,18 @@
      "wait_for_launch": 60,
      "reserved_account": "",
      "rpczone": "b2",
-     "rpcnode": 4
+     "rpcnode": 2
   },
   "bls": {
      "pass": "blsnopass.txt",
      "bucket": "harmony-secret-keys",
      "folder": "bls-test",
      "keyfile": "blskey-test.txt"
+  },
+  "multikey": {
+     "enable": true,
+     "keys_per_node": 2,
+     "blskey_folder": ".hmy/blskeys"
   },
   "genesis": "genesis.txt",
   "libp2p": true
