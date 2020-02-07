@@ -20,15 +20,16 @@ cd /home/ec2-user
 BUCKET=unique-bucket-bin
 FOLDER=leo/
 
-TESTBIN=( harmony libbls384_256.so libbls384.so libmcl.so )
+TESTBIN=( soldier harmony )
 
 for bin in "${TESTBIN[@]}"; do
-   curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
+   curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}/static/${bin} -o ${bin}
    chmod +x ${bin}
 done
 
-curl -LO http://${BUCKET}.s3.amazonaws.com/common/soldier
+curl http://${BUCKET}.s3.amazonaws.com/common/soldier -o soldier
 chmod +x soldier
+
 
 # Download the blspass file
 aws s3 cp s3://harmony-pass/blspass.txt blspass.txt
