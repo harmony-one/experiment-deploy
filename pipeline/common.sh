@@ -123,7 +123,7 @@ function gen_userdata
    [ ! -e $USERDATA ] && errexit "can't find userdata file: $USERDATA"
 
    echo "generating userdata file"
-   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA > $USERDATA.aws
+   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $USERDATA > $USERDATA.aws
    verbose ${configs[@]}
 }
 

@@ -85,7 +85,7 @@
      "port": 8000
   },
   "parallel": 50,
-  "userdata": "userdata-soldier-http.sh",
+  "userdata": "userdata-soldier-http-static.sh",
   "flow": {
      "wait_for_launch": 60,
      "reserved_account": "",
