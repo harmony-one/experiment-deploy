@@ -1,5 +1,5 @@
 {
-  "description": "aws 20 nodes on 2 shards in one region, 2 key per node, we just need 10 nodes",
+  "description": "aws 60 nodes on 2 shards in one region, 3 key per node, we just need 20 nodes",
   "client": {
     "num_vm": 0,
     "type": "t3.medium",
@@ -53,7 +53,7 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 10,
+    "peer_per_shard": 30,
     "minpeer": 6,
     "log_conn": false,
     "even_shard": true,
@@ -100,7 +100,7 @@
   },
   "multikey": {
      "enable": true,
-     "keys_per_node": 2,
+     "keys_per_node": 3,
      "blskey_folder": ".hmy/blskeys"
   },
   "genesis": "genesis.txt",
