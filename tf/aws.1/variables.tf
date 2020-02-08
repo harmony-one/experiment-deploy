@@ -12,7 +12,7 @@ variable "private_key_path" {
 
 variable "node_volume_size" {
   description = "Root Volume size of the ec2 node instance"
-  default     = 200
+  default     = 20
 }
 
 variable "node_instance_type" {
@@ -44,7 +44,7 @@ variable "spot_type" {
 variable "instance_interruption_behaviour" {
    type        = "string"
    description = "Whether a Spot instance stops or terminates when it is interrupted, can be stop or terminate"
-   default     = "stop"
+   default     = "terminate"
 }
 
 variable "security_groups" {

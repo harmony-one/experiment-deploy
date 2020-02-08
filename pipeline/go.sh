@@ -169,7 +169,10 @@ function do_launch
 function do_dns_setup
 {
    R53=${THEPWD}/updater53.sh
-   local NUM_RPC=5
+   local NUM_RPC=${configs[flow.rpcnode]}
+   if [[ -z "$NUM_RPC" || "$NUM_RPC" == "null" ]]; then
+      NUM_RPC=5
+   fi
    rm -f $R53
 
    [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
@@ -413,8 +416,8 @@ function do_reset_explorer
    "leaders":[$explorer_nodes]
 }
 EOT
-      echo curl -m 3 -X POST https://${configs[${explorer}.name]}:${configs[${explorer}.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
-      curl -m 3 -X POST https://${configs[${explorer}.name]}:${configs[${explorer}.port]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+      echo curl -m 3 -X POST https://${configs[${explorer}.name]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+      curl -m 3 -X POST https://${configs[${explorer}.name]}/reset -H 'content-type: application/json' -d@explorer.reset.json
 
       [ -e explorer.reset.json ] && cp explorer.reset.json logs/$TS
    fi

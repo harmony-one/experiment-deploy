@@ -64,7 +64,7 @@ function read_profile
       benchmark.attacked_mode benchmark.init_retry
       logs.leader logs.client logs.validator logs.soldier logs.db
       parallel
-      userdata flow.wait_for_launch flow.reserved_account flow.rpczone
+      userdata flow.wait_for_launch flow.reserved_account flow.rpczone flow.rpcnode
       benchmark.minpeer benchmark.even_shard benchmark.peer_per_shard
       benchmark.commit_delay benchmark.log_conn benchmark.network_type
       explorer.name explorer.port explorer.reset
@@ -80,6 +80,7 @@ function read_profile
       bootnode4.p2pkey bootnode4.log_conn
       wallet.enable
       benchmark.bls bls.pass bls.bucket bls.folder bls.keyfile
+      multikey.enable multikey.keys_per_node multikey.blskey_folder
    )
    
    managednodekey=.managednodes.nodes
@@ -122,8 +123,73 @@ function gen_userdata
    [ ! -e $USERDATA ] && errexit "can't find userdata file: $USERDATA"
 
    echo "generating userdata file"
-   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA > $USERDATA.aws
+   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $USERDATA > $USERDATA.aws
    verbose ${configs[@]}
+}
+
+# gen_multi_key generates a list of index that can be used to add multiple keys to one node
+# the algorithm is trying to separate the index as much as possible
+#
+# INPUT parameters
+# * number of shards
+# * number of nodes per shard
+# * number of bls keys
+# * shard number of the node
+# * generate the list of index for the nth node to number of
+#
+# OUTPUT: a list of index for one node with multi-key
+function gen_multi_key
+{
+   shard=$1
+   num_nodes=$2
+   keys_per_node=$3
+
+   s=$4
+   n=$5
+
+# total number of nodes
+   total=$(( $shard * $num_nodes ))
+
+# gap among multi-key
+   gap=$(( $num_nodes / $keys_per_node ))
+
+# number of multi-key nodes, considering left over nodes
+   if [ $(( $num_nodes % $keys_per_node )) -eq 0 ]; then
+      mk_nodes=$gap
+   else
+      mk_nodes=$(( $gap + 1 ))
+      remainder=true
+   fi
+
+# is this node the last one?
+# differernt starting index
+   lastone=false
+   if [[ "$remainder" == "true" && $n -eq $(( $mk_nodes - 1 )) ]]; then
+      lastone=true
+      start=$(( $gap * $shard * $keys_per_node + $s ))
+   else
+      start=$(( $shard * $n + $s ))
+   fi
+
+# enumerate the multi-key for this node
+# FIXME: for the last node, just have all remaining keys
+# this is not ideal allocation algorithm for the last one though
+   i=1
+   keys=( $start )
+   while [ $i -lt $keys_per_node ]; do
+      if [ "$lastone" == "true" ]; then
+         start=$(( $start + $shard ))
+      else
+         start=$(( $start + $gap * $shard ))
+      fi
+      if [ $start -lt $total ]; then
+         keys+=( $start )
+      fi
+      (( i++ ))
+   done
+
+# return the list of keys for one node
+   echo ${keys[@]}
 }
 
 ##########

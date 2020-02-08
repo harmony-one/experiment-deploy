@@ -76,7 +76,7 @@ function launch_vms
    _launch_vms_azure
 
    echo "Change userdata file"
-   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}/," $USERDATA > $USERDATA.aws
+   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $USERDATA > $USERDATA.aws
 
    ../bin/instance -config_dir $CONFIGDIR -launch_profile launch-${LAUNCH_PROFILE}.json
 

@@ -1,0 +1,17 @@
+{
+   "launch": [
+      {
+         "region": "iad",
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 18,
+         "protection": false,
+         "root": 10
+      }
+   ],
+   "userdata": {
+      "name": "http",
+      "file": "userdata-soldier-http-static.sh.aws"
+   },
+   "batch": 100
+}
