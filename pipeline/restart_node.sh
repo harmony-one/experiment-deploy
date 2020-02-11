@@ -319,7 +319,7 @@ fetch_binaries() {
 	tf)
 		rn_info "fetching upgrade binaries on tf node"
 		node_ssh "${ip}" "
-			./node.sh -U upgrade -d
+			./node.sh -U upgrade -I -d
 		"
 		;;
 	*)
