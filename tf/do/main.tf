@@ -152,6 +152,7 @@ resource "digitalocean_droplet" "harmony_node" {
 
     provisioner "remote-exec" {
         inline = [
+            "sudo yum install -y bind-utils jq psmisc unzip",
             "cd /mnt/do-user",
             "curl -LO https://harmony.one/node.sh",
             "chmod +x node.sh rclone.sh uploadlog.sh",
