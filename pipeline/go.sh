@@ -5,6 +5,10 @@
 
 source ./common.sh || exit 1
 
+# load faucet key for fund distribution
+source /home/ec2-user/.secret/key.sh
+addr='one1zksj3evekayy90xt4psrz8h6j2v3hla4qwz4ur'
+
 RETRY_LAUNCH_TIME=10
 
 #############################
@@ -24,6 +28,7 @@ This script automates the benchmark test based on profile.
    -k                keep all the instances, skip deinit (default: $KEEP)
    -t                do not run txgen (default: $TXGEN), overriding profile configuration
    -w                run wallet test (default: $WALLET)
+   -n                chain_id (eg., testnet)
 
 [ACTIONS]
    launch            do launch only
@@ -47,6 +52,9 @@ This script automates the benchmark test based on profile.
    $ME -p testnet log
 
    $ME -p banjo reinit 1.2.3.4 2.3.4.5
+
+   # launch the network, then fund the testing accounts to testnet
+   $ME -p os -k -n testnet
 
 EOT
    exit 0
@@ -572,6 +580,22 @@ function do_replace
 #   do_sync_logs
 }
 
+# do fund distribution 
+function do_fund_dist
+{
+   echo "start to distribute funds to test accounts.. " 
+   local timeout amount
+   timeout=120
+   amount=100000
+   if [ "$CHAIN_ID" == 'testnet' ]; then
+      endpoints=("https://api.s0.os.hmny.io/" "https://api.s1.os.hmny.io/" "https://api.s2.os.hmny.io/")
+   elif [ "$CHAIN_ID" == 'lrtn' ]; then
+      endpoints=("https://api.s0.b.hmny.io/" "https://api.s1.b.hmny.io/" "https://api.s2.b.hmny.io/")
+   fi
+
+   python3 ./fund-accounts/fund.py $key $addr --timeout $timeout --amount $amount --endpoints=$endpoints --chain_id=$CHAIN_ID
+}
+
 function do_all
 {
    do_launch_bootnode
@@ -583,6 +607,7 @@ function do_all
    do_run
    do_reset_explorer
    do_reset_explorer explorer2
+   do_fund_dist
    download_logs
    analyze_logs
    do_sync_logs
@@ -612,7 +637,7 @@ TAG=${WHOAMI}
 TXGEN=true
 WALLET=false
 
-while getopts "hp:vktw" option; do
+while getopts "hp:vktwn:" option; do
    case $option in
       h) usage ;;
       p)
@@ -625,6 +650,8 @@ while getopts "hp:vktw" option; do
       k) KEEP=true ;;
       t) TXGEN=false ;;
       w) WALLET=true ;;
+      n) 
+         CHAIN_ID=$OPTARG ;;
    esac
 done
 
