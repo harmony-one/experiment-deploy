@@ -73,9 +73,12 @@ OPTIONS:
    -s state-file-directory    specify the directory of the terraform state files (default: $STATEDIR)
    -d log-file-directory      specify the directory of the log directory (default: logs/$HMY_PROFILE)
    -S                         enabled state pruning for the node (default: $SYNC)
+
    -i <instance type>         specify instance type (default: $INSTANCE)
+                              supported type: $(echo ${!SPOT[@]} | tr " " ,)
+
    -r <region>                specify the region (default: $REG)
-                              valid region: ${REGIONS[@]}
+                              supported region: $(echo ${REGIONS[@]} | tr " " ,)
 
 COMMANDS:
    new [list of index]        list of index of the harmony node in internal/genesis/harmony.go, delimited by space
@@ -115,6 +118,7 @@ function _do_launch_one {
    vars=(
       -var "blskey_index=$index" 
       -var "node_instance_type=$INSTANCE" 
+      -var "spot_instance_price=${SPOT[$INSTANCE]}"
    )
 # enable state pruning
    if $SYNC; then
