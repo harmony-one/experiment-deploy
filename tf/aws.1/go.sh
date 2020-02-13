@@ -4,7 +4,6 @@
 source ./regions.sh
 ME=`basename $0`
 SSH='ssh -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
-REGION=
 
 set -o pipefail
 # set -x
@@ -73,6 +72,10 @@ OPTIONS:
    -G                         do the real job
    -s state-file-directory    specify the directory of the terraform state files (default: $STATEDIR)
    -d log-file-directory      specify the directory of the log directory (default: logs/$HMY_PROFILE)
+   -S                         enabled state pruning for the node (default: $SYNC)
+   -i <instance type>         specify instance type (default: $INSTANCE)
+   -r <region>                specify the region (default: $REG)
+                              valid region: ${REGIONS[@]}
 
 COMMANDS:
    new [list of index]        list of index of the harmony node in internal/genesis/harmony.go, delimited by space
@@ -85,6 +88,8 @@ EXAMPLES:
    $ME -v
 
    $ME new 20 30 5
+
+   $ME new -S -i c5.large 20 30 5
 
    $ME rclone 12.34.56.78 123.234.123.234
 
@@ -107,9 +112,25 @@ function _do_launch_one {
       return
    fi
 
-   region=${REGIONS[$RANDOM % ${#REGIONS[@]}]}
-   REGION=$region
-   terraform apply -var "aws_region=$region" -var "blskey_index=$index" -auto-approve || return
+   vars=(
+      -var "blskey_index=$index" 
+      -var "node_instance_type=$INSTANCE" 
+   )
+# enable state pruning
+   if $SYNC; then
+      vars+=(
+         -var "node_volume_size=30"
+      )
+   fi
+
+   if [ "$REG" == "random" ]; then
+      REG=${REGIONS[$RANDOM % ${#REGIONS[@]}]}
+   fi
+
+   vars+=(
+      -var "aws_region=$REG"
+   )
+   terraform apply "${vars[@]}" -auto-approve || return
    sleep 3
    IP=$(terraform output -json | jq -rc '.public_ip.value  | @tsv')
    ID=$(terraform output -json | jq -rc '.instance_id.value  | @tsv')
@@ -131,7 +152,7 @@ function new_instance
       _do_launch_one $i
       echo $IP >> ip.txt
       shard=$(( $i % 4 ))
-      aws --profile mainnet --region $REGION ec2 create-tags --resources $ID --tags "Key=Name,Value=s${shard}-t3-$i" "Key=Shard,Value=${shard}" "Key=Index,Value=$i" "Key=Type,Value=node"
+      aws --profile mainnet --region $REG ec2 create-tags --resources $ID --tags "Key=Name,Value=s${shard}-t3-$i" "Key=Shard,Value=${shard}" "Key=Index,Value=$i" "Key=Type,Value=node"
    done
 
    do_state_sync
@@ -141,8 +162,14 @@ function new_instance
 function rclone_sync
 {
    ips=$@
+   if $SYNC; then
+      folder=mainnet.min
+   else
+      folder=mainnet
+   fi
+
    for ip in $ips; do
-      $SSH ec2-user@$ip 'nohup /home/ec2-user/rclone.sh > rclone.log 2> rclone.err < /dev/null &'
+      $SSH ec2-user@$ip "nohup /home/ec2-user/rclone.sh $folder > rclone.log 2> rclone.err < /dev/null &"
    done
 }
 
@@ -210,17 +237,25 @@ function update_uptime
 LOGDIR=../../pipeline/logs/$HMY_PROFILE
 DRYRUN=echo
 OUTPUT=$LOGDIR/$(date +%F.%H:%M:%S).log
+SYNC=false
+INSTANCE=t3.small
+REG=random
 
-while getopts "hnvGss:d:" option; do
+while getopts "hnvGss:d:Si:r:" option; do
    case $option in
       n) DRYRUN=echo [DRYRUN] ;;
       v) VERBOSE=-v ;;
       G) DRYRUN= ;;
-      s) STATEDIR=$OPTARG ;;
-      d) LOGDIR=$OPTARG ;;
+      s) STATEDIR="${OPTARG}" ;;
+      d) LOGDIR="${OPTARG}" ;;
+      S) SYNC=true ;;
+      i) INSTANCE="${OPTARG}" ;;
+      r) REG="${OPTARG}" ;;
       h|?|*) usage ;;
    esac
 done
+
+# TODO: verify/validate the command line variables
 
 shift $(($OPTIND-1))
 
