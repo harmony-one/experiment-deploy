@@ -23,7 +23,7 @@ FOLDER=leo/
 TESTBIN=( harmony libbls384_256.so libbls384.so libmcl.so )
 
 for bin in "${TESTBIN[@]}"; do
-   curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}${bin} -o ${bin}
+   curl http://${BUCKET}.s3.amazonaws.com/${FOLDER}/${bin} -o ${bin}
    chmod +x ${bin}
 done
 
