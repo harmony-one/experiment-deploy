@@ -152,11 +152,12 @@ function new_instance
 {
    indexes=$@
    rm -f ip.txt
+   i_name=$(echo $INSTANCE | cut -f1 -d.)
    for i in $indexes; do
       _do_launch_one $i
       echo $IP >> ip.txt
       shard=$(( $i % 4 ))
-      aws --profile mainnet --region $REG ec2 create-tags --resources $ID --tags "Key=Name,Value=s${shard}-t3-$i" "Key=Shard,Value=${shard}" "Key=Index,Value=$i" "Key=Type,Value=node"
+      aws --profile mainnet --region $REG ec2 create-tags --resources $ID --tags "Key=Name,Value=s${shard}-${i_name}-$i" "Key=Shard,Value=${shard}" "Key=Index,Value=$i" "Key=Type,Value=node"
    done
 
    do_state_sync
@@ -229,11 +230,12 @@ function do_wait
 function update_uptime
 {
    ips=$@
+   i_name=$(echo $INSTANCE | cut -f1 -d.)
    for ip in $ips; do
       idx=$($SSH ec2-user@$ip 'cat index.txt')
       shard=$(( $idx % 4 ))
-      echo ./uptimerobot.sh -t t3 -i $idx update s${shard}-t3-$idx $ip $shard
-      echo ./uptimerobot.sh -t t3 -i $idx -G update s${shard}-t3-$idx $ip $shard
+      echo ./uptimerobot.sh -t $i_name -i $idx update "s${shard}-.*-$idx" $ip $shard
+      echo ./uptimerobot.sh -t $i_name -i $idx -G update "s${shard}-.*-$idx" $ip $shard
    done
 }
 
