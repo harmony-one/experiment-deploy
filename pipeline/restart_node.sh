@@ -44,6 +44,7 @@ print_usage() {
 		-r N		try a failed step N more times (default: ${default_step_retries})
 		-R N		try a failed cycle N more times (default: ${default_cycle_retries})
 		-U		upgrade the node software
+		-s 			static=true; static linked binary node
 		-B BUCKET	fetch upgrade binaries from the given bucket
 		 		(default: ${default_bucket})
 		-F FOLDER	fetch upgrade binaries from the given folder
@@ -59,7 +60,7 @@ unset -v timeout step_retries cycle_retries upgrade bucket folder
 upgrade=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}t:r:R:UB:F:P" opt
+while getopts ":${common_getopts_spec}t:r:R:UB:F:Ps" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -72,6 +73,7 @@ do
 	B) bucket="${OPTARG}";;
 	F) folder="${OPTARG}";;
 	P) public_rpc=false;;
+	s) static=true;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -324,9 +326,15 @@ fetch_binaries() {
 		;;
 	*)
 		rn_info "fetching upgrade binaries"
-		node_ssh "${ip}" "
-			aws s3 sync $(shell_quote "${s3_folder}") staging
-		"
+		if [ $static = 'true' ]; then
+			node_ssh "${ip}" "
+				aws s3 sync $(shell_quote "${s3_folder}/static") staging
+			"
+		else
+			node_ssh "${ip}" "
+				aws s3 sync $(shell_quote "${s3_folder}") staging
+			"
+		fi
 		;;
 	esac
 }
