@@ -9,8 +9,7 @@ resource "random_id" "droplet_id" {
 # Create a new SSH key
 resource "digitalocean_ssh_key" "default" {
     name       = "Harmony Pub SSH Key"
-    # this needs to be updated on the devops instance
-    public_key = file("/Users/bwu2/.ssh/id_rsa.pub")
+    public_key = file("keys/harmony-node.pub")
 }
 
 resource "digitalocean_droplet" "harmony_node" {
@@ -27,8 +26,8 @@ resource "digitalocean_droplet" "harmony_node" {
 
     provisioner "remote-exec" {
         inline = [
-            "mount /dev/sda /mnt",
-            "mkdir -p /mnt/do-user",
+            "mkdir -p /root/do-user",
+            "mount /dev/sda /root/do-user",
         ]
         connection {
             host        = digitalocean_droplet.harmony_node.ipv4_address
@@ -47,7 +46,7 @@ resource "digitalocean_droplet" "harmony_node" {
 
     provisioner "file" {
         source      = "files/bls.key"
-        destination = "/mnt/do-user/bls.key"
+        destination = "/root/do-user/bls.key"
         connection {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
@@ -60,7 +59,7 @@ resource "digitalocean_droplet" "harmony_node" {
 
     provisioner "file" {
         source      = "files/bls.pass"
-        destination = "/mnt/do-user/bls.pass"
+        destination = "/root/do-user/bls.pass"
         connection {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
@@ -73,7 +72,7 @@ resource "digitalocean_droplet" "harmony_node" {
 
     provisioner "file" {
         source      = "files/harmony.service"
-        destination = "/mnt/do-user/harmony.service"
+        destination = "/root/do-user/harmony.service"
         connection {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
@@ -86,20 +85,7 @@ resource "digitalocean_droplet" "harmony_node" {
 
     provisioner "file" {
         source      = "files/node_exporter.service"
-        destination = "/mnt/do-user/node_exporter.service"
-        connection {
-            host        = digitalocean_droplet.harmony_node.ipv4_address
-            type        = "ssh"
-            user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
-            timeout     = "2m"
-            agent       = true
-        }
-    }
-
-    provisioner "file" {
-        source      = "files/rclone.conf"
-        destination = "/mnt/do-user/rclone.conf"
+        destination = "/root/do-user/node_exporter.service"
         connection {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
@@ -112,7 +98,20 @@ resource "digitalocean_droplet" "harmony_node" {
 
     provisioner "file" {
         source      = "files/rclone.sh"
-        destination = "/mnt/do-user/rclone.sh"
+        destination = "/root/do-user/rclone.sh"
+        connection {
+            host        = digitalocean_droplet.harmony_node.ipv4_address
+            type        = "ssh"
+            user        = "root"
+            private_key = "${file(var.ssh_private_key_path)}"
+            timeout     = "2m"
+            agent       = true
+        }
+    }
+
+    provisioner "file" {
+        source      = "files/rclone.conf"
+        destination = "/root/do-user/rclone.conf"
         connection {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
@@ -125,7 +124,7 @@ resource "digitalocean_droplet" "harmony_node" {
 
     provisioner "file" {
         source      = "files/uploadlog.sh"
-        destination = "/mnt/do-user/uploadlog.sh"
+        destination = "/root/do-user/uploadlog.sh"
         connection {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
@@ -138,7 +137,7 @@ resource "digitalocean_droplet" "harmony_node" {
 
     provisioner "file" {
         source      = "files/crontab"
-        destination = "/mnt/do-user/crontab"
+        destination = "/root/do-user/crontab"
         connection {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
@@ -153,12 +152,14 @@ resource "digitalocean_droplet" "harmony_node" {
     provisioner "remote-exec" {
         inline = [
             "sudo yum install -y bind-utils jq psmisc unzip",
-            "cd /mnt/do-user",
+            "curl https://rclone.org/install.sh | sudo bash",
+            "cd /root/do-user",
             "curl -LO https://harmony.one/node.sh",
             "chmod +x node.sh rclone.sh uploadlog.sh",
             "crontab crontab",
-            "mkdir -p /mnt/do-user/.config/rclone",
-            "mv -f rclone.conf /mnt/do-user/.config/rclone",
+            "mkdir -p /root/.config/rclone",
+            "mv -f rclone.conf /root/.config/rclone",
+            "mv -f rclone.sh ../",
             "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
             "sudo systemctl enable harmony.service",
             "sudo systemctl start harmony.service",

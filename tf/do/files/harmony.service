@@ -6,8 +6,8 @@ After=network.target network-online.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root
-ExecStart=bash /root/node.sh -1 -S -p /root/bls.pass -k /root/bls.key -P
+WorkingDirectory=/root/do-user
+ExecStart=bash /root/do-user/node.sh -1 -S -p /root/do-user/bls.pass -k /root/do-user/bls.key -P
 Restart=always
 
 [Install]
