@@ -340,7 +340,7 @@ kill_harmony() {
 		node_ssh "${ip}" 'sudo systemctl stop harmony.service' || status=$?
 		;;
 	*)
-		node_ssh "${ip}" 'sudo pkill harmony' || status=$?
+		node_ssh "${ip}" 'sudo pkill -9 harmony' || status=$?
 		case "${status}" in
 		1) status=0;;  # it is OK if no processes have been found
 		esac
