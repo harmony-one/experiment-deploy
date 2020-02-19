@@ -194,7 +194,7 @@ function do_dns_setup
       local shard_file=${THEPWD}/logs/$TS/shard${n}.txt
       grep " $n " ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' > $shard_file
       RPCS[$n]="$(head -n 1 $shard_file) "
-      RPCS[$n]+=$(sort -R $shard_file | head -n ${NUM_RPC})
+      RPCS[$n]+=$(tail -n +2 $shard_file | sort -R | head -n ${NUM_RPC})
 
       echo python3 r53update.py ${configs[flow.rpczone]} $n ${RPCS[$n]} | tee -a $R53
       (( n++ ))
@@ -580,24 +580,42 @@ function do_replace
 #   do_sync_logs
 }
 
+# find IP of explorers 
+function _find_explorers
+{
+   # number of shards 
+   local shards=${configs[benchmark.shards]}
+   
+   for shard in $(seq 0 $((shards-1))); do
+      EXP_IP=( $(cat logs/$PROFILE/shard$shard.txt | sed -n '2p') ) 
+      exp_array+=( $EXP_IP )    
+   done 
+
+}
+
 # do fund distribution 
 function do_fund_dist
 {
+   _find_explorers
+
    echo "start to distribute funds to test accounts.. " 
    local timeout amount
    timeout=120
    amount=100000
-   if [ "$CHAIN_ID" == 'testnet' ]; then
-      endpoints=("https://api.s0.os.hmny.io/" "https://api.s1.os.hmny.io/" "https://api.s2.os.hmny.io/")
-   elif [ "$CHAIN_ID" == 'lrtn' ]; then
-      endpoints=("https://api.s0.b.hmny.io/" "https://api.s1.b.hmny.io/" "https://api.s2.b.hmny.io/")
-   fi
+
+   local shards=${configs[benchmark.shards]}
+   declare -a endpoints
+
+   for i in $(seq 0 $((shards-1))); do
+      endpoints+=( '"'${exp_array[i]}':9500" ')
+   done    
 
    python3 ./fund-accounts/fund.py $key $addr --timeout $timeout --amount $amount --endpoints=$endpoints --chain_id=$CHAIN_ID
 }
 
 function do_all
 {
+
    do_launch_bootnode
    do_launch_bootnode bootnode1
    do_launch_bootnode bootnode3
@@ -636,6 +654,8 @@ KEEP=false
 TAG=${WHOAMI}
 TXGEN=true
 WALLET=false
+# an array to store explorer IP
+declare -a exp_array
 
 while getopts "hp:vktwn:" option; do
    case $option in
