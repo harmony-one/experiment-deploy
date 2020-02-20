@@ -5,12 +5,12 @@ variable "do_token" {
 
 variable "ssh_private_key_path" {
   description = "Your SSH private key path"
-  default     = "/Users/bwu2/.ssh/id_rsa"
+  default     = "~/.ssh/harmony-node.pem"
 }
 
 variable "addition_volume_size" {
   description = "The addition volume size of the Droplet"
-  default     = 200
+  default     = 250
 }
 
 variable "droplet_size" {
