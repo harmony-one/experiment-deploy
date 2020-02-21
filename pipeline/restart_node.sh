@@ -319,12 +319,14 @@ fetch_binaries() {
 	tf)
 		rn_info "fetching upgrade binaries on tf node"
 		node_ssh "${ip}" "
+			sudo rm -rf ~/staging/*;
 			./node.sh -U upgrade -I -d
 		"
 		;;
 	*)
 		rn_info "fetching upgrade binaries"
 		node_ssh "${ip}" "
+			sudo rm -rf ~/staging/*;
 			aws s3 sync $(shell_quote "${s3_folder}") staging
 		"
 		;;
