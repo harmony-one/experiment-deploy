@@ -325,6 +325,9 @@ fetch_binaries() {
 	*)
 		rn_info "fetching upgrade binaries"
 		node_ssh "${ip}" "
+			rm -f staging/*
+		"
+		node_ssh "${ip}" "
 			aws s3 sync $(shell_quote "${s3_folder}") staging
 		"
 		;;
@@ -340,7 +343,7 @@ kill_harmony() {
 		node_ssh "${ip}" 'sudo systemctl stop harmony.service' || status=$?
 		;;
 	*)
-		node_ssh "${ip}" 'sudo pkill -9 harmony' || status=$?
+		node_ssh "${ip}" 'sudo pkill harmony' || status=$?
 		case "${status}" in
 		1) status=0;;  # it is OK if no processes have been found
 		esac
@@ -353,7 +356,7 @@ wait_for_harmony_process_to_exit() {
 	rn_info "waiting for harmony process to exit (if any)"
 	local deadline now sleep status
 	now=$(date +%s)
-	deadline=$((${now} + 15))
+	deadline=$((${now} + 25))
 	sleep=0
 	while :
 	do
