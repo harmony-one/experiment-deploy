@@ -197,21 +197,27 @@ REGION_KEY['ap-southeast-1']='singapore-key-benchmark.pem'
 REGION_KEY['eu-central-1']='frankfurt-key-benchmark.pem'
 REGION_KEY['eu-west-1']='ireland-key-benchmark.pem'
 REGION_KEY['gcp']='harmony-node.pem'
+REGION_KEY['do']='do-node.pem'
 
 find_cloud_from_host()
 {
    local hostname1="$1"
    if [ -n "$hostname1" ]; then
-      dns=$(echo "$hostname1" | awk -F\. ' { print $(NF-2) }' )
-      case "$dns" in
-      "amazonaws")
-         cloud=aws ;;
-      "googleusercontent")
-         cloud=gcp ;;
-      *)
-         cloud=unknown ;;
-      esac
-      echo $cloud
+		# quick hack
+		if [ "$hostname1" = "3(NXDOMAIN)" ]; then 
+			cloud=do 
+		else 
+			dns=$(echo "$hostname1" | awk -F\. ' { print $(NF-2) }' )
+			case "$dns" in
+			"amazonaws")
+				cloud=aws ;;
+			"googleusercontent")
+				cloud=gcp ;;
+			*)
+				cloud=unknown ;;
+			esac
+		fi
+      	echo $cloud
    else
       echo null
    fi
@@ -221,17 +227,22 @@ find_key_from_host()
 {
    local hostname2="$1"
    if [ -n "$hostname2" ]; then
-      vendor=$(find_cloud_from_host $hostname2)
-      case "$vendor" in
-      "aws")
-         reg=$(echo "$hostname2" | awk -F\. ' { print $2 }' ) ;;
-      "gcp")
-         reg='gcp' ;;
-      *)
-         echo "ERROR: unknown cloud provider"
-         return
-      esac
-      echo ${REGION_KEY[$reg]}
+		# quick hack
+		if [ "$hostname2" = "3(NXDOMAIN)" ]; then
+			reg='do'
+		else
+			vendor=$(find_cloud_from_host $hostname2)
+			case "$vendor" in
+			"aws")
+				reg=$(echo "$hostname2" | awk -F\. ' { print $2 }' ) ;;
+			"gcp")
+				reg='gcp' ;;
+			*)
+				echo "ERROR: unknown cloud provider"
+				return
+			esac
+		fi
+      	echo ${REGION_KEY[$reg]}
    fi
 }
 
