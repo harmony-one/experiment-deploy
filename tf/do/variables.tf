@@ -5,7 +5,7 @@ variable "do_token" {
 
 variable "ssh_private_key_path" {
   description = "Your SSH private key path"
-  default     = "~/.ssh/harmony-node.pem"
+  default     = "~/.ssh/do-node.pem"
 }
 
 variable "addition_volume_size" {

@@ -82,6 +82,8 @@ case "${userip}" in
       userip="ec2-user@${userip}" ;;
    "gcp")
       userip="gce-user@${userip}" ;;
+   "do")
+	  userip="root@${userip}" ;;
    esac
    key_file=$KEYDIR/$(find_key_from_host $hostname)
 	;;

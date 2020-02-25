@@ -9,7 +9,7 @@ resource "random_id" "droplet_id" {
 # Create a new SSH key
 resource "digitalocean_ssh_key" "default" {
     name       = "Harmony Pub SSH Key"
-    public_key = file("keys/harmony-node.pub")
+    public_key = file("keys/do-node.pub")
 }
 
 resource "digitalocean_droplet" "harmony_node" {
