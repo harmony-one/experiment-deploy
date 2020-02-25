@@ -40,18 +40,19 @@ print_usage() {
 		${common_usage_desc}
 
 		options:
-		-t N		wait at most N seconds for BINGO/HOORAY (default: ${default_timeout})
-		-r N		try a failed step N more times (default: ${default_step_retries})
-		-R N		try a failed cycle N more times (default: ${default_cycle_retries})
-		-U		upgrade the node software
-		-B BUCKET	fetch upgrade binaries from the given bucket
-		 		(default: ${default_bucket})
-		-F FOLDER	fetch upgrade binaries from the given folder
-		 		(default: ${default_folder})
-		-P		disable public RPC
+		-t N        wait at most N seconds for BINGO/HOORAY (default: ${default_timeout})
+		-r N        try a failed step N more times (default: ${default_step_retries})
+		-R N        try a failed cycle N more times (default: ${default_cycle_retries})
+		-U          upgrade the node software
+		-B BUCKET   fetch upgrade binaries from the given bucket
+                  (default: ${default_bucket})
+		-F FOLDER   fetch upgrade binaries from the given folder
+                  (default: ${default_folder})
+		-P          disable public RPC
 
 		arguments:
 		ip		the IP address to upgrade
+
 	ENDEND
 }
 
@@ -399,7 +400,7 @@ upgrade_binaries() {
 	node_ssh "${ip}" '
 		set -eu
 		unset -v f
-		for f in harmony libmcl.so libbls384_256.so
+		for f in harmony
 		do
 			rm -f "${f}"
 			cp -fp "staging/${f}" "${f}"
