@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-SSH='ssh -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
+SSH='ssh -i ~/.ssh/do-node.pem -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
 
 function usage
 {
