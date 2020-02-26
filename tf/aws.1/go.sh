@@ -50,6 +50,7 @@ function verbose
 }
 
 STATEDIR=states
+NODEDB=$(realpath ../../../nodedb)
 
 function usage
 {
@@ -73,6 +74,7 @@ OPTIONS:
    -s state-file-directory    specify the directory of the terraform state files (default: $STATEDIR)
    -d log-file-directory      specify the directory of the log directory (default: logs/$HMY_PROFILE)
    -S                         enabled state pruning for the node (default: $SYNC)
+   -N nodedb-directory        specify the directory of the nodedb (default: $NODEDB)
 
    -i <instance type>         specify instance type (default: $INSTANCE)
                               supported type: $(echo ${!SPOT[@]} | tr " " ,)
@@ -80,11 +82,14 @@ OPTIONS:
    -r <region>                specify the region (default: $REG)
                               supported region: $(echo ${REGIONS[@]} | tr " " ,)
 
+
 COMMANDS:
    new [list of index]        list of index of the harmony node in internal/genesis/harmony.go, delimited by space
    rclone [list of ip]        list of IP addresses to do rlcone, delimited by space
    wait [list of ip]          list of IP addresses to wait until rclone finished, check every minute
    uptime [list of ip]        list of IP addresses to update uptime robot, will generate uptimerobot.sh cli
+   status [list of ip]        list of IP addresses to check latest block height
+   replace [list of index]    terminate old instances replaced by the new one, find the IP of old instance using the index from nodedb
 
 EXAMPLES:
 
@@ -92,11 +97,15 @@ EXAMPLES:
 
    $ME new 20 30 5
 
-   $ME new -S -i c5.large 20 30 5
+   $ME -S -i c5.large new 20 30 5
 
    $ME rclone 12.34.56.78 123.234.123.234
 
    $ME wait 12.34.56.78 123.234.123.234
+
+   $ME uptime 12.34.56.78 123.234.123.234 > upt.sh
+
+   $ME replace 200 20 10 > repl.sh
 
 EOF
    exit 0
@@ -221,9 +230,8 @@ function do_wait
       (( min++ ))
    done
 
-   for ip in $ips; do
-      $SSH ec2-user@$ip 'tac latest/zerolog*.log | grep -m 1 BINGO'
-   done
+   do_status
+
    date
 }
 
@@ -236,6 +244,26 @@ function update_uptime
       shard=$(( $idx % 4 ))
       echo ./uptimerobot.sh -t $i_name -i $idx update "s${shard}-.*-$idx" $ip $shard
       echo ./uptimerobot.sh -t $i_name -i $idx -G update "s${shard}-.*-$idx" $ip $shard
+   done
+}
+
+function do_status
+{
+   ips=$@
+   for ip in $ips; do
+      $SSH ec2-user@$ip 'tac latest/zerolog*.log | grep -m 1 BINGO'
+   done
+}
+
+function do_replace
+{
+   indexes=$@
+   for index in $indexes; do
+      ip=$(grep -E :$index: $NODEDB/mainnet/ip.idx.map | tail -n 1 | cut -f1 -d:)
+      echo $ip
+      id=$($SSH ec2-user@$ip 'curl http://169.254.169.254/latest/meta-data/instance-id')
+      region=$($SSH ec2-user@$ip 'curl http://169.254.169.254/latest/meta-data/placement/availability-zone | sed "s/[a-z]$//"')
+      echo aws --profile mainnet --region $region ec2 terminate-instances --instance-ids $id --query 'TerminatingInstances[*].InstanceId'
    done
 }
 
@@ -287,5 +315,7 @@ case $CMD in
    rclone) rclone_sync $@ ;;
    wait) do_wait $@ ;;
    uptime) update_uptime $@ ;;
+   status) do_status $@ ;;
+   replace) do_replace $@ ;;
    *) usage ;;
 esac

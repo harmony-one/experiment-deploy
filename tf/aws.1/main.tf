@@ -152,6 +152,7 @@ resource "aws_spot_instance_request" "foundation-node" {
       "mkdir -p /home/ec2-user/.config/rclone",
       "mv -f rclone.conf /home/ec2-user/.config/rclone",
       "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
+      "/home/ec2-user/node.sh -I -d && cp -f /home/ec2-user/staging/harmony /home/ec2-user",
       "sudo systemctl enable harmony.service",
       "sudo systemctl start harmony.service",
       "sudo mv -f node_exporter.service /etc/systemd/system/node_exporter.service",
