@@ -294,7 +294,8 @@ get_logfile() {
 		') || return $?
 		;;
 	*)
-		logfiledir='latest'
+		# for DO, its proper path is: /root/do-user/latest
+		logfiledir="${latest:-/root/do-user/latest}"
 		;;
 	esac
 	case "${node_type}" in
