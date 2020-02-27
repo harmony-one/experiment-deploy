@@ -16,13 +16,14 @@ esac
 . "${progdir}/common_opts.sh"
 
 unset -v default_timeout default_step_retries default_cycle_retries \
-	default_bucket default_folder default_public_rpc
+	default_bucket default_folder default_public_rpc default_multi_key
 default_timeout=450
 default_step_retries=2
 default_cycle_retries=2
 default_bucket=unique-bucket-bin
 default_folder="${WHOAMI}"
 default_public_rpc=true
+default_multi_key=false
 
 print_usage() {
 	cat <<- ENDEND
@@ -49,6 +50,8 @@ print_usage() {
 		-F FOLDER   fetch upgrade binaries from the given folder
                   (default: ${default_folder})
 		-P          disable public RPC
+		-M          support multi-key
+                  (default: ${default_multi_key})
 
 		arguments:
 		ip		the IP address to upgrade
@@ -60,7 +63,7 @@ unset -v timeout step_retries cycle_retries upgrade bucket folder
 upgrade=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}t:r:R:UB:F:P" opt
+while getopts ":${common_getopts_spec}t:r:R:UB:F:PM" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -73,6 +76,7 @@ do
 	B) bucket="${OPTARG}";;
 	F) folder="${OPTARG}";;
 	P) public_rpc=false;;
+	M) multi_key=true;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -85,6 +89,7 @@ default_common_opts
 : ${bucket="${default_bucket}"}
 : ${folder="${default_folder}"}
 : ${public_rpc="${default_public_rpc}"}
+: ${multi_key="${default_multi_key}"}
 
 node_ssh() {
 	local ip=$1
@@ -289,7 +294,8 @@ get_logfile() {
 		') || return $?
 		;;
 	*)
-		logfiledir='latest'
+		# for DO, its proper path is: /root/do-user/latest
+		logfiledir="${latest:-/root/do-user/latest}"
 		;;
 	esac
 	case "${node_type}" in
@@ -443,6 +449,9 @@ start_harmony() {
 	rn_info "restarting harmony process"
 	case "${node_type}" in
 	tf)
+		if ${multi_key}; then
+         node_ssh "${ip}" 'sudo sed -i.bak "s,-k /home/ec2-user/bls.key,-M," /etc/systemd/system/harmony.service'
+      fi
 		node_ssh "${ip}" 'sudo systemctl daemon-reload; sudo systemctl start harmony.service'
 		;;
 	*)

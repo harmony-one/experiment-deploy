@@ -50,6 +50,7 @@ function verbose
 }
 
 STATEDIR=states
+NODEDB=$(realpath ../../../nodedb)
 
 function usage
 {
@@ -73,18 +74,25 @@ OPTIONS:
    -s state-file-directory    specify the directory of the terraform state files (default: $STATEDIR)
    -d log-file-directory      specify the directory of the log directory (default: logs/$HMY_PROFILE)
    -S                         enabled state pruning for the node (default: $SYNC)
+   -N nodedb-directory        specify the directory of the nodedb (default: $NODEDB)
 
    -i <instance type>         specify instance type (default: $INSTANCE)
                               supported type: $(echo ${!SPOT[@]} | tr " " ,)
 
    -r <region>                specify the region (default: $REG)
                               supported region: $(echo ${REGIONS[@]} | tr " " ,)
+   -M multi-key-node-index    use this node to host multi-key
+   -K blskey-directory        specify the directory of all blskeys (default: $KEYDIR)
+
 
 COMMANDS:
    new [list of index]        list of index of the harmony node in internal/genesis/harmony.go, delimited by space
    rclone [list of ip]        list of IP addresses to do rlcone, delimited by space
    wait [list of ip]          list of IP addresses to wait until rclone finished, check every minute
    uptime [list of ip]        list of IP addresses to update uptime robot, will generate uptimerobot.sh cli
+   status [list of ip]        list of IP addresses to check latest block height
+   replace [list of index]    terminate old instances replaced by the new one, find the IP of old instance using the index from nodedb
+   multikey [list of index]   copy all the keys specified by index to the multikey host (must use -M)
 
 EXAMPLES:
 
@@ -92,11 +100,15 @@ EXAMPLES:
 
    $ME new 20 30 5
 
-   $ME new -S -i c5.large 20 30 5
+   $ME -S -i c5.large new 20 30 5
 
    $ME rclone 12.34.56.78 123.234.123.234
 
    $ME wait 12.34.56.78 123.234.123.234
+
+   $ME uptime 12.34.56.78 123.234.123.234 > upt.sh
+
+   $ME replace 200 20 10 > repl.sh
 
 EOF
    exit 0
@@ -221,9 +233,8 @@ function do_wait
       (( min++ ))
    done
 
-   for ip in $ips; do
-      $SSH ec2-user@$ip 'tac latest/zerolog*.log | grep -m 1 BINGO'
-   done
+   do_status
+
    date
 }
 
@@ -239,6 +250,55 @@ function update_uptime
    done
 }
 
+function do_status
+{
+   ips=$@
+   for ip in $ips; do
+      $SSH ec2-user@$ip 'tac latest/zerolog*.log | grep -m 1 BINGO'
+   done
+}
+
+function do_replace
+{
+   indexes=$@
+   for index in $indexes; do
+      ip=$(grep -E :$index: $NODEDB/mainnet/ip.idx.map | tail -n 1 | cut -f1 -d:)
+      echo $ip
+      id=$($SSH ec2-user@$ip 'curl http://169.254.169.254/latest/meta-data/instance-id')
+      region=$($SSH ec2-user@$ip 'curl http://169.254.169.254/latest/meta-data/placement/availability-zone | sed "s/[a-z]$//"')
+      echo aws --profile mainnet --region $region ec2 terminate-instances --instance-ids $id --query 'TerminatingInstances[*].InstanceId'
+   done
+}
+
+function do_copy_multikey
+{
+   indexes=$@
+   if [ -z "$MKHOST" ]; then
+      errexit "Please specify multikey host index using -M option"
+   fi
+   shard=$(( $MKHOST % 4 ))
+   mkhost_ip=$(grep -E :$MKHOST: $NODEDB/mainnet/ip.idx.map | tail -n 1 | cut -f1 -d:)
+   echo multikey host shard =\> $shard IP =\> $mkhost_ip
+   $SSH ec2-user@$mkhost_ip "mkdir -p .hmy/blskeys/"
+
+   for index in $indexes; do
+      s=$(( $index % 4 ))
+      if [ $s -ne $shard ]; then
+         errexit "index:$index doesn't belong to shard $shard. All indexes have to be in the same shard."
+      fi
+   done
+   for index in $indexes; do
+      key=$(grep -E "\"$index\"\s+=" variables.tf | cut -f2 -d= | tr -d \" | tr -d " ")
+      if [ -e "$KEYDIR/${key}.key" ]; then
+         ip=$(grep -E :$index: $NODEDB/mainnet/ip.idx.map | tail -n 1 | cut -f1 -d:)
+         echo $index:$ip:${key}.key
+         cat "$KEYDIR/${key}.key" | $SSH ec2-user@$mkhost_ip "cat > .hmy/blskeys/${key}.key"
+      else
+         echo found NO $index =\> ${key}.key file, skipping ..
+      fi
+   done
+}
+
 ###############################################################################
 LOGDIR=../../pipeline/logs/$HMY_PROFILE
 DRYRUN=echo
@@ -246,8 +306,10 @@ OUTPUT=$LOGDIR/$(date +%F.%H:%M:%S).log
 SYNC=false
 INSTANCE=t3.small
 REG=random
+MKHOST=
+KEYDIR=$HOME/tmp/blskey
 
-while getopts "hnvGss:d:Si:r:" option; do
+while getopts "hnvGss:d:Si:r:M:K:" option; do
    case $option in
       n) DRYRUN=echo [DRYRUN] ;;
       v) VERBOSE=-v ;;
@@ -257,6 +319,8 @@ while getopts "hnvGss:d:Si:r:" option; do
       S) SYNC=true ;;
       i) INSTANCE="${OPTARG}" ;;
       r) REG="${OPTARG}" ;;
+      M) MKHOST="${OPTARG}" ;;
+      K) KEYDIR="${OPTARG}" ;;
       h|?|*) usage ;;
    esac
 done
@@ -287,5 +351,8 @@ case $CMD in
    rclone) rclone_sync $@ ;;
    wait) do_wait $@ ;;
    uptime) update_uptime $@ ;;
+   status) do_status $@ ;;
+   replace) do_replace $@ ;;
+   multikey) do_copy_multikey $@ ;;
    *) usage ;;
 esac
