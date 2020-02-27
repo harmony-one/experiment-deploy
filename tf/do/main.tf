@@ -148,6 +148,19 @@ resource "digitalocean_droplet" "harmony_node" {
         }
     }
 
+    provisioner "file" {
+        source      = "files/userdata.sh"
+        destination = "/root/do-user/userdata.sh"
+        connection {
+            host        = digitalocean_droplet.harmony_node.ipv4_address
+            type        = "ssh"
+            user        = "root"
+            private_key = "${file(var.ssh_private_key_path)}"
+            timeout     = "2m"
+            agent       = true
+        }
+    }
+
 
     provisioner "remote-exec" {
         inline = [
@@ -168,6 +181,8 @@ resource "digitalocean_droplet" "harmony_node" {
             "sudo systemctl start node_exporter",
             "sudo systemctl enable node_exporter",
             "echo ${var.blskey_index} > index.txt",
+            "chmod +x userdata.sh; ./userdata.sh",
+            "sudo sed -i /etc/selinux/config -r -e 's/^SELINUX=.*/SELINUX=disabled/g'",
         ]
         connection {
             host        = digitalocean_droplet.harmony_node.ipv4_address
@@ -202,7 +217,19 @@ resource "digitalocean_firewall" "harmony_fw" {
 
     inbound_rule {
         protocol         = "tcp"
+        port_range       = "6000"
+        source_addresses = ["0.0.0.0/0", "::/0"]
+    }
+
+    inbound_rule {
+        protocol         = "tcp"
         port_range       = "9000"
+        source_addresses = ["0.0.0.0/0", "::/0"]
+    }
+
+    inbound_rule {
+        protocol         = "tcp"
+        port_range       = "9500"
         source_addresses = ["0.0.0.0/0", "::/0"]
     }
 
@@ -214,13 +241,33 @@ resource "digitalocean_firewall" "harmony_fw" {
 
     inbound_rule {
         protocol         = "tcp"
-        port_range       = "6000"
+        port_range       = "53"
         source_addresses = ["0.0.0.0/0", "::/0"]
     }
 
     inbound_rule {
-        protocol         = "tcp"
-        port_range       = "9500"
+        protocol         = "udp"
+        port_range       = "53"
         source_addresses = ["0.0.0.0/0", "::/0"]
     }
+
+    outbound_rule {
+        protocol              = "tcp"
+        port_range            = "53"
+        destination_addresses = ["0.0.0.0/0", "::/0"]
+    }
+
+    outbound_rule {
+        protocol              = "udp"
+        port_range            = "53"
+        destination_addresses = ["0.0.0.0/0", "::/0"]
+    }
+
+    outbound_rule {
+        protocol              = "tcp"
+        port_range            = "all"
+        destination_addresses = ["0.0.0.0/0", "::/0"]
+    }
+
+
 }

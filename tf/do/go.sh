@@ -73,6 +73,8 @@ function _do_launch_one
    IP=$(terraform output | grep 'public_ip = ' | awk -F= ' { print $2 } ' | tr -d ' ')
    sleep 1
    mv -f terraform.tfstate states/terraform.tfstate.do.$index
+
+   
 }
 
 function new_instance
