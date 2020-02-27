@@ -35,6 +35,7 @@ This script automates the benchmark test based on profile.
    wallet            generate wallet.ini file
    reinit <ip>       re-run init command on hosts (list of ips)
    replace <ip>      start a new node to replace existing nodes with ip (list of ips)
+   multikey <ip>     start multi-bls-key migration
    all               do everything (default)
 
 
@@ -572,6 +573,22 @@ function do_replace
 #   do_sync_logs
 }
 
+# re-init a node with multi-key, pause other nodes
+function do_multikey
+{
+   mkhost=$1
+   shift
+
+   [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+   TS=$(cat $SESSION_FILE | $JQ .sessionID)
+
+   ./restart_node.sh -p $PROFILE -M $mkhost
+
+   for ip in $@; do
+      ./node_ssh.sh -d logs/$TS ec2-user@$ip "sudo systemctl stop harmony"
+   done
+}
+
 function do_all
 {
    do_launch_bootnode
@@ -680,6 +697,8 @@ case $ACTION in
          do_reinit $* ;;
    replace)
          do_replace $* ;;
+   multikey)
+         do_multikey $* ;;
    *)
       echo "unknown action! \"$ACTION\""
       ;;

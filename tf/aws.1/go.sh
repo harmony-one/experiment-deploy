@@ -81,6 +81,8 @@ OPTIONS:
 
    -r <region>                specify the region (default: $REG)
                               supported region: $(echo ${REGIONS[@]} | tr " " ,)
+   -M multi-key-node-index    use this node to host multi-key
+   -K blskey-directory        specify the directory of all blskeys (default: $KEYDIR)
 
 
 COMMANDS:
@@ -90,6 +92,7 @@ COMMANDS:
    uptime [list of ip]        list of IP addresses to update uptime robot, will generate uptimerobot.sh cli
    status [list of ip]        list of IP addresses to check latest block height
    replace [list of index]    terminate old instances replaced by the new one, find the IP of old instance using the index from nodedb
+   multikey [list of index]   copy all the keys specified by index to the multikey host (must use -M)
 
 EXAMPLES:
 
@@ -267,6 +270,35 @@ function do_replace
    done
 }
 
+function do_copy_multikey
+{
+   indexes=$@
+   if [ -z "$MKHOST" ]; then
+      errexit "Please specify multikey host index using -M option"
+   fi
+   shard=$(( $MKHOST % 4 ))
+   mkhost_ip=$(grep -E :$MKHOST: $NODEDB/mainnet/ip.idx.map | tail -n 1 | cut -f1 -d:)
+   echo multikey host shard =\> $shard IP =\> $mkhost_ip
+   $SSH ec2-user@$mkhost_ip "mkdir -p .hmy/blskeys/"
+
+   for index in $indexes; do
+      s=$(( $index % 4 ))
+      if [ $s -ne $shard ]; then
+         errexit "index:$index doesn't belong to shard $shard. All indexes have to be in the same shard."
+      fi
+   done
+   for index in $indexes; do
+      key=$(grep -E "\"$index\"\s+=" variables.tf | cut -f2 -d= | tr -d \" | tr -d " ")
+      if [ -e "$KEYDIR/${key}.key" ]; then
+         ip=$(grep -E :$index: $NODEDB/mainnet/ip.idx.map | tail -n 1 | cut -f1 -d:)
+         echo $index:$ip:${key}.key
+         cat "$KEYDIR/${key}.key" | $SSH ec2-user@$mkhost_ip "cat > .hmy/blskeys/${key}.key"
+      else
+         echo found NO $index =\> ${key}.key file, skipping ..
+      fi
+   done
+}
+
 ###############################################################################
 LOGDIR=../../pipeline/logs/$HMY_PROFILE
 DRYRUN=echo
@@ -274,8 +306,10 @@ OUTPUT=$LOGDIR/$(date +%F.%H:%M:%S).log
 SYNC=false
 INSTANCE=t3.small
 REG=random
+MKHOST=
+KEYDIR=$HOME/tmp/blskey
 
-while getopts "hnvGss:d:Si:r:" option; do
+while getopts "hnvGss:d:Si:r:M:K:" option; do
    case $option in
       n) DRYRUN=echo [DRYRUN] ;;
       v) VERBOSE=-v ;;
@@ -285,6 +319,8 @@ while getopts "hnvGss:d:Si:r:" option; do
       S) SYNC=true ;;
       i) INSTANCE="${OPTARG}" ;;
       r) REG="${OPTARG}" ;;
+      M) MKHOST="${OPTARG}" ;;
+      K) KEYDIR="${OPTARG}" ;;
       h|?|*) usage ;;
    esac
 done
@@ -317,5 +353,6 @@ case $CMD in
    uptime) update_uptime $@ ;;
    status) do_status $@ ;;
    replace) do_replace $@ ;;
+   multikey) do_copy_multikey $@ ;;
    *) usage ;;
 esac
