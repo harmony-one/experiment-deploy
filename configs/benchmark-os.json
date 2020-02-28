@@ -6,15 +6,15 @@
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 3,
-    "type": "t3.small",
+    "num_vm": 4,
+    "type": "m5a.large",
     "regions": "iad",
     "protection": false,
     "root": 15
   },
   "explorer_node": {
-    "num_vm": 3,
-    "type": "t3.small",
+    "num_vm": 4,
+    "type": "m5a.large",
     "regions": "iad",
     "root": 25,
     "protection": false
@@ -48,13 +48,13 @@
     ]
   },
   "benchmark": {
-    "shards": 3,
+    "shards": 4,
     "duration": 120,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 10,
-    "minpeer": 6,
+    "peer_per_shard": 25,
+    "minpeer": 16,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
