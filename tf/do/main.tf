@@ -39,7 +39,6 @@ resource "digitalocean_droplet" "harmony_node" {
         }
     }     
 
-
     provisioner "local-exec" {
         command = "aws s3 cp s3://harmony-secret-keys/bls/${lookup(var.harmony-nodes-blskeys, var.blskey_index, var.default_key)}.key files/bls.key"
     }
@@ -73,19 +72,6 @@ resource "digitalocean_droplet" "harmony_node" {
     provisioner "file" {
         source      = "files/harmony.service"
         destination = "/root/do-user/harmony.service"
-        connection {
-            host        = digitalocean_droplet.harmony_node.ipv4_address
-            type        = "ssh"
-            user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
-            timeout     = "2m"
-            agent       = true
-        }
-    }
-
-    provisioner "file" {
-        source      = "files/node_exporter.service"
-        destination = "/root/do-user/node_exporter.service"
         connection {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
@@ -161,6 +147,18 @@ resource "digitalocean_droplet" "harmony_node" {
         }
     }
 
+    provisioner "file" {
+        source      = "files/reboot.sh"
+        destination = "/root/do-user/reboot.sh"
+        connection {
+            host        = digitalocean_droplet.harmony_node.ipv4_address
+            type        = "ssh"
+            user        = "root"
+            private_key = "${file(var.ssh_private_key_path)}"
+            timeout     = "2m"
+            agent       = true
+        }
+    }
 
     provisioner "remote-exec" {
         inline = [
@@ -168,18 +166,13 @@ resource "digitalocean_droplet" "harmony_node" {
             "curl https://rclone.org/install.sh | sudo bash",
             "cd /root/do-user",
             "curl -LO https://harmony.one/node.sh",
-            "chmod +x node.sh rclone.sh uploadlog.sh",
+            "chmod +x node.sh rclone.sh uploadlog.sh reboot.sh",
             "crontab crontab",
             "mkdir -p /root/.config/rclone",
             "mv -f rclone.conf /root/.config/rclone",
             "mv -f rclone.sh ../",
-            "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
             "sudo systemctl enable harmony.service",
             "sudo systemctl start harmony.service",
-            "sudo mv -f node_exporter.service /etc/systemd/system/node_exporter.service",
-            "sudo systemctl daemon-reload",
-            "sudo systemctl start node_exporter",
-            "sudo systemctl enable node_exporter",
             "echo ${var.blskey_index} > index.txt",
             "chmod +x userdata.sh; ./userdata.sh",
             "sudo sed -i /etc/selinux/config -r -e 's/^SELINUX=.*/SELINUX=disabled/g'",
@@ -253,18 +246,12 @@ resource "digitalocean_firewall" "harmony_fw" {
 
     outbound_rule {
         protocol              = "tcp"
-        port_range            = "53"
+        port_range            = "all"
         destination_addresses = ["0.0.0.0/0", "::/0"]
     }
 
     outbound_rule {
         protocol              = "udp"
-        port_range            = "53"
-        destination_addresses = ["0.0.0.0/0", "::/0"]
-    }
-
-    outbound_rule {
-        protocol              = "tcp"
         port_range            = "all"
         destination_addresses = ["0.0.0.0/0", "::/0"]
     }
