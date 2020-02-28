@@ -285,9 +285,12 @@ get_launch_params() {
 }
 
 get_logfile() {
-	rn_info "getting log filename"
+	rn_info "getting log filename. node_type =\> ${node_type}"
 	local logfiledir logip
 	case "${node_type}" in
+	tf)
+		logfiledir="latest"
+      ;;
 	exp)
 		logfiledir=$(node_ssh "${ip}" '
 			ls -td ../tmp_log/log-* | head -1

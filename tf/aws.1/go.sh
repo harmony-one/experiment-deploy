@@ -293,6 +293,7 @@ function do_copy_multikey
          ip=$(grep -E :$index: $NODEDB/mainnet/ip.idx.map | tail -n 1 | cut -f1 -d:)
          echo $index:$ip:${key}.key
          cat "$KEYDIR/${key}.key" | $SSH ec2-user@$mkhost_ip "cat > .hmy/blskeys/${key}.key"
+         echo $index |  $SSH ec2-user@$mkhost_ip "cat >> ~/multikey.txt"
       else
          echo found NO $index =\> ${key}.key file, skipping ..
       fi
