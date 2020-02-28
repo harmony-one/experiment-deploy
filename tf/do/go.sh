@@ -73,6 +73,9 @@ function _do_launch_one
    IP=$(terraform output | grep 'public_ip = ' | awk -F= ' { print $2 } ' | tr -d ' ')
    sleep 1
    mv -f terraform.tfstate states/terraform.tfstate.do.$index
+
+   # reboot the instance to ensure selinux is disabled - DO only
+   $SSH root@$ip '/root/do-user/reboot.sh'
 }
 
 function new_instance
@@ -90,6 +93,8 @@ function rclone_sync
 {
    ips=$@
    for ip in $ips; do
+      # leave enough time to make sure the new droplet properly launched
+      sleep 30
       $SSH root@$ip 'nohup /root/rclone.sh > rclone.log 2> rclone.err < /dev/null &'
    done
 }
