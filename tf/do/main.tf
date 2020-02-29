@@ -171,6 +171,7 @@ resource "digitalocean_droplet" "harmony_node" {
             "mkdir -p /root/.config/rclone",
             "mv -f rclone.conf /root/.config/rclone",
             "mv -f rclone.sh ../",
+            "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
             "sudo systemctl enable harmony.service",
             "sudo systemctl start harmony.service",
             "echo ${var.blskey_index} > index.txt",
@@ -256,5 +257,16 @@ resource "digitalocean_firewall" "harmony_fw" {
         destination_addresses = ["0.0.0.0/0", "::/0"]
     }
 
+    outbound_rule {
+        protocol              = "tcp"
+        port_range            = "53"
+        destination_addresses = ["0.0.0.0/0", "::/0"]
+    }
+
+    outbound_rule {
+        protocol              = "udp"
+        port_range            = "53"
+        destination_addresses = ["0.0.0.0/0", "::/0"]
+    }
 
 }
