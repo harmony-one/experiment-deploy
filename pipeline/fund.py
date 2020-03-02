@@ -123,6 +123,7 @@ def parse_args():
     parser.add_argument("--amount", dest="amount", default="1000", type=str, help="Amount to fund each account")
     parser.add_argument("--accounts", dest="accounts", default=None, help="CSV of one1... addresses")
     parser.add_argument("--check", action="store_true", help="Spot check balances after funding")
+    parser.add_argument("--force", action="store_true", help="Send transactions even if network appears to be offline")
     p_arg = parser.parse_args()
     p_arg.accounts = accounts if p_arg.accounts is None else [el.strip() for el in p_arg.accounts.split(",")]
     return p_arg
@@ -233,8 +234,9 @@ if __name__ == "__main__":
     net_config = get_network_config()
     chain_id = get_chain_id(net_config)
     endpoints = get_endpoints(net_config)
-    for ep in endpoints:
-        assert util.is_active_shard(ep, delay_tolerance=120), f"`{ep}` is not an active endpoint"
+    if not args.force:
+        for ep in endpoints:
+            assert util.is_active_shard(ep, delay_tolerance=120), f"`{ep}` is not an active endpoint"
 
     print(f"{util.Typgpy.HEADER}Funding using endpoints: {util.Typgpy.OKGREEN}{endpoints}{util.Typgpy.ENDC}")
     print(f"{util.Typgpy.HEADER}Chain-ID: {util.Typgpy.OKGREEN}{chain_id}{util.Typgpy.ENDC}")
@@ -261,8 +263,10 @@ if __name__ == "__main__":
         for addr in addrs_to_check:
             for bal in get_balance(addr):
                 if float(bal["amount"]) < float(args.amount):
-                    print(f"{util.Typgpy.FAIL}`{addr}` did not get funded!{util.Typgpy.ENDC}")
+                    print(f"{util.Typgpy.FAIL}{addr} did not get funded!{util.Typgpy.ENDC}")
                     failed = True
                     break
         if not failed:
             print(f"{util.Typgpy.HEADER}Successfully checked {len(addrs_to_check)} balances....{util.Typgpy.ENDC}")
+        else:
+            exit(-1)
