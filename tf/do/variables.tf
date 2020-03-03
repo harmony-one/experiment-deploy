@@ -8,11 +8,6 @@ variable "ssh_private_key_path" {
   default     = "~/.ssh/do-node.pem"
 }
 
-variable "addition_volume_size" {
-  description = "The addition volume size of the Droplet"
-  default     = 250
-}
-
 variable "droplet_size" {
   description = "The size of the Droplet"
   default     = "s-2vcpu-2gb"
