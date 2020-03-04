@@ -27,7 +27,7 @@ default_multi_key=false
 
 print_usage() {
 	cat <<- ENDEND
-		usage: ${progname} ${common_usage} [-t timeout] [-r step_retries] [-R cycle_retries] ip
+		usage: ${progname} ${common_usage} [-t timeout] [-r step_retries] [-R cycle_retries] [-y] ip
 
 		Restarts the node at the given IP address.
 
@@ -52,6 +52,7 @@ print_usage() {
 		-P          disable public RPC
 		-M          support multi-key
                   (default: ${default_multi_key})
+		-y          say yes to restart confirmation     
 
 		arguments:
 		ip		the IP address to upgrade
@@ -59,11 +60,12 @@ print_usage() {
 	ENDEND
 }
 
-unset -v timeout step_retries cycle_retries upgrade bucket folder
+unset -v timeout step_retries cycle_retries upgrade bucket folder force_yes
 upgrade=false
+force_yes=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}t:r:R:UB:F:PM" opt
+while getopts ":${common_getopts_spec}t:r:R:UB:F:PMy" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -77,6 +79,7 @@ do
 	F) folder="${OPTARG}";;
 	P) public_rpc=false;;
 	M) multi_key=true;;
+	y) force_yes=true;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -115,6 +118,20 @@ ip="${1}"
 shift 1
 
 log_define -v restart_node_log_level -l INFO rn
+
+if [ -z "${profile}" ] ;then
+	echo "profile not set, exiting..."
+	exit
+fi
+echo "profile: ${profile}"
+echo "restart node?"
+if [ "${force_yes}" = false ] ;then
+  printf "[Y]/n > "
+  read -r yn
+  if [ "${yn}" != "Y" ] ;then
+     exit
+  fi
+fi
 
 # run_with_retries ${cmd} [${arg} ...]
 #	Run the given command with the given arguments, if any, retrying the

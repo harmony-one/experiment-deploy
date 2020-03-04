@@ -11,13 +11,10 @@ esac
 
 . "${progdir}/msg.sh"
 . "${progdir}/usage.sh"
-. "${progdir}/common_opts.sh"
 
 print_usage() {
 	cat <<- ENDEND
-		usage: ${progname} ${common_usage} [-t timestamp] [-qTOESrM] shard command
-
-		${common_usage_desc}
+		usage: ${progname} [-t timestamp] [-qTOESrMpy] shard command
 
 		options:
 		-t timestamp	use the given timestamp (default: basename of realname of -d)
@@ -32,6 +29,8 @@ print_usage() {
 		-r		remove outdir (-o) after running
 		-M		use opportunistic ssh connection multiplexing
 		 		(helps back-to-back invocations); -M -M uses fresh mux
+		-p		profile of network to run on (example: s3)
+		-y		say yes to cmd confirmation
 
 		shard		the shard number, such as 0
 		command		the shell command to run on each host; may use \${ip}
@@ -39,7 +38,7 @@ print_usage() {
 	ENDEND
 }
 
-unset -v ts outdir quiet terse remove print_stdout print_stderr print_status use_ssh_mux
+unset -v ts outdir quiet terse remove print_stdout print_stderr print_status use_ssh_mux net_profile force_yes
 quiet=false
 terse=false
 remove=false
@@ -48,11 +47,12 @@ print_stderr=true
 print_status=true
 use_ssh_mux=false
 exit_mux_first=false
+force_yes=false
+net_profile=
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts :${common_getopts_spec}t:o:qTOESrM opt
+while getopts :t:o:qTOESrMp:y opt
 do
-	! process_common_opts "${opt}" || continue
 	case "${opt}" in
 	'?') usage "unrecognized option -${OPTARG}";;
 	':') usage "missing argument for -${OPTARG}";;
@@ -65,11 +65,12 @@ do
 	S) print_status=false;;
 	r) remove=true;;
 	M) exit_mux_first="${use_ssh_mux}"; use_ssh_mux=true;;
+	p) net_profile="${OPTARG}";;
+	y) force_yes=true;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
 shift $((${OPTIND} - 1))
-default_common_opts
 
 unset -v shard cmd
 shard="${1-}"
@@ -81,6 +82,21 @@ case $# in
 	usage "extra arguments given"
 	;;
 esac
+
+if [ -z "${net_profile}" ] ;then
+	echo "profile not set, exiting..."
+	exit
+fi
+logdir="logs/${net_profile}"
+echo "profile: ${net_profile}"
+echo "execute: ${cmd}"
+if [ "${force_yes}" = false ] ;then
+  printf "[Y]/n > "
+  read -r yn
+  if [ "${yn}" != "Y" ] ;then
+     exit
+  fi
+fi
 
 case "${ts+set}" in
 '')
