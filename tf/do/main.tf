@@ -6,10 +6,9 @@ resource "random_id" "droplet_id" {
     byte_length = 8
 }
 
-# Create a new SSH key
-resource "digitalocean_ssh_key" "default" {
+# Use existing ssh key stored on Digital Ocean
+data "digitalocean_ssh_key" "default" {
     name       = "Harmony Pub SSH Key"
-    public_key = file("keys/do-node.pub")
 }
 
 resource "digitalocean_droplet" "harmony_node" {
@@ -18,10 +17,8 @@ resource "digitalocean_droplet" "harmony_node" {
     region      = var.droplet_region
     size        = var.droplet_size
     tags        = ["harmony"]
-    ssh_keys    = [digitalocean_ssh_key.default.fingerprint] 
-    volume_ids  = [digitalocean_volume.harmony_data_volume.id]
+    ssh_keys    = [data.digitalocean_ssh_key.default.fingerprint] 
     resize_disk = "false"
-    depends_on = [digitalocean_volume.harmony_data_volume]     
 
     provisioner "local-exec" {
         command = "aws s3 cp s3://harmony-secret-keys/bls/${lookup(var.harmony-nodes-blskeys, var.blskey_index, var.default_key)}.key files/bls.key"
@@ -34,7 +31,7 @@ resource "digitalocean_droplet" "harmony_node" {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
             user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
+            private_key = file(var.ssh_private_key_path)
             timeout     = "2m"
             agent       = true
         }
@@ -47,7 +44,7 @@ resource "digitalocean_droplet" "harmony_node" {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
             user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
+            private_key = file(var.ssh_private_key_path)
             timeout     = "2m"
             agent       = true
         }
@@ -60,7 +57,7 @@ resource "digitalocean_droplet" "harmony_node" {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
             user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
+            private_key = file(var.ssh_private_key_path)
             timeout     = "2m"
             agent       = true
         }
@@ -73,7 +70,7 @@ resource "digitalocean_droplet" "harmony_node" {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
             user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
+            private_key = file(var.ssh_private_key_path)
             timeout     = "2m"
             agent       = true
         }
@@ -86,7 +83,7 @@ resource "digitalocean_droplet" "harmony_node" {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
             user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
+            private_key = file(var.ssh_private_key_path)
             timeout     = "2m"
             agent       = true
         }
@@ -99,7 +96,7 @@ resource "digitalocean_droplet" "harmony_node" {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
             user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
+            private_key = file(var.ssh_private_key_path)
             timeout     = "2m"
             agent       = true
         }
@@ -112,7 +109,7 @@ resource "digitalocean_droplet" "harmony_node" {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
             user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
+            private_key = file(var.ssh_private_key_path)
             timeout     = "2m"
             agent       = true
         }
@@ -125,7 +122,7 @@ resource "digitalocean_droplet" "harmony_node" {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
             user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
+            private_key = file(var.ssh_private_key_path)
             timeout     = "2m"
             agent       = true
         }
@@ -138,7 +135,7 @@ resource "digitalocean_droplet" "harmony_node" {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
             user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
+            private_key = file(var.ssh_private_key_path)
             timeout     = "2m"
             agent       = true
         }
@@ -154,6 +151,7 @@ resource "digitalocean_droplet" "harmony_node" {
             "mkdir -p /root/.config/rclone",
             "mv -f rclone.conf /root/.config/rclone",
             "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
+            "sudo systemctl daemon-reload",
             "sudo systemctl enable harmony.service",
             "sudo systemctl start harmony.service",
             "echo ${var.blskey_index} > index.txt",
@@ -164,83 +162,10 @@ resource "digitalocean_droplet" "harmony_node" {
             host        = digitalocean_droplet.harmony_node.ipv4_address
             type        = "ssh"
             user        = "root"
-            private_key = "${file(var.ssh_private_key_path)}"
+            private_key = file(var.ssh_private_key_path)
             timeout     = "2m"
             agent       = true
         }
     } 
-
-}
-
-resource "digitalocean_firewall" "harmony_fw" {
-    name = "harmony-fw"
-
-    droplet_ids = [digitalocean_droplet.harmony_node.id]
-
-    inbound_rule {
-        protocol         = "tcp"
-        port_range       = "22"
-        source_addresses = ["35.160.64.190/0"]
-    }
-
-    inbound_rule {
-        protocol         = "tcp"
-        port_range       = "6000"
-        source_addresses = ["0.0.0.0/0", "::/0"]
-    }
-
-    inbound_rule {
-        protocol         = "tcp"
-        port_range       = "9000"
-        source_addresses = ["0.0.0.0/0", "::/0"]
-    }
-
-    inbound_rule {
-        protocol         = "tcp"
-        port_range       = "9500"
-        source_addresses = ["0.0.0.0/0", "::/0"]
-    }
-
-    inbound_rule {
-        protocol         = "tcp"
-        port_range       = "9800"
-        source_addresses = ["0.0.0.0/0", "::/0"]
-    }
-
-    inbound_rule {
-        protocol         = "tcp"
-        port_range       = "53"
-        source_addresses = ["0.0.0.0/0", "::/0"]
-    }
-
-    inbound_rule {
-        protocol         = "udp"
-        port_range       = "53"
-        source_addresses = ["0.0.0.0/0", "::/0"]
-    }
-
-    outbound_rule {
-        protocol              = "tcp"
-        port_range            = "all"
-        destination_addresses = ["0.0.0.0/0", "::/0"]
-    }
-
-    outbound_rule {
-        protocol              = "udp"
-        port_range            = "all"
-        destination_addresses = ["0.0.0.0/0", "::/0"]
-    }
-
-    outbound_rule {
-        protocol              = "tcp"
-        port_range            = "53"
-        destination_addresses = ["0.0.0.0/0", "::/0"]
-    }
-
-    outbound_rule {
-        protocol              = "udp"
-        port_range            = "53"
-        destination_addresses = ["0.0.0.0/0", "::/0"]
-    }
 
 }

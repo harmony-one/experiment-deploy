@@ -75,7 +75,7 @@ function _do_launch_one
    mv -f terraform.tfstate states/terraform.tfstate.do.$index
 
    # reboot the instance to ensure selinux is disabled - DO only
-   $SSH root@$IP './do-user/reboot.sh'
+   $SSH root@$IP './reboot.sh'
 }
 
 function new_instance
