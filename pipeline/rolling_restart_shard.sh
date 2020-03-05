@@ -103,7 +103,7 @@ restart_shard() {
 	set --
 	for ip in $(cat "${result_dir}/${shard}/order.txt")
 	do
-		capture "${result_dir}/${shard}/${ip}" "${progdir}/restart_node.sh" -p "${profile}" -d "${logdir}" -U "${ip}" &
+		capture "${result_dir}/${shard}/${ip}" "${progdir}/restart_node.sh" -y -p "${profile}" -d "${logdir}" -U "${ip}" &
 		set -- "$@" "${ip}"
 		case $(($# < ${stride})) in
 		0)
@@ -229,7 +229,7 @@ make_restart_order() {
 	rollupg_debug "getting the current leader"
 	local leader_ip
 	leader_ip=$(
-		./run_on_shard.sh -d "${logdir}" -rT "${shard}" '
+		./run_on_shard.sh -y -p "${profile}" -rT "${shard}" '
 			(
 				for f in ../tmp_log/log-*/*.log latest/*.log
 				do
