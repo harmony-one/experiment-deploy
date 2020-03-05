@@ -13,6 +13,7 @@ PREREQUISITE:
 * make sure you have set DIGITAL_OCEAN_TOKEN environment variable.
 OPTIONS:
    -h                               print this help message
+   -S                               enabled state pruning for the node (default: false)
 COMMANDS:
    new [list of index]              list of blskey index
    rclone [list of ip]              list of IP addresses to run rclone 
@@ -92,10 +93,15 @@ function new_instance
 function rclone_sync
 {
    ips=$@
+   if $SYNC; then
+     folder=mainnet.min
+   else
+     folder=mainnet
+   fi
    for ip in $ips; do
       # leave enough time to make sure the new droplet properly launched
-      sleep 30
-      $SSH root@$ip 'nohup /root/rclone.sh > rclone.log 2> rclone.err < /dev/null &'
+      sleep 15
+      $SSH root@$ip 'nohup /root/rclone.sh $folder > rclone.log 2> rclone.err < /dev/null &'
    done
 }
 
@@ -159,10 +165,14 @@ function update_uptime
    done
 }
 
-while getopts "hv" option; do
+##############################################################################
+SYNC=false
+
+while getopts "hvS" option; do
    case $option in
       v) VERBOSE=true ;;
       h|?|*) usage ;;
+      S) SYNC=true ;;
    esac
 done
 

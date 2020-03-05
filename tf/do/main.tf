@@ -150,7 +150,7 @@ resource "digitalocean_droplet" "harmony_node" {
             "crontab crontab",
             "mkdir -p /root/.config/rclone",
             "mv -f rclone.conf /root/.config/rclone",
-            "sudo mv -f harmony.service /etc/systemd/system/harmony.service",
+            "sudo cp -f harmony.service /etc/systemd/system/harmony.service",
             "sudo systemctl daemon-reload",
             "sudo systemctl enable harmony.service",
             "sudo systemctl start harmony.service",
