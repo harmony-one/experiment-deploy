@@ -18,8 +18,11 @@ esac
 
 log_define rollupg
 
-unset -v default_stride
+unset -v default_stride default_timeout default_step_retries default_cycle_retries
 default_stride=4
+default_timeout=450
+default_step_retries=2
+default_cycle_retries=2
 
 print_usage() {
 	cat <<- ENDEND
@@ -32,16 +35,18 @@ print_usage() {
 		-v		print stdout/stderr from restart_node.sh (default: just save)
 		-f iplist	use the given file as the list of nodes to restart
 		 		(default: use shardX.txt)
-
+		-t N        wait at most N seconds for BINGO/HOORAY (default: ${default_timeout})
+		-r N        try a failed step N more times (default: ${default_step_retries})
+		-R N        try a failed cycle N more times (default: ${default_cycle_retries})
 		arguments:
 		shard		the shard number, such as 0
 	ENDEND
 }
 
-unset -v stride verbose iplist
+unset -v stride verbose iplist timeout step_retries cycle_retries
 verbose=false
 
-unset -v OPTIND OPTARG opt
+unset -v OPTIND OPTARG opt 
 OPTIND=1
 while getopts ":${common_getopts_spec}s:vf:" opt
 do
@@ -52,6 +57,9 @@ do
 	s) stride="${OPTARG}";;
 	v) verbose=true;;
 	f) iplist="${OPTARG}";;
+	t) timeout="${OPTARG}";;
+	r) step_retries="${OPTARG}";;
+	R) cycle_retries="${OPTARG}";;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -59,6 +67,9 @@ shift $((${OPTIND} - 1))
 default_common_opts
 
 : ${stride="${default_stride}"}
+: ${timeout="${default_timeout}"}
+: ${step_retries="${default_step_retries}"}
+: ${cycle_retries="${default_cycle_retries}"}
 
 case "${stride}" in
 ""|*[^0-9]*) usage "invalid stride ${stride}";;
@@ -103,7 +114,8 @@ restart_shard() {
 	set --
 	for ip in $(cat "${result_dir}/${shard}/order.txt")
 	do
-		capture "${result_dir}/${shard}/${ip}" "${progdir}/restart_node.sh" -y -p "${profile}" -d "${logdir}" -U "${ip}" &
+		capture "${result_dir}/${shard}/${ip}" "${progdir}/restart_node.sh" -y -p "${profile}" -d "${logdir}" -U "${ip}" \
+			-t "${timeout}" -r "${step_retries}" -R "${cycle_retries}" &
 		set -- "$@" "${ip}"
 		case $(($# < ${stride})) in
 		0)
