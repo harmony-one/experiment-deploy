@@ -94,7 +94,7 @@
   "flow": {
      "wait_for_launch": 60,
      "reserved_account": "",
-     "rpczone": "os",
+     "rpczone": "ps",
      "rpcnode": 2
   },
   "bls": {
