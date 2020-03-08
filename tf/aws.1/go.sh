@@ -74,7 +74,7 @@ OPTIONS:
    -G                         do the real job
    -s state-file-directory    specify the directory of the terraform state files (default: $STATEDIR)
    -d log-file-directory      specify the directory of the log directory (default: logs/$HMY_PROFILE)
-   -S                         enabled state pruning for the node (default: $SYNC)
+   -S                         disable state pruning for the node (default: $SYNC)
    -N nodedb-directory        specify the directory of the nodedb (default: $NODEDB)
 
    -i <instance type>         specify instance type (default: $INSTANCE)
@@ -382,7 +382,7 @@ function do_copy_multikey
 LOGDIR=../../pipeline/logs/$HMY_PROFILE
 DRYRUN=echo
 OUTPUT=$LOGDIR/$(date +%F.%H:%M:%S).log
-SYNC=false
+SYNC=true
 INSTANCE=c5.large
 REG=random
 MKHOST=
@@ -395,7 +395,7 @@ while getopts "hnvGss:d:Si:r:M:K:" option; do
       G) DRYRUN= ;;
       s) STATEDIR="${OPTARG}" ;;
       d) LOGDIR="${OPTARG}" ;;
-      S) SYNC=true ;;
+      S) SYNC=false ;;
       i) INSTANCE="${OPTARG}" ;;
       r) REG="${OPTARG}" ;;
       M) MKHOST="${OPTARG}" ;;
