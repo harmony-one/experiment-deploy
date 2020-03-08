@@ -17,7 +17,7 @@ variable "node_volume_size" {
 
 variable "node_instance_type" {
   description = "Instance type of the ec2 node instance"
-  default     = "t3.small"
+  default     = "c5.large"
 }
 
 variable "aws_region" {
@@ -32,19 +32,19 @@ variable "node_owner" {
 
 variable "spot_instance_price" {
   description = "The spot instance price"
-  default     = "0.021"
+  default     = "0.086"
 }
 
 variable "spot_type" {
-   type        = "string"
-   description = "(Optional; Default: 'persistent') If set to 'one-time', after the instance is terminated, the spot request will be closed. Also, Terraform can't manage one-time spot requests, just launch them."
-   default     = "one-time"
+  type        = "string"
+  description = "(Optional; Default: 'persistent') If set to 'one-time', after the instance is terminated, the spot request will be closed. Also, Terraform can't manage one-time spot requests, just launch them."
+  default     = "one-time"
 }
 
 variable "instance_interruption_behaviour" {
-   type        = "string"
-   description = "Whether a Spot instance stops or terminates when it is interrupted, can be stop or terminate"
-   default     = "terminate"
+  type        = "string"
+  description = "Whether a Spot instance stops or terminates when it is interrupted, can be stop or terminate"
+  default     = "terminate"
 }
 
 variable "security_groups" {
@@ -75,6 +75,10 @@ variable "user_data" {
 
 variable "default_key" {
   default = ""
+}
+
+variable "default_shard" {
+  default = "0"
 }
 
 variable "blskey_index" {

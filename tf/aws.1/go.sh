@@ -4,6 +4,7 @@
 source ./regions.sh
 ME=`basename $0`
 SSH='ssh -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
+HARMONYDB=harmony.go
 
 set -o pipefail
 # set -x
@@ -94,6 +95,7 @@ COMMANDS:
    replace [list of index]    terminate old instances replaced by the new one, find the IP of old instance using the index from nodedb
    multikey [list of index]   copy all the keys specified by index to the multikey host (must use -M)
    mkuptime [list of index]   list of index to be updated in uptimerobot (must use -M)
+   newmk [list of index]      launch a multi-key node with list of index keys, all indexes have to be in the same shard
 
 EXAMPLES:
 
@@ -115,6 +117,8 @@ EXAMPLES:
 
    $ME -M 10 mkuptime 10 22 42 > upmk.sh
 
+   $ME newmk 20 40 80
+
 EOF
    exit 0
 }
@@ -131,9 +135,11 @@ function _do_launch_one {
       echo index: $index is out of bound
       return
    fi
+   shard=$(( $index % 4 ))
 
    vars=(
       -var "blskey_index=$index" 
+      -var "default_shard=$shard"
       -var "node_instance_type=$INSTANCE" 
       -var "spot_instance_price=${SPOT[$INSTANCE]}"
    )
@@ -170,6 +176,7 @@ function new_instance
    indexes=$@
    rm -f ip.txt
    i_name=$(echo $INSTANCE | cut -f1 -d.)
+   cp -f files/harmony-1.service files/service/harmony.service
    for i in $indexes; do
       _do_launch_one $i
       echo $IP >> ip.txt
@@ -178,6 +185,44 @@ function new_instance
    done
 
    do_state_sync
+}
+
+# copy one blskey keyfile files/blskeys directory
+function _do_copy_blskeys
+{
+   index=$1
+   key=$(grep "Index:...$index " $HARMONYDB | grep -oE 'BlsPublicKey:..[a-z0-9]+' | cut -f2 -d: | tr -d \" | tr -d " ")
+   aws s3 cp s3://harmony-secret-keys/bls/${key}.key files/blskeys/${key}.key
+}
+
+# new host with multiple bls keys
+function do_new_mk
+{
+   indexes=( $@ )
+   shard=-1
+   for idx in ${indexes[@]}; do
+      idx_shard=$(( $idx % 4 ))
+      if [ $shard == -1 ]; then
+         shard=$idx_shard
+      else
+         if [ $shard != $idx_shard ]; then
+            errexit "shard: $shard should be identical. $idx is in shard $idx_shard."
+         fi
+      fi
+   done
+   i_name=$(echo $INSTANCE | cut -f1 -d.)
+   # clean the existing blskeys
+   rm -f files/blskeys/*.key
+   rm -f files/multikey.txt
+
+   for idx in ${indexes[@]}; do
+      _do_copy_blskeys $idx
+      echo $idx >> files/multikey.txt
+   done
+   tag=$(cat files/multikey.txt | tr "\n" "-" | sed "s/-$//")
+   cp -f files/harmony-mk.service files/service/harmony.service
+   _do_launch_one ${indexes[0]}
+   aws --profile mainnet --region $REG ec2 create-tags --resources $ID --tags "Key=Name,Value=s${shard}-${i_name}-${tag}" "Key=Shard,Value=${shard}" "Key=Index,Value=${tag}" "Key=Type,Value=node"
 }
 
 # use rclone to sync harmony db
@@ -338,7 +383,7 @@ LOGDIR=../../pipeline/logs/$HMY_PROFILE
 DRYRUN=echo
 OUTPUT=$LOGDIR/$(date +%F.%H:%M:%S).log
 SYNC=false
-INSTANCE=t3.small
+INSTANCE=c5.large
 REG=random
 MKHOST=
 KEYDIR=$HOME/tmp/blskey
@@ -389,5 +434,8 @@ case $CMD in
    replace) do_replace $@ ;;
    multikey) do_copy_multikey $@ ;;
    mkuptime) mk_update_uptime $@ ;;
+   newmk) do_new_mk $@ ;;
    *) usage ;;
 esac
+
+# vim:ts=3:sw=3
