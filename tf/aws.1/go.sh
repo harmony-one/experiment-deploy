@@ -93,6 +93,7 @@ COMMANDS:
    status [list of ip]        list of IP addresses to check latest block height
    replace [list of index]    terminate old instances replaced by the new one, find the IP of old instance using the index from nodedb
    multikey [list of index]   copy all the keys specified by index to the multikey host (must use -M)
+   mkuptime [list of index]   list of index to be updated in uptimerobot (must use -M)
 
 EXAMPLES:
 
@@ -102,13 +103,17 @@ EXAMPLES:
 
    $ME -S -i c5.large new 20 30 5
 
-   $ME rclone 12.34.56.78 123.234.123.234
+   $ME -S rclone 12.34.56.78 123.234.123.234
 
    $ME wait 12.34.56.78 123.234.123.234
 
    $ME uptime 12.34.56.78 123.234.123.234 > upt.sh
 
    $ME replace 200 20 10 > repl.sh
+
+   $ME -M 100 multikey 100 200 300
+
+   $ME -M 10 mkuptime 10 22 42 > upmk.sh
 
 EOF
    exit 0
@@ -243,11 +248,39 @@ function update_uptime
    ips=$@
    i_name=$(echo $INSTANCE | cut -f1 -d.)
    for ip in $ips; do
-      idx=$($SSH ec2-user@$ip 'cat index.txt')
+      idx=$(node_ssh.sh $ip 'cat index.txt')
       shard=$(( $idx % 4 ))
       echo ./uptimerobot.sh -t $i_name -i $idx update "s${shard}-.*-$idx" $ip $shard
       echo ./uptimerobot.sh -t $i_name -i $idx -G update "s${shard}-.*-$idx" $ip $shard
    done
+}
+
+function mk_update_uptime
+{
+   indexes=$@
+   if [ -z "$MKHOST" ]; then
+      errexit "Please specify multikey host index using -M option"
+   fi
+   if [ $(echo "$indexes" | wc -w) -lt 2 ]; then
+      errexit "Please specify at least 2 idx for multi-key uptime update"
+   fi
+   mk_ip=$(grep -E :$MKHOST: $NODEDB/mainnet/ip.idx.map | tail -n 1 | cut -f1 -d:)
+   mk_name=$(echo "$indexes" | tr " " "-")
+   for idx in $indexes; do
+      if [ "$idx" == "$MKHOST" ]; then
+         i_name=$(echo $INSTANCE | cut -f1 -d.)
+         shard=$(( $idx % 4 ))
+         # update uptimerobot of multikey host
+         echo ./uptimerobot.sh -t $i_name -i $mk_name update "s${shard}-.*-$idx" $mk_ip $shard
+         echo ./uptimerobot.sh -t $i_name -i $mk_name -G update "s${shard}-.*-$idx" $mk_ip $shard
+
+      else
+         # pause uptimerobot of other hosts
+         echo ./uptimerobot.sh pause "s${shard}-.*-$idx"
+         echo ./uptimerobot.sh -G pause "s${shard}-.*-$idx"
+      fi
+   done
+
 }
 
 function do_status
@@ -355,5 +388,6 @@ case $CMD in
    status) do_status $@ ;;
    replace) do_replace $@ ;;
    multikey) do_copy_multikey $@ ;;
+   mkuptime) mk_update_uptime $@ ;;
    *) usage ;;
 esac

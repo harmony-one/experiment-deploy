@@ -582,11 +582,7 @@ function do_multikey
    [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
    TS=$(cat $SESSION_FILE | $JQ .sessionID)
 
-   ./restart_node.sh -p $PROFILE -M $mkhost
-
-   for ip in $@; do
-      ./node_ssh.sh -d logs/$TS ec2-user@$ip "sudo systemctl stop harmony"
-   done
+   ./restart_node.sh -p $PROFILE -y -M $mkhost
 }
 
 function do_all
