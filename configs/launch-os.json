@@ -4,7 +4,7 @@
          "region": "iad",
          "type": "t3.small",
          "ondemand": 0,
-         "spot": 96,
+         "spot": 32,
          "protection": false,
          "root": 15
       }
