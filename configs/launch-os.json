@@ -2,7 +2,7 @@
    "launch": [
       {
          "region": "iad",
-         "type": "t3.small",
+         "type": "m5a.large",
          "ondemand": 0,
          "spot": 32,
          "protection": false,
