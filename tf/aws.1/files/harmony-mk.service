@@ -1,0 +1,15 @@
+[Unit]
+Description=harmony service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=ec2-user
+WorkingDirectory=/home/ec2-user
+ExecStart=/home/ec2-user/node.sh -1 -S -P -p /home/ec2-user/bls.pass -M -D
+
+[Install]
+WantedBy=multi-user.target
