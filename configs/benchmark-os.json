@@ -53,7 +53,7 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 9,
+    "peer_per_shard": 27,
     "minpeer": 6,
     "log_conn": false,
     "even_shard": true,
