@@ -3,8 +3,8 @@
       {
          "region": "iad",
          "type": "t3.small",
-         "ondemand": 0,
-         "spot": 18,
+         "ondemand": 8,
+         "spot": 0,
          "protection": false,
          "root": 15
       }
