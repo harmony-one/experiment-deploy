@@ -1,8 +1,8 @@
 {
-  "description": "aws 20 nodes on 2 shard in one region",
+  "description": "aws 10 nodes on 2 shard in one region with mkeys",
   "client": {
     "num_vm": 0,
-    "type": "t3.medium",
+    "type": "t3.small",
     "regions": "iad"
   },
   "leader": {
@@ -53,13 +53,13 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 10,
-    "minpeer": 6,
+    "peer_per_shard": 15,
+    "minpeer": 3,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
     "commit_delay": "2s",
-    "network_type": "devnet",
+    "network_type": "partner",
     "bls": true
   },
   "logs": {
@@ -102,6 +102,11 @@
      "bucket": "harmony-secret-keys",
      "folder": "bls-test",
      "keyfile": "blskey-test.txt"
+  },
+  "multikey": {
+     "enable": true,
+     "keys_per_node": 3,
+     "blskey_folder": ".hmy/blskeys"
   },
   "genesis": "genesis.txt",
   "libp2p": true

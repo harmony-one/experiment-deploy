@@ -1,21 +1,21 @@
 {
-  "description": "aws 510 nodes",
+  "description": "aws 160 nodes, 4 shards",
   "client": {
     "num_vm": 0,
-    "type": "t3.medium",
+    "type": "m5a.large",
     "regions": "iad"
   },
   "leader": {
     "num_vm": 1,
     "type": "m5a.large",
-    "regions": "iad,pdx,cmh",
+    "regions": "iad,pdx,cmh,sfo",
     "protection": false,
     "root": 15
   },
   "explorer_node": {
     "num_vm": 1,
     "type": "m5a.xlarge",
-    "regions": "iad,pdx,cmh",
+    "regions": "iad,pdx,cmh,sfo",
     "root": 25,
     "protection": false
   },
@@ -48,18 +48,18 @@
     ]
   },
   "benchmark": {
-    "shards": 3,
+    "shards": 4,
     "duration": 120,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 250,
-    "minpeer": 168,
+    "peer_per_shard": 120,
+    "minpeer": 30,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
     "commit_delay": "2s",
-    "network_type": "testnet",
+    "network_type": "stressnet",
     "bls": true
   },
   "logs": {
@@ -102,6 +102,11 @@
      "bucket": "harmony-secret-keys",
      "folder": "bls-test",
      "keyfile": "blskey-test.txt"
+  },
+  "multikey": {
+     "enable": true,
+     "keys_per_node": 3,
+     "blskey_folder": ".hmy/blskeys"
   },
   "genesis": "genesis.txt",
   "libp2p": true
