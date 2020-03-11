@@ -195,36 +195,6 @@ function _do_copy_blskeys
    aws s3 cp s3://harmony-secret-keys/bls/${key}.key files/blskeys/${key}.key
 }
 
-# new host with multiple bls keys
-function do_new_mk
-{
-   indexes=( $@ )
-   shard=-1
-   for idx in ${indexes[@]}; do
-      idx_shard=$(( $idx % 4 ))
-      if [ $shard == -1 ]; then
-         shard=$idx_shard
-      else
-         if [ $shard != $idx_shard ]; then
-            errexit "shard: $shard should be identical. $idx is in shard $idx_shard."
-         fi
-      fi
-   done
-   i_name=$(echo $INSTANCE | cut -f1 -d.)
-   # clean the existing blskeys
-   rm -f files/blskeys/*.key
-   rm -f files/multikey.txt
-
-   for idx in ${indexes[@]}; do
-      _do_copy_blskeys $idx
-      echo $idx >> files/multikey.txt
-   done
-   tag=$(cat files/multikey.txt | tr "\n" "-" | sed "s/-$//")
-   cp -f files/harmony-mk.service files/service/harmony.service
-   _do_launch_one ${indexes[0]}
-   aws --profile mainnet --region $REG ec2 create-tags --resources $ID --tags "Key=Name,Value=s${shard}-${i_name}-${tag}" "Key=Shard,Value=${shard}" "Key=Index,Value=${tag}" "Key=Type,Value=node"
-}
-
 # use rclone to sync harmony db
 function rclone_sync
 {
@@ -286,6 +256,39 @@ function do_wait
    do_status
 
    date
+}
+
+# new host with multiple bls keys
+function do_new_mk
+{
+   indexes=( $@ )
+   shard=-1
+   for idx in ${indexes[@]}; do
+      idx_shard=$(( $idx % 4 ))
+      if [ $shard == -1 ]; then
+         shard=$idx_shard
+      else
+         if [ $shard != $idx_shard ]; then
+            errexit "shard: $shard should be identical. $idx is in shard $idx_shard."
+         fi
+      fi
+   done
+   i_name=$(echo $INSTANCE | cut -f1 -d.)
+   # clean the existing blskeys
+   rm -f files/blskeys/*.key
+   rm -f files/multikey.txt
+
+   for idx in ${indexes[@]}; do
+      _do_copy_blskeys $idx
+      echo $idx >> files/multikey.txt
+   done
+   tag=$(cat files/multikey.txt | tr "\n" "-" | sed "s/-$//")
+   cp -f files/harmony-mk.service files/service/harmony.service
+   _do_launch_one ${indexes[0]}
+   aws --profile mainnet --region $REG ec2 create-tags --resources $ID --tags "Key=Name,Value=s${shard}-${i_name}-${tag}" "Key=Shard,Value=${shard}" "Key=Index,Value=${tag}" "Key=Type,Value=node"
+
+   rclone_sync $IP
+   do_wait $IP
 }
 
 function update_uptime
@@ -383,7 +386,7 @@ LOGDIR=../../pipeline/logs/$HMY_PROFILE
 DRYRUN=echo
 OUTPUT=$LOGDIR/$(date +%F.%H:%M:%S).log
 SYNC=true
-INSTANCE=c5.large
+INSTANCE=m5a.large
 REG=random
 MKHOST=
 KEYDIR=$HOME/tmp/blskey

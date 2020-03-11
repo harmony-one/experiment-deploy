@@ -1,0 +1,4 @@
+SHELL=/usr/bin/bash
+HOME=/home/gce-user
+
+30 0 * * *  rm -f latest/*.gz

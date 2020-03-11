@@ -19,16 +19,16 @@ variable "node_instance_type" {
 }
 
 variable "region" {
-   default   = "us-east1"
+  default = "us-east1"
 }
 
 variable "zone" {
-   default = "us-east1-b"
+  default = "us-east1-b"
 }
 
 variable "vpc_name" {
-   description = "The network name of the GCP nodes"
-   default     = "hmy-mainnet-vpc"
+  description = "The network name of the GCP nodes"
+  default     = "hmy-mainnet-vpc"
 }
 
 variable "default_key" {
@@ -42,6 +42,11 @@ variable "shard" {
 
 variable "blskey_index" {
   description = "Index of the Harmony Node BlsKey"
+  default     = "0"
+}
+
+variable "blskey_indexes" {
+  description = "Indexes of the Harmony Node BlsKey"
   default     = "0"
 }
 
