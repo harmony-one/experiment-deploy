@@ -3,8 +3,8 @@
       {
          "region": "iad",
          "type": "m5a.large",
-         "ondemand": 0,
-         "spot": 32,
+         "ondemand": 32,
+         "spot": 0,
          "protection": false,
          "root": 15
       }
