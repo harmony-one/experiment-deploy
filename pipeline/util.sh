@@ -242,7 +242,15 @@ find_key_from_host()
 				return
 			esac
 		fi
-      	echo ${REGION_KEY[$reg]}
+      case "$WHOAMI" in
+         # keep it backward compatible
+         "HARMONY"|"OS"|"PS"|"LRTN")
+            echo ${REGION_KEY[$reg]}
+            ;;
+         # all new network should use new testnet keypair
+         *) echo "harmony-testnet.pem"
+            ;;
+      esac
    fi
 }
 
