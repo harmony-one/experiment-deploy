@@ -48,7 +48,7 @@ verbose=false
 
 unset -v OPTIND OPTARG opt 
 OPTIND=1
-while getopts ":${common_getopts_spec}s:vf:" opt
+while getopts ":${common_getopts_spec}s:vf:t:r:R:" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
