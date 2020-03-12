@@ -1,23 +1,28 @@
 #!/bin/bash
-# this script is used to launch/terminate bootnode node on Jenkins server
+# this script is used to launch/terminate bootnode node on bootnode server
 # it can download bootnode binary from s3 bucket, and kill existing bootnode process
-# and launch new bootnode process.  All done remotely on Jenkins server
-# You should have keys to access Jenkins server
-# TODO: we should launch multiple bootnodes. We need to test multiple bootnodes and the p2p network.
+# and launch new bootnode process.
 
 set -euo pipefail
 # IFS=$'\n\t'
 
+unset -v progname progdir
+progname="${0##*/}"
+case "${0}" in
+*/*) progdir="${0%/*}";;
+*) progdir=".";;
+esac
+
+. "${progdir}/util.sh"
+
 ME=$(basename $0)
 NOW=$(date +%Y%m%d.%H%M%S)
-JENKINS=jenkins.harmony.one
-KEY=california-key-benchmark.pem
 
 function usage
 {
    cat<<EOF
 Usage: $ME [Options] Command
-This script is used to launch/terminate bootnode program on Jenkins server.
+This script is used to launch/terminate bootnode program on bootnode server.
 
 OPTIONS:
    -h             print this help message
@@ -108,7 +113,7 @@ PORT=9876
 BUCKET=unique-bucket-bin
 USERID=${WHOAMI:-$USER}
 FOLDER=$USERID
-SERVER=${JENKINS}
+SERVER=
 PROFILE=
 BN=bootnode
 P2PKEY=bootnode.key
@@ -142,6 +147,8 @@ CMD="$@"
 if [ "$CMD" = "" ]; then
    CMD=all
 fi
+
+KEY=$(find_key_from_ip $SERVER)
 
 SSH="/usr/bin/ssh -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
 SCP="/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
