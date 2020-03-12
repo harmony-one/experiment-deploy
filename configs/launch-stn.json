@@ -4,7 +4,7 @@
             "region": "iad",
             "type": "m5a.large",
             "ondemand": 0,
-            "spot": 39,
+            "spot": 9,
             "protection": false,
             "root": 10
         },
@@ -12,7 +12,7 @@
             "region": "pdx",
             "type": "m5a.large",
             "ondemand": 0,
-            "spot": 39,
+            "spot": 9,
             "protection": false,
             "root": 10
         },
@@ -20,7 +20,7 @@
             "region": "cmh",
             "type": "m5a.large",
             "ondemand": 0,
-            "spot": 39,
+            "spot": 9,
             "protection": false,
             "root": 10
         },
@@ -28,7 +28,7 @@
             "region": "sfo",
             "type": "m5a.large",
             "ondemand": 0,
-            "spot": 39,
+            "spot": 9,
             "protection": false,
             "root": 10
         },
