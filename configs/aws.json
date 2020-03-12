@@ -8,13 +8,13 @@
         "sg": "sg-020cb5729fa212d43"
       },
       "ami": {
-        "default": "ami-061392db613a6357b"
+        "default": "ami-0e8c04af2729ff1bb"
       },
       "limit": {
         "t3.micro": 3000,
         "t2.micro": 3000
       },
-      "keypair": "oregon-key-benchmark",
+      "keypair": "harmony-testnet",
       "code": "4"
     },
     {
@@ -25,13 +25,13 @@
         "sg": "sg-0a66ccb6ab9161a14"
       },
       "ami": {
-        "default": "ami-0019ef04ac50be30f"
+        "default": "ami-01c94064639c71719"
       },
       "limit": {
         "t3.micro": 1500,
         "t2.micro": 3000
       },
-      "keypair": "california-key-benchmark",
+      "keypair": "harmony-testnet",
       "code": "3"
     },
     {
@@ -42,13 +42,13 @@
         "sg": "sg-0aa8954acb79fdb58"
       },
       "ami": {
-        "default": "ami-07683a44e80cd32c5"
+        "default": "ami-099a8245f5daa82bf"
       },
       "limit": {
         "t3.micro": 3000,
         "t2.micro": 3000
       },
-      "keypair": "ireland-key-benchmark",
+      "keypair": "harmony-testnet",
       "code": "8"
     },
     {
@@ -59,13 +59,13 @@
         "sg": "sg-009aeb97f675c1ad5"
       },
       "ami": {
-        "default": "ami-0f9ae750e8274075b"
+        "default": "ami-0af1df87db7b650f4"
       },
       "limit": {
         "t3.micro": 1000,
         "t2.micro": 3000
       },
-      "keypair": "tokyo-key-benchmark",
+      "keypair": "harmony-testnet",
       "code": "5"
     },
     {
@@ -76,13 +76,13 @@
         "sg": "sg-0bb06fcd8b25b5910"
       },
       "ami": {
-        "default": "ami-09def150731bdbcc2"
+        "default": "ami-0df0e7600ad0913a9"
       },
       "limit": {
         "t3.micro": 1000,
         "t2.micro": 3000
       },
-      "keypair": "frankfurt-key-benchmark",
+      "keypair": "harmony-testnet",
       "code": "7"
     },
     {
@@ -93,13 +93,13 @@
         "sg": "sg-0789078f1c76defbe"
       },
       "ami": {
-        "default": "ami-02bcbb802e03574ba"
+        "default": "ami-0e38b48473ea57778"
       },
       "limit": {
         "t3.micro": 3000,
         "t2.micro": 3000
       },
-      "keypair": "ohio-key-benchmark",
+      "keypair": "harmony-testnet",
       "code": "2"
     },
     {
@@ -110,13 +110,13 @@
         "sg": "sg-05f9b60044a19dfb2"
       },
       "ami": {
-        "default": "ami-0b419c3a4b01d1859"
+        "default": "ami-0f02b24005e4aec36"
       },
       "limit": {
         "t3.micro": 3000,
         "t2.micro": 3000
       },
-      "keypair": "singapore-key-benchmark",
+      "keypair": "harmony-testnet",
       "code": "6"
     },
     {
@@ -127,48 +127,20 @@
         "sg": "sg-04d0b62ee08ce8800"
       },
       "ami": {
-        "default": "ami-0de53d8956e8dcf80"
+        "default": "ami-0a887e401f7654935"
       },
       "limit": {
         "t3.micro": 1000,
         "t2.micro": 3000
       },
-      "keypair": "virginia-key-benchmark",
+      "keypair": "harmony-testnet",
       "code": "1"
     }
   ],
   "keyfiles": [
     {
-      "keypair": "california-key-benchmark",
-      "keyfile": "../keys/california-key-benchmark.pem"
-    },
-    {
-      "keypair": "ireland-key-benchmark",
-      "keyfile": "../keys/ireland-key-benchmark.pem"
-    },
-    {
-      "keypair": "oregon-key-benchmark",
-      "keyfile": "../keys/oregon-key-benchmark.pem"
-    },
-    {
-      "keypair": "tokyo-key-benchmark",
-      "keyfile": "../keys/tokyo-key-benchmark.pem"
-    },
-    {
-      "keypair": "frankfurt-key-benchmark",
-      "keyfile": "../keys/frankfurt-key-benchmark.pem"
-    },
-    {
-      "keypair": "ohio-key-benchmark",
-      "keyfile": "../keys/ohio-key-benchmark.pem"
-    },
-    {
-      "keypair": "singapore-key-benchmark",
-      "keyfile": "../keys/singapore-key-benchmark.pem"
-    },
-    {
-      "keypair": "virginia-key-benchmark",
-      "keyfile": "../keys/virginia-key-benchmark.pem"
+      "keypair": "harmony-testnet",
+      "keyfile": "../keys/harmony-testnet.pem"
     }
   ],
   "userdata": [
@@ -209,6 +181,10 @@
     {
       "name": "m5.large",
       "price": 0.106
+    },
+    {
+      "name": "c5.large",
+      "price": 0.1
     }
   ]
 }
