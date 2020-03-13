@@ -192,6 +192,7 @@ def fund(shard):
         return
     transactions = []
     starting_nonce = get_nonce(endpoints[shard], faucet_addr)
+    print(f"{util.Typgpy.HEADER}Sending funds for shard {shard} ({len(args.accounts)} transaction(s)){util.Typgpy.ENDC}")
     for j, acc in enumerate(args.accounts):
         transactions.append({
             "from": faucet_addr,
@@ -206,21 +207,18 @@ def fund(shard):
     with open(filename, 'w') as f:
         json.dump(transactions, f, indent=4)
     command = f"hmy --node={endpoints[shard]} transfer --file {filename} --chain-id {chain_id} --timeout 0"
-    print(f"{util.Typgpy.HEADER}Sending funds for shard {shard} ({len(transactions)} transaction(s)){util.Typgpy.ENDC}")
-    print(util.Typgpy.HEADER,
-          f"Transaction for shard {shard}:\n",
-          util.Typgpy.OKGREEN,
-          cli.single_call(command, timeout=int(args.timeout) * len(endpoints) * len(args.accounts)),
-          util.Typgpy.ENDC)
+    print(f"{util.Typgpy.HEADER}Transaction for shard {shard}:\n{util.Typgpy.OKGREEN}"
+          f"{cli.single_call(command, timeout=int(args.timeout) * len(endpoints) * len(args.accounts))} "
+          f"{util.Typgpy.ENDC}")
 
 
-def get_balance(address):
+def get_balance_from_node_ip(address, endpoint_list):
     """
     Assumes that endpoints provided are ips and that the CLI
     only returns the balances for a specific shard.
     """
     balances = []
-    for endpoint in endpoints:
+    for endpoint in endpoint_list:
         cli_bal = json.loads(cli.single_call(f"hmy --node={endpoint} balances {address}"))
         assert len(cli_bal) == 1, f"Expect CLI to only return balances for 1 shard. Got: {cli_bal}"
         balances.append(cli_bal[0])
@@ -237,21 +235,26 @@ if __name__ == "__main__":
     if not args.force:
         for ep in endpoints:
             assert util.is_active_shard(ep, delay_tolerance=120), f"`{ep}` is not an active endpoint"
+    if os.environ['HMY_PROFILE'] is None:
+        raise RuntimeError(f"{util.Typgpy.FAIL}Profile is not set, exiting...{util.Typgpy.ENDC}")
 
     print(f"{util.Typgpy.HEADER}Funding using endpoints: {util.Typgpy.OKGREEN}{endpoints}{util.Typgpy.ENDC}")
     print(f"{util.Typgpy.HEADER}Chain-ID: {util.Typgpy.OKGREEN}{chain_id}{util.Typgpy.ENDC}")
+    print(f"{util.Typgpy.OKBLUE}Profile: {util.Typgpy.OKGREEN}{os.environ['HMY_PROFILE']}{util.Typgpy.ENDC}")
+    if input("Fund accounts?\n[Y]/n > ") != 'Y':
+        exit()
 
     pool = ThreadPool(processes=len(endpoints))
-    threads = []
     i = 0
     while i < len(endpoints):
+        threads = []
         for _ in range(os.cpu_count()):
             threads.append(pool.apply_async(fund, (i,)))
             i += 1
             if i >= len(endpoints):
                 break
-    for t in threads:
-        t.get()
+        for t in threads:
+            t.get()
 
     print(f"{util.Typgpy.HEADER}Finished sending transactions!{util.Typgpy.ENDC}")
     if args.check:
@@ -261,7 +264,7 @@ if __name__ == "__main__":
         print(f"{util.Typgpy.HEADER}Spot checking {len(addrs_to_check)} balances....{util.Typgpy.ENDC}")
         failed = False
         for addr in addrs_to_check:
-            for bal in get_balance(addr):
+            for bal in get_balance_from_node_ip(addr, endpoints):
                 if float(bal["amount"]) < float(args.amount):
                     print(f"{util.Typgpy.FAIL}{addr} did not get funded!{util.Typgpy.ENDC}")
                     failed = True
