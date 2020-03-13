@@ -1,0 +1,190 @@
+{
+  "regions": [
+    {
+      "name": "pdx",
+      "ext-name": "us-west-2",
+      "vpc": {
+        "id": "vpc-cd3e33b4",
+        "sg": "sg-02d9aae7e39f79a19"
+      },
+      "ami": {
+        "default": "ami-0e8c04af2729ff1bb"
+      },
+      "limit": {
+        "t3.micro": 3000,
+        "t2.micro": 3000
+      },
+      "keypair": "harmony-testnet",
+      "code": "4"
+    },
+    {
+      "name": "sfo",
+      "ext-name": "us-west-1",
+      "vpc": {
+        "id": "vpc-bb770fdcd",
+        "sg": "sg-00875ae5aa60f9733"
+      },
+      "ami": {
+        "default": "ami-01c94064639c71719"
+      },
+      "limit": {
+        "t3.micro": 1500,
+        "t2.micro": 3000
+      },
+      "keypair": "harmony-testnet",
+      "code": "3"
+    },
+    {
+      "name": "dub",
+      "ext-name": "eu-west-1",
+      "vpc": {
+        "id": "vpc-80166ce6",
+        "sg": "sg-08a8733d97ec75e08"
+      },
+      "ami": {
+        "default": "ami-099a8245f5daa82bf"
+      },
+      "limit": {
+        "t3.micro": 3000,
+        "t2.micro": 3000
+      },
+      "keypair": "harmony-testnet",
+      "code": "8"
+    },
+    {
+      "name": "nrt",
+      "ext-name": "ap-northeast-1",
+      "vpc": {
+        "id": "vpc-dd631cba",
+        "sg": "sg-08123a4b151c2ebba"
+      },
+      "ami": {
+        "default": "ami-0af1df87db7b650f4"
+      },
+      "limit": {
+        "t3.micro": 1000,
+        "t2.micro": 3000
+      },
+      "keypair": "harmony-testnet",
+      "code": "5"
+    },
+    {
+      "name": "fra",
+      "ext-name": "eu-central-1",
+      "vpc": {
+        "id": "vpc-94246aff",
+        "sg": "sg-08a2b143e8870d8a5"
+      },
+      "ami": {
+        "default": "ami-0df0e7600ad0913a9"
+      },
+      "limit": {
+        "t3.micro": 1000,
+        "t2.micro": 3000
+      },
+      "keypair": "harmony-testnet",
+      "code": "7"
+    },
+    {
+      "name": "cmh",
+      "ext-name": "us-east-2",
+      "vpc": {
+        "id": "vpc-2c420a44",
+        "sg": "sg-061c334b084470b15"
+      },
+      "ami": {
+        "default": "ami-0e38b48473ea57778"
+      },
+      "limit": {
+        "t3.micro": 3000,
+        "t2.micro": 3000
+      },
+      "keypair": "harmony-testnet",
+      "code": "2"
+    },
+    {
+      "name": "sin",
+      "ext-name": "ap-southeast-1",
+      "vpc": {
+        "id": "vpc-864103e1",
+        "sg": "sg-089af85c49b5a1914"
+      },
+      "ami": {
+        "default": "ami-0f02b24005e4aec36"
+      },
+      "limit": {
+        "t3.micro": 3000,
+        "t2.micro": 3000
+      },
+      "keypair": "harmony-testnet",
+      "code": "6"
+    },
+    {
+      "name": "iad",
+      "ext-name": "us-east-1",
+      "vpc": {
+        "id": "vpc-88c9c2f3",
+        "sg": "sg-06a73edb69d2967d3"
+      },
+      "ami": {
+        "default": "ami-0a887e401f7654935"
+      },
+      "limit": {
+        "t3.micro": 1000,
+        "t2.micro": 3000
+      },
+      "keypair": "harmony-testnet",
+      "code": "1"
+    }
+  ],
+  "keyfiles": [
+    {
+      "keypair": "harmony-testnet",
+      "keyfile": "../keys/harmony-testnet.pem"
+    }
+  ],
+  "userdata": [
+    {
+      "name": "http:",
+      "file": "../../configs/userdata-soldier-http.sh"
+    },
+    {
+      "name": "legacy",
+      "file": "../../configs/userdata-soldier.sh"
+    }
+  ],
+  "instance": [
+    {
+      "name": "t3.micro",
+      "price": 0.0104
+    },
+    {
+      "name": "t3.small",
+      "price": 0.0209
+    },
+    {
+      "name": "t3.medium",
+      "price": 0.0418
+    },
+    {
+      "name": "t3.large",
+      "price": 0.0835
+    },
+    {
+      "name": "t2.micro",
+      "price": 0.0116
+    },
+    {
+      "name": "m5a.large",
+      "price": 0.086
+    },
+    {
+      "name": "m5.large",
+      "price": 0.106
+    },
+    {
+      "name": "c5.large",
+      "price": 0.1
+    }
+  ]
+}

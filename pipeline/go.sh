@@ -99,6 +99,7 @@ function do_launch
       -instance_count ${configs[explorer_node.num_vm]} \
       -instance_type ${configs[explorer_node.type]} \
       -launch_region ${configs[explorer_node.regions]} \
+      -aws_profile aws-explorer.json \
       -ip_file raw_ip-explorer_node.txt \
       -output instance_ids_output-explorer_node.txt \
       -tag_file instance_output-explorer_node.txt \
