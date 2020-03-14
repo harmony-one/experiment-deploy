@@ -2,7 +2,7 @@
    "launch": [
         {
             "region": "iad",
-            "type": "m5a.large",
+            "type": "m5a.xlarge",
             "ondemand": 0,
             "spot": 9,
             "protection": false,
@@ -10,28 +10,12 @@
         },
         {
             "region": "pdx",
-            "type": "m5a.large",
+            "type": "m5a.xlarge",
             "ondemand": 0,
             "spot": 9,
             "protection": false,
             "root": 10
-        },
-        {
-            "region": "cmh",
-            "type": "m5a.large",
-            "ondemand": 0,
-            "spot": 9,
-            "protection": false,
-            "root": 10
-        },
-        {
-            "region": "sfo",
-            "type": "m5a.large",
-            "ondemand": 0,
-            "spot": 9,
-            "protection": false,
-            "root": 10
-        },
+        }
     ],
     "userdata": {
        "name": "http",

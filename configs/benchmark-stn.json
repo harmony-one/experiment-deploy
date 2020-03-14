@@ -2,20 +2,20 @@
   "description": "aws 160 nodes, 4 shards",
   "client": {
     "num_vm": 0,
-    "type": "m5a.large",
+    "type": "m5a.xlarge",
     "regions": "iad"
   },
   "leader": {
     "num_vm": 1,
-    "type": "m5a.large",
-    "regions": "iad,pdx,cmh,sfo",
+    "type": "m5a.xlarge",
+    "regions": "iad,pdx",
     "protection": false,
     "root": 15
   },
   "explorer_node": {
     "num_vm": 1,
     "type": "m5a.xlarge",
-    "regions": "iad,pdx,cmh,sfo",
+    "regions": "iad,pdx",
     "root": 25,
     "protection": false
   },
@@ -48,7 +48,7 @@
     ]
   },
   "benchmark": {
-    "shards": 4,
+    "shards": 2,
     "duration": 120,
     "dashboard": false,
     "crosstx": 30,
