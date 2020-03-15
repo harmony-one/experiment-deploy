@@ -1,0 +1,15 @@
+[Unit]
+Description=harmony service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+WorkingDirectory=/root
+ExecStart=/root/node.sh -N staking -1 -P -p /root/bls.pass -M -D
+
+[Install]
+WantedBy=multi-user.target

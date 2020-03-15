@@ -1,0 +1,7 @@
+---
+- name: download hmycli
+  get_url: 
+    url: https://harmony.one/hmycli
+    dest: /home/{{ remote_user }}/hmy
+    mode: '0755'
+  

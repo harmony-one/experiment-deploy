@@ -1,0 +1,9 @@
+---
+
+PACKAGES:
+   - unzip
+
+USER:
+   user: root
+   group: root
+   home: /root

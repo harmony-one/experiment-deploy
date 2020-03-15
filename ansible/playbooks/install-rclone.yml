@@ -1,0 +1,5 @@
+---
+- hosts: '{{ inventory }}'
+  remote_user: '{{ user }}'
+  roles:
+    - { role: charliemaiors.rclone_ansible }

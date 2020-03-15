@@ -1,0 +1,20 @@
+plugin: aws_ec2
+boto_profile: mainnet
+
+regions:
+   - us-east-1
+   - us-east-2
+   - us-west-1
+   - us-west-2
+   - ap-northeast-1
+   - ap-southeast-1
+   - eu-central-1
+   - eu-west-1 
+
+filters:
+   tag:Shard:
+      - "3"
+
+keyed_groups:
+   - key: placement.region
+     prefix: aws_region

@@ -1,0 +1,73 @@
+---
+- name: gather OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - '{{ ansible_bios_version }}-{{ ansible_distribution }}.yml'
+    - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml'
+    - '{{ ansible_distribution }}.yml'
+    - '{{ ansible_os_family }}.yml'
+  tags:
+    - vars
+
+- name: install required packages
+  package:
+    name: '{{ item }}'
+    state: present
+  become: true
+  with_items: '{{ PACKAGES }}'
+
+- name: download hmycli
+  get_url: 
+    url: https://harmony.one/hmycli
+    dest: '{{ USER.home }}/hmy'
+    mode: '0755'
+
+- name: download node.sh 
+  get_url: 
+    url: https://raw.githubusercontent.com/harmony-one/harmony/master/scripts/node.sh
+    dest: '{{ USER.home }}/node.sh'
+    mode: '0755'
+
+- name: get node.sh version
+  shell: '{{ USER.home }}/node.sh -v'
+  register: ver
+
+- name: print node.sh version
+  debug:
+    msg: ver={{ ver }}
+
+- name: download harmony binaries
+  shell: "{{ USER.home }}/node.sh -I -N staking -d && mv -f staging/harmony {{ USER.home }} > node.log 2> node.err"
+
+- name: get harmony version
+  shell: "{{ USER.home }}/node.sh -V"
+  register: Ver
+
+- name: print harmony version
+  debug:
+    msg: Ver={{ Ver }}
+
+- name: copy harmony service files
+  copy:
+    src: harmony.service
+    dest: /lib/systemd/system
+
+- name: enable harmony service
+  systemd: 
+    name: harmony
+    daemon_reload: yes
+    enabled: yes
+#    state: started
+
+- name: create .hmy/blskeys directory
+  file:
+    path: "{{ USER.home }}/.hmy/blskeys"
+    state: directory
+
+- name: copy blskey files
+  copy:
+    src: "{{ inventory_hostname }}/{{ item }}"
+    dest: "{{ USER.home }}/.hmy/blskeys"
+  with_items:
+    - bls.pass
+    - bls.key
