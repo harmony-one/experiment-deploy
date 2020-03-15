@@ -140,7 +140,7 @@ function do_simple_cmd
       fi
 
       explorerArgs=$benchmarkArgs
-      explorerArgs+=" -node_type=explorer -shard_id=SHARDID"
+      explorerArgs+=" -node_type=explorer -shard_id=SHARDID -is_archival=true"
 
       cat>$LOGDIR/$cmd/leader.$cmd.json<<EOT
 {
