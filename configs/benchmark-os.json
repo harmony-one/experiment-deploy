@@ -95,7 +95,7 @@
      "wait_for_launch": 60,
      "reserved_account": "",
      "rpczone": "os",
-     "rpcnode": 2
+     "rpcnode": 5
   },
   "bls": {
      "pass": "blsnopass.txt",
