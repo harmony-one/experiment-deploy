@@ -1,8 +1,8 @@
 {
-  "description": "aws 30 nodes on 3 shard in one region",
+  "description": "aws 20 nodes on 4 shard in one region",
   "client": {
     "num_vm": 0,
-    "type": "t3.medium",
+    "type": "m5a.large",
     "regions": "iad"
   },
   "leader": {
@@ -53,8 +53,8 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 27,
-    "minpeer": 6,
+    "peer_per_shard": 60,
+    "minpeer": 12,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
