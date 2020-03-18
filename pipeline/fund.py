@@ -25,38 +25,38 @@ import requests
 faucet_addr = "one1zksj3evekayy90xt4psrz8h6j2v3hla4qwz4ur"  # Assumes that this is in the CLI's keystore.
 # From: https://docs.google.com/spreadsheets/d/1Z5Jsf_wPkCKWrzYfSUApMFyBZy9Ye9EKBEb_-C89pYQ/edit#gid=0
 accounts = [
-    "one1kvfsza4u4e5ml6qv92j2pmsal2am9mcv9u4g83"
-    "one1ujljr2nuymtxm0thjm32f64xsa9uzs54swreyw"
-    "one1p5hv9qv90dyrag9fj3wzrvvrs273ypcq8mz7zn"
-    "one1egemh5e9xjy3x8d3cq0kq7mw4sw4jjwgkc7axs"
-    "one1y5n7p8a845v96xyx2gh75wn5eyhtw5002lah27"
-    "one10qq0uqa4gvgdufqjph89pp7nj6yeatz94xdjrt"
-    "one1j33qtvx86j4ugy0a8exwwhtldm5wv4daksrwsl"
-    "one1fv5ku7szkm60h4j4tcd2yanvjaw2ym3ugnls33"
-    "one1rcv3chw86tprvhpw4fjnpy2gnvqy4gp4fmhdd9"
-    "one1wh4p0kuc7unxez2z8f82zfnhsg4ty6dupqyjt2"
-    "one19gr02mxulyatwz4lpuhl2z3pezwx62xg2uchtg"
-    "one1t0x76npc295gpsv64xzyf3qk9zml7a099v4cqj"
-    "one1k7hgd27qggp8wcmn7n5u9sdhrjy7d2ed3m3c75"
-    "one1sdzeclwvcjxkvjehpagh0fgs8cxtf73q4leysz"
-    "one1tpxl87y4g8ecsm6ceqay49qxyl5vs94jjyfvd9"
-    "one1tnnncpjdqdjyk7y4d9gaxrg9qk927ueqptmptz"
-    "one1337twjy8nfcwxzjqrc6lgqxxhs0zeult242ttw"
-    "one15ap4frdwexw2zcue4hq5jjad5jjzz678urwkyw"
-    "one1wxlm29z9u08udhwuulgssnnh902vh9wfnt5tyh"
-    "one1m6j80t6rhc3ypaumtsfmqwjwp0mrqk9ff50prh"
-    "one10fjqteq6q75nm62cx8vejqsk7mc8t5hle8ewnl"
-    "one1vzsj3julf0ljcj3hhxuqpu6zvadu488zfrtttz"
-    "one1marnnvc8hywmfxhrc8mtpjkvvdt32x9kxtwkvv"
-    "one1u6c4wer2dkm767hmjeehnwu6tqqur62gx9vqsd"
-    "one1t4p6x5k7zw59kers7hwmjh3kymj0n6spr02qnf"
-    "one1s7fp0jrmd97estwye3mhkp7xsqf42vn5x2sfqy"
-    "one10jvjrtwpz2sux2ngktg3kq7m3sdz5p5au5l8c8"
-    "one1km7xg8e3xjys7azp9f4xp8hkw79vm2h3f2lade"
-    "one1c9h3u72czs6sk755tjyse7x5t70m38ppnkx922"
-    "one170xqsfzm4xdmuyax54t5pvtp5l5yt66u50ctrp"
-    "one1vfqqagdzz352mtvdl69v0hw953hm993n6v26yl"
-    "one1gjsxmewzws9mt3fn65jmdhr3e4hel9xza8wd6t"
+    "one1kvfsza4u4e5ml6qv92j2pmsal2am9mcv9u4g83",
+    "one1ujljr2nuymtxm0thjm32f64xsa9uzs54swreyw",
+    "one1p5hv9qv90dyrag9fj3wzrvvrs273ypcq8mz7zn",
+    "one1egemh5e9xjy3x8d3cq0kq7mw4sw4jjwgkc7axs",
+    "one1y5n7p8a845v96xyx2gh75wn5eyhtw5002lah27",
+    "one10qq0uqa4gvgdufqjph89pp7nj6yeatz94xdjrt",
+    "one1j33qtvx86j4ugy0a8exwwhtldm5wv4daksrwsl",
+    "one1fv5ku7szkm60h4j4tcd2yanvjaw2ym3ugnls33",
+    "one1rcv3chw86tprvhpw4fjnpy2gnvqy4gp4fmhdd9",
+    "one1wh4p0kuc7unxez2z8f82zfnhsg4ty6dupqyjt2",
+    "one19gr02mxulyatwz4lpuhl2z3pezwx62xg2uchtg",
+    "one1t0x76npc295gpsv64xzyf3qk9zml7a099v4cqj",
+    "one1k7hgd27qggp8wcmn7n5u9sdhrjy7d2ed3m3c75",
+    "one1sdzeclwvcjxkvjehpagh0fgs8cxtf73q4leysz",
+    "one1tpxl87y4g8ecsm6ceqay49qxyl5vs94jjyfvd9",
+    "one1tnnncpjdqdjyk7y4d9gaxrg9qk927ueqptmptz",
+    "one1337twjy8nfcwxzjqrc6lgqxxhs0zeult242ttw",
+    "one15ap4frdwexw2zcue4hq5jjad5jjzz678urwkyw",
+    "one1wxlm29z9u08udhwuulgssnnh902vh9wfnt5tyh",
+    "one1m6j80t6rhc3ypaumtsfmqwjwp0mrqk9ff50prh",
+    "one10fjqteq6q75nm62cx8vejqsk7mc8t5hle8ewnl",
+    "one1vzsj3julf0ljcj3hhxuqpu6zvadu488zfrtttz",
+    "one1marnnvc8hywmfxhrc8mtpjkvvdt32x9kxtwkvv",
+    "one1u6c4wer2dkm767hmjeehnwu6tqqur62gx9vqsd",
+    "one1t4p6x5k7zw59kers7hwmjh3kymj0n6spr02qnf",
+    "one1s7fp0jrmd97estwye3mhkp7xsqf42vn5x2sfqy",
+    "one10jvjrtwpz2sux2ngktg3kq7m3sdz5p5au5l8c8",
+    "one1km7xg8e3xjys7azp9f4xp8hkw79vm2h3f2lade",
+    "one1c9h3u72czs6sk755tjyse7x5t70m38ppnkx922",
+    "one170xqsfzm4xdmuyax54t5pvtp5l5yt66u50ctrp",
+    "one1vfqqagdzz352mtvdl69v0hw953hm993n6v26yl",
+    "one1gjsxmewzws9mt3fn65jmdhr3e4hel9xza8wd6t",
     "one1mpzx5wr2kmz9nvkhsgj6jr6zs87ahm0gxmhlck"
 ]
 
