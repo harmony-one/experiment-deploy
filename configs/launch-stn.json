@@ -1,7 +1,7 @@
 {
    "launch": [
         {
-            "region": "iad",
+            "region": "cmh",
             "type": "m5a.xlarge",
             "ondemand": 0,
             "spot": 9,
