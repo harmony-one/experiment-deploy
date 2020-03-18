@@ -65,7 +65,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Funding script for a new network')
     parser.add_argument("--timeout", dest="timeout", default=120, help="timeout for each transaction")
     parser.add_argument("--amount", dest="amount", default="1000", type=str, help="Amount to fund each account")
-    parser.add_argument("--accounts", dest="accounts", default=None, help="CSV of one1... addresses")
+    parser.add_argument("--accounts", dest="accounts", default=None, help="String in CSV format of one1... addresses")
     parser.add_argument("--check", action="store_true", help="Spot check balances after funding")
     parser.add_argument("--force", action="store_true", help="Send transactions even if network appears to be offline")
     p_arg = parser.parse_args()
@@ -147,7 +147,7 @@ def fund(shard):
             "amount": str(args.amount),
             "nonce": str(starting_nonce + j),
         })
-    filename = f"./fund{shard}.json"
+    filename = f"./fund-{os.environ['HMY_PROFILE']}.s{shard}.json"
     with open(filename, 'w') as f:
         json.dump(transactions, f, indent=4)
     command = f"hmy --node={endpoints[shard]} transfer --file {filename} --chain-id {chain_id} --timeout 0"
