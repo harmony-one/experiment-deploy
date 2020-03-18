@@ -3,19 +3,19 @@
   "client": {
     "num_vm": 0,
     "type": "m5a.xlarge",
-    "regions": "iad"
+    "regions": "cmh"
   },
   "leader": {
     "num_vm": 1,
     "type": "m5a.xlarge",
-    "regions": "iad,pdx",
+    "regions": "cmh,pdx",
     "protection": false,
     "root": 15
   },
   "explorer_node": {
     "num_vm": 1,
     "type": "m5a.xlarge",
-    "regions": "iad,pdx",
+    "regions": "cmh,pdx",
     "root": 25,
     "protection": false
   },
