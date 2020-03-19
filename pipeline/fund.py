@@ -14,6 +14,7 @@ import time
 import argparse
 import os
 from multiprocessing.pool import ThreadPool
+from decimal import Decimal
 
 from pyhmy import (
     cli,
@@ -66,12 +67,15 @@ def parse_args():
     parser.add_argument("--timeout", dest="timeout", default=120, help="timeout for each transaction")
     parser.add_argument("--amount", dest="amount", default="1000", type=str, help="Amount to fund each account")
     parser.add_argument("--accounts", dest="accounts", default=None, help="String in CSV format of one1... addresses")
-    parser.add_argument("--shards", dest="shards", default=None, help="String in CSV format of shards to fund, default is all.")
+    parser.add_argument("--shards", dest="shards", default=None,
+                        help="String in CSV format of shards to fund, default is all.")
     parser.add_argument("--check", action="store_true", help="Spot check balances after funding")
     parser.add_argument("--force", action="store_true", help="Send transactions even if network appears to be offline")
     parser.add_argument("--yes", action="store_true", help="Say yes to profile check")
     p_arg = parser.parse_args()
-    p_arg.accounts = accounts if p_arg.accounts is None else [el.strip() for el in p_arg.accounts.split(",") if el.strip()]
+    p_arg.accounts = accounts if p_arg.accounts is None else [el.strip()
+                                                              for el in p_arg.accounts.split(",")
+                                                              if el.strip()]
     return p_arg
 
 
@@ -83,6 +87,19 @@ def setup():
     env = cli.download("./bin/hmy", replace=False)
     cli.environment.update(env)
     cli.set_binary("./bin/hmy")
+
+
+def get_balance(address, endpoint):
+    url = endpoint
+    payload = json.dumps({"id": "1", "jsonrpc": "2.0",
+                          "method": "hmy_getBalance",
+                          "params": [address, "latest"]})
+    headers = {
+        'Content-Type': 'application/json'
+    }
+    response = requests.request('POST', url, headers=headers, data=payload, allow_redirects=False, timeout=30)
+    atto_bal = int(json.loads(response.content)["result"], 16)
+    return float(Decimal(atto_bal)/Decimal(1e18))
 
 
 def get_nonce(endpoint, address):
@@ -138,24 +155,30 @@ def fund(shard):
         return
     transactions = []
     starting_nonce = get_nonce(endpoints[shard], faucet_addr)
-    print(f"{util.Typgpy.HEADER}Sending funds for shard {shard} ({len(args.accounts)} transaction(s)){util.Typgpy.ENDC}")
+    print(f"{util.Typgpy.HEADER}Preparing transactions for shard {shard} "
+          f"({len(args.accounts)} transaction(s)){util.Typgpy.ENDC}")
     for j, acc in enumerate(args.accounts):
-        transactions.append({
-            "from": faucet_addr,
-            "to": acc,
-            "from-shard": str(shard),
-            "to-shard": str(shard),
-            "passphrase-string": "",
-            "amount": str(args.amount),
-            "nonce": str(starting_nonce + j),
-        })
+        if get_balance(acc, endpoints[shard]) < float(args.amount):
+            transactions.append({
+                "from": faucet_addr,
+                "to": acc,
+                "from-shard": str(shard),
+                "to-shard": str(shard),
+                "passphrase-string": "",
+                "amount": str(args.amount),
+                "nonce": str(starting_nonce + j),
+            })
     filename = f"./fund-{os.environ['HMY_PROFILE']}.s{shard}.json"
     with open(filename, 'w') as f:
         json.dump(transactions, f, indent=4)
     command = f"hmy --node={endpoints[shard]} transfer --file {filename} --chain-id {chain_id} --timeout 0"
-    print(f"{util.Typgpy.HEADER}Transaction for shard {shard}:\n{util.Typgpy.OKGREEN}"
-          f"{cli.single_call(command, timeout=int(args.timeout) * len(endpoints) * len(args.accounts))} "
-          f"{util.Typgpy.ENDC}")
+    if transactions:
+        print(f"{util.Typgpy.HEADER}Sending {len(transactions)} transaction(s) on shard {shard}!{util.Typgpy.ENDC}")
+        print(f"{util.Typgpy.HEADER}Transaction for shard {shard}:\n{util.Typgpy.OKGREEN}"
+              f"{cli.single_call(command, timeout=int(args.timeout) * len(endpoints) * len(args.accounts))} "
+              f"{util.Typgpy.ENDC}")
+    else:
+        print(f"{util.Typgpy.FAIL}No transactions to send on shard {shard}!{util.Typgpy.ENDC}")
 
 
 def get_balance_from_node_ip(address, endpoint_list):
@@ -181,7 +204,8 @@ if __name__ == "__main__":
     net_config = get_network_config()
     chain_id = get_chain_id(net_config)
     endpoints = get_endpoints(net_config)
-    args.shards = [i for i in range(len(endpoints))] if args.shards is None else [int(i.strip()) for i in args.shards.split(",")]
+    args.shards = [i for i in range(len(endpoints))] if args.shards is None else [int(i.strip()) for i in
+                                                                                  args.shards.split(",")]
     if not args.force:
         for ep in endpoints:
             assert util.is_active_shard(ep, delay_tolerance=120), f"`{ep}` is not an active endpoint"
