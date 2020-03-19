@@ -2,7 +2,7 @@
   "description": "aws 160 nodes, 4 shards",
   "client": {
     "num_vm": 0,
-    "type": "m5a.xlarge",
+    "type": "m5a.large",
     "regions": "cmh"
   },
   "leader": {

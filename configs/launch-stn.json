@@ -2,7 +2,7 @@
    "launch": [
         {
             "region": "cmh",
-            "type": "m5a.xlarge",
+            "type": "m5a.large",
             "ondemand": 0,
             "spot": 9,
             "protection": false,
@@ -10,7 +10,7 @@
         },
         {
             "region": "pdx",
-            "type": "m5a.xlarge",
+            "type": "m5a.large",
             "ondemand": 0,
             "spot": 9,
             "protection": false,
