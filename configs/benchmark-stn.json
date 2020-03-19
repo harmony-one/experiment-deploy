@@ -2,20 +2,20 @@
   "description": "aws 160 nodes, 4 shards",
   "client": {
     "num_vm": 0,
-    "type": "m5a.xlarge",
-    "regions": "cmh"
+    "type": "m5a.large",
+    "regions": "sfo,pdx"
   },
   "leader": {
     "num_vm": 1,
     "type": "m5a.xlarge",
-    "regions": "cmh,pdx",
+    "regions": "sfo,pdx",
     "protection": false,
     "root": 15
   },
   "explorer_node": {
     "num_vm": 1,
     "type": "m5a.xlarge",
-    "regions": "cmh,pdx",
+    "regions": "sfo,pdx",
     "root": 25,
     "protection": false
   },
