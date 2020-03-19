@@ -5,7 +5,7 @@ This is a script to fund accounts without the use of an endpoint.
 Note that this script assumes that the faucet key is in the CLI's keystore.
 
 Example usage:
-    python3 fund.py --amount 100000 --check
+    python3 fund.py --amount 100000 --check --shards "0, 2, 3" 
 """
 
 import json
@@ -66,10 +66,12 @@ def parse_args():
     parser.add_argument("--timeout", dest="timeout", default=120, help="timeout for each transaction")
     parser.add_argument("--amount", dest="amount", default="1000", type=str, help="Amount to fund each account")
     parser.add_argument("--accounts", dest="accounts", default=None, help="String in CSV format of one1... addresses")
+    parser.add_argument("--shards", dest="shards", default=None, help="String in CSV format of shards to fund, default is all.")
     parser.add_argument("--check", action="store_true", help="Spot check balances after funding")
     parser.add_argument("--force", action="store_true", help="Send transactions even if network appears to be offline")
+    parser.add_argument("--yes", action="store_true", help="Say yes to profile check")
     p_arg = parser.parse_args()
-    p_arg.accounts = accounts if p_arg.accounts is None else [el.strip() for el in p_arg.accounts.split(",")]
+    p_arg.accounts = accounts if p_arg.accounts is None else [el.strip() for el in p_arg.accounts.split(",") if el.strip()]
     return p_arg
 
 
@@ -78,7 +80,7 @@ def setup():
     assert pyhmy.__version__.major == 20, "wrong pyhmy version"
     assert pyhmy.__version__.minor == 1, "wrong pyhmy version"
     assert pyhmy.__version__.micro >= 14, "wrong pyhmy version, update please"
-    env = cli.download("./bin/hmy", replace=True)
+    env = cli.download("./bin/hmy", replace=False)
     cli.environment.update(env)
     cli.set_binary("./bin/hmy")
 
@@ -171,11 +173,15 @@ def get_balance_from_node_ip(address, endpoint_list):
 
 if __name__ == "__main__":
     args = parse_args()
+    if len(args.accounts) == 0:
+        print(f"{util.Typgpy.HEADER}No accounts to fund...{util.Typgpy.ENDC}")
+        exit()
     setup()
     assert cli.get_accounts(faucet_addr), f"`{faucet_addr}` is not found in CLI's keystore"
     net_config = get_network_config()
     chain_id = get_chain_id(net_config)
     endpoints = get_endpoints(net_config)
+    args.shards = [i for i in range(len(endpoints))] if args.shards is None else [int(i.strip()) for i in args.shards.split(",")]
     if not args.force:
         for ep in endpoints:
             assert util.is_active_shard(ep, delay_tolerance=120), f"`{ep}` is not an active endpoint"
@@ -183,33 +189,43 @@ if __name__ == "__main__":
         raise RuntimeError(f"{util.Typgpy.FAIL}Profile is not set, exiting...{util.Typgpy.ENDC}")
 
     print(f"{util.Typgpy.HEADER}Funding using endpoints: {util.Typgpy.OKGREEN}{endpoints}{util.Typgpy.ENDC}")
+    print(f"{util.Typgpy.HEADER}Funding on shards: {util.Typgpy.OKGREEN}{args.shards}{util.Typgpy.ENDC}")
+    print(f"{util.Typgpy.HEADER}Amount to fund per shard: {util.Typgpy.OKGREEN}{args.amount}{util.Typgpy.ENDC}")
+    print(f"{util.Typgpy.HEADER}Count of accounts to fund: {util.Typgpy.OKGREEN}{len(args.accounts)}{util.Typgpy.ENDC}")
     print(f"{util.Typgpy.HEADER}Chain-ID: {util.Typgpy.OKGREEN}{chain_id}{util.Typgpy.ENDC}")
-    print(f"{util.Typgpy.OKBLUE}Profile: {util.Typgpy.OKGREEN}{os.environ['HMY_PROFILE']}{util.Typgpy.ENDC}")
-    if input("Fund accounts?\n[Y]/n > ") != 'Y':
+    print(f"{util.Typgpy.HEADER}Profile: {util.Typgpy.OKGREEN}{os.environ['HMY_PROFILE']}{util.Typgpy.ENDC}")
+
+    if not args.yes and input("Fund accounts?\n[Y]/n > ") != 'Y':
         exit()
 
+    print("")
     pool = ThreadPool(processes=len(endpoints))
-    i = 0
-    while i < len(endpoints):
-        threads = []
-        for _ in range(os.cpu_count()):
-            threads.append(pool.apply_async(fund, (i,)))
-            i += 1
-            if i >= len(endpoints):
-                break
+    shard_iter = iter(args.shards)
+    threads = []
+
+    try:
+        while True:
+            threads.clear()
+            for _ in range(os.cpu_count()):
+                i = next(shard_iter)
+                threads.append(pool.apply_async(fund, (i,)))
+            for t in threads:
+                t.get()
+    except StopIteration:
         for t in threads:
             t.get()
+        threads.clear()
 
     print(f"{util.Typgpy.HEADER}Finished sending transactions!{util.Typgpy.ENDC}")
     if args.check:
-        print(f"{util.Typgpy.HEADER}Sleeping 90 seconds before checking balances{util.Typgpy.ENDC}")
-        time.sleep(90)
+        print(f"{util.Typgpy.HEADER}Sleeping 60 seconds before checking balances{util.Typgpy.ENDC}")
+        time.sleep(60)
         addrs_to_check = random.sample(args.accounts, max(len(args.accounts) // 10, 1))
         print(f"{util.Typgpy.HEADER}Spot checking {len(addrs_to_check)} balances....{util.Typgpy.ENDC}")
         failed = False
         for addr in addrs_to_check:
             for bal in get_balance_from_node_ip(addr, endpoints):
-                if float(bal["amount"]) < float(args.amount):
+                if int(bal["shard"]) in args.shards and float(bal["amount"]) < float(args.amount):
                     print(f"{util.Typgpy.FAIL}{addr} did not get funded!{util.Typgpy.ENDC}")
                     failed = True
                     break
