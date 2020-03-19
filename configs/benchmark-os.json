@@ -58,7 +58,7 @@
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
-    "commit_delay": "3s",
+    "commit_delay": "4s",
     "network_type": "pangaea",
     "bls": true
   },
