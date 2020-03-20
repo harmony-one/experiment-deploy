@@ -28,6 +28,7 @@ faucet_addr = "one1zksj3evekayy90xt4psrz8h6j2v3hla4qwz4ur"  # Assumes that this 
 accounts = [
     "one1kvfsza4u4e5ml6qv92j2pmsal2am9mcv9u4g83",
     "one1ujljr2nuymtxm0thjm32f64xsa9uzs54swreyw",
+    "one1kvfsza4u4e5ml6qv92j2pmsal2am9mcv9u4g83",
     "one1p5hv9qv90dyrag9fj3wzrvvrs273ypcq8mz7zn",
     "one1egemh5e9xjy3x8d3cq0kq7mw4sw4jjwgkc7axs",
     "one1y5n7p8a845v96xyx2gh75wn5eyhtw5002lah27",
@@ -35,30 +36,31 @@ accounts = [
     "one1j33qtvx86j4ugy0a8exwwhtldm5wv4daksrwsl",
     "one1fv5ku7szkm60h4j4tcd2yanvjaw2ym3ugnls33",
     "one1rcv3chw86tprvhpw4fjnpy2gnvqy4gp4fmhdd9",
-    "one1wh4p0kuc7unxez2z8f82zfnhsg4ty6dupqyjt2",
+    "one1qyvwqh6klj2cfnzk4mcrlwae3790dm33jgy6kw",
     "one19gr02mxulyatwz4lpuhl2z3pezwx62xg2uchtg",
     "one1t0x76npc295gpsv64xzyf3qk9zml7a099v4cqj",
     "one1k7hgd27qggp8wcmn7n5u9sdhrjy7d2ed3m3c75",
-    "one1sdzeclwvcjxkvjehpagh0fgs8cxtf73q4leysz",
+    "one1xw94y2z7uc2qynyumze2ps8g4nq2w2qtzmdn8r",
+    "one18vn078vyp5jafma8q7kek6w0resrgex9yufqws",
     "one1tpxl87y4g8ecsm6ceqay49qxyl5vs94jjyfvd9",
+    "one103q7qe5t2505lypvltkqtddaef5tzfxwsse4z7",
+    "one18jcl4uxjadq3qm3fj0clct3svugfxdkqy7f27s",
+    "one1tewvfjk0d4whmajpqvcvzfpx6wftrh0gagsa7n",
+    "one18xfcqu7jf0cq5apweyu5jxr30x9cvetegwqfss",
     "one1tnnncpjdqdjyk7y4d9gaxrg9qk927ueqptmptz",
     "one1337twjy8nfcwxzjqrc6lgqxxhs0zeult242ttw",
     "one15ap4frdwexw2zcue4hq5jjad5jjzz678urwkyw",
+    "one12sujm2at8j8terh7nmw2gnxtrmk74wza3tvjd9",
     "one1wxlm29z9u08udhwuulgssnnh902vh9wfnt5tyh",
+    "one1m4f8qng3h0lad30kygyr9c6nwsxpzehxm9av93",
     "one1m6j80t6rhc3ypaumtsfmqwjwp0mrqk9ff50prh",
     "one10fjqteq6q75nm62cx8vejqsk7mc8t5hle8ewnl",
     "one1vzsj3julf0ljcj3hhxuqpu6zvadu488zfrtttz",
     "one1marnnvc8hywmfxhrc8mtpjkvvdt32x9kxtwkvv",
-    "one1u6c4wer2dkm767hmjeehnwu6tqqur62gx9vqsd",
-    "one1t4p6x5k7zw59kers7hwmjh3kymj0n6spr02qnf",
-    "one1s7fp0jrmd97estwye3mhkp7xsqf42vn5x2sfqy",
-    "one10jvjrtwpz2sux2ngktg3kq7m3sdz5p5au5l8c8",
-    "one1km7xg8e3xjys7azp9f4xp8hkw79vm2h3f2lade",
-    "one1c9h3u72czs6sk755tjyse7x5t70m38ppnkx922",
-    "one170xqsfzm4xdmuyax54t5pvtp5l5yt66u50ctrp",
-    "one1vfqqagdzz352mtvdl69v0hw953hm993n6v26yl",
-    "one1gjsxmewzws9mt3fn65jmdhr3e4hel9xza8wd6t",
-    "one1mpzx5wr2kmz9nvkhsgj6jr6zs87ahm0gxmhlck"
+    "one1xmx3fd69jp06ad23ptsj2pxuy2vsquhha76w0a",
+    "one13upa4q2ntl4rjawrw2tjtj8n347yud0kv5eqk2",
+    "one164e2dwupqxd7ssr85ncnkx3quk7fexy0eta2vy",
+    "one1zc4et7xmtp8lna54ucye9phxlvw73kfgqeh5um"
 ]
 
 
@@ -158,7 +160,7 @@ def fund(shard):
     print(f"{util.Typgpy.HEADER}Preparing transactions for shard {shard} "
           f"({len(args.accounts)} transaction(s)){util.Typgpy.ENDC}")
     for j, acc in enumerate(args.accounts):
-        if get_balance(acc, endpoints[shard]) < float(args.amount):
+        if get_balance(acc, endpoints[shard]) == 0:
             transactions.append({
                 "from": faucet_addr,
                 "to": acc,
