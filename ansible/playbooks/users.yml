@@ -95,9 +95,42 @@
       user: "{{ item.username }}"
       key: "{{ lookup('file', '../vars/'+ item.username + '.key.pub') }}"
     with_items: "{{ users }}"
-#  - name: "Allow admin users to sudo without a password"
-#    lineinfile:
-#      dest: "/etc/sudoers" # path: in version 2.3
-#      state: "present"
-#      regexp: "^%admin"
-#      line: "%admin ALL=(ALL) NOPASSWD: ALL"
+  - name: "Add each user to sudo"
+    lineinfile:
+      path: "/etc/sudoers.d/{{ item.username }}"
+      line: '{{ item.username }} ALL=(ALL) NOPASSWD: LOG_INPUT: LOG_OUTPUT: ALL'
+      state: present
+      mode: 0440
+      create: yes
+      validate: '/usr/sbin/visudo -cf %s'
+    with_items: "{{ users }}"
+  - name: "Set includedir in sudoers"
+    lineinfile:
+      path: /etc/sudoers
+      line: "#includedir /etc/sudoers.d"
+      state: present
+      validate: "/usr/sbin/visudo -cf %s"
+  - name: "log sudo command"
+    lineinfile:
+      path: "/etc/sudoers"
+      state: present
+      regexp: "^%wheel"
+      insertafter: '^%wheel'
+      line: 'Defaults logfile=/var/log/sudo'
+  - name: "log sudo-io per user"
+    lineinfile:
+      path: "/etc/sudoers"
+      state: present
+      regexp: "^%wheel"
+      insertafter: '^%wheel'
+      line: 'Defaults iolog_dir=/var/log/sudo-io/%{user}'
+      validate: "/usr/sbin/visudo -cf %s"
+  - name: "Add shell customization"
+    lineinfile:
+      path: "/etc/profile.d/sh.local"
+      state: present
+      regexp: "#Add"
+      insertafter: "#Add"
+      line: 'PATH=${PATH}:/usr/local/go/bin'
+
+# vim: set expandtab:ts=4
