@@ -52,6 +52,21 @@
     src: harmony.service
     dest: /lib/systemd/system
 
+- name: create .hmy/blskeys directory
+  file:
+    path: "{{ USER.home }}/.hmy/blskeys"
+    state: directory
+
+- name: copy all bls keys
+  copy:
+    src: "{{ inventory_hostname }}/"
+    dest: "{{ USER.home }}/.hmy/blskeys/"
+
+- name: copy bls pass
+  copy:
+    src: "bls.pass"
+    dest: "{{ USER.home }}/.hmy/blskeys/"
+
 - name: enable harmony service
   systemd: 
     name: harmony
@@ -59,15 +74,4 @@
     enabled: yes
 #    state: started
 
-- name: create .hmy/blskeys directory
-  file:
-    path: "{{ USER.home }}/.hmy/blskeys"
-    state: directory
 
-- name: copy blskey files
-  copy:
-    src: "{{ inventory_hostname }}/{{ item }}"
-    dest: "{{ USER.home }}/.hmy/blskeys"
-  with_items:
-    - bls.pass
-    - bls.key

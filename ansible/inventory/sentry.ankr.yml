@@ -1,4 +1,15 @@
+ostn:
+   hosts:
+      leo130:
+         ansible_host: 23.106.248.150
+
 sentry:
    hosts:
-      sentry0:
-         ansible_host: 23.106.248.150
+      leo-sentry-s0:
+         ansible_host: 23.106.254.1
+      leo-sentry-s1:
+         ansible_host: 23.106.254.2
+      leo-sentry-s2:
+         ansible_host: 23.106.254.3
+      leo-sentry-s3:
+         ansible_host: 23.106.254.4
