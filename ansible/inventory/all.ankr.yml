@@ -1,33 +1,6 @@
-ostn:
-   hosts:
-      s0:
-         ansible_host: 23.106.248.146
-      s1:
-         ansible_host: 23.106.248.147
-      s2:
-         ansible_host: 23.106.248.148
-      s3:
-         ansible_host: 23.106.248.149
-
-devop:
-   hosts:
-      23.106.248.150
-      
-shard0:
-   hosts:
-      23.106.248.[146:150]
-
-shard1:
-   hosts:
-      23.106.248.[151:155]
-
-ostn:
-   hosts:
-      23.106.248.[146:149]
-
 batch1:
    hosts:
-      23.106.248.[146:150]
+      23.106.248.[146:155]
 
 batch2:
    hosts:
