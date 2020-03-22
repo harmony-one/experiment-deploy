@@ -42,7 +42,6 @@ resource "aws_spot_instance_request" "foundation-node" {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
       agent       = true
     }
   }
@@ -54,7 +53,6 @@ resource "aws_spot_instance_request" "foundation-node" {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
       agent       = true
     }
   }
@@ -66,7 +64,6 @@ resource "aws_spot_instance_request" "foundation-node" {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
       agent       = true
     }
   }
@@ -78,7 +75,6 @@ resource "aws_spot_instance_request" "foundation-node" {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
       agent       = true
     }
   }
@@ -90,7 +86,6 @@ resource "aws_spot_instance_request" "foundation-node" {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
       agent       = true
     }
   }
@@ -102,7 +97,6 @@ resource "aws_spot_instance_request" "foundation-node" {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
       agent       = true
     }
   }
@@ -114,7 +108,6 @@ resource "aws_spot_instance_request" "foundation-node" {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
       agent       = true
     }
   }
@@ -126,7 +119,6 @@ resource "aws_spot_instance_request" "foundation-node" {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
       agent       = true
     }
   }
@@ -138,7 +130,6 @@ resource "aws_spot_instance_request" "foundation-node" {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
       agent       = true
     }
   }
@@ -150,7 +141,6 @@ resource "aws_spot_instance_request" "foundation-node" {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
       agent       = true
     }
   }
@@ -179,7 +169,6 @@ resource "aws_spot_instance_request" "foundation-node" {
       host        = "${aws_spot_instance_request.foundation-node.public_ip}"
       type        = "ssh"
       user        = "ec2-user"
-      private_key = "${file(var.private_key_path)}"
       agent       = true
     }
   }

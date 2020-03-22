@@ -74,7 +74,7 @@ OPTIONS:
    -G                         do the real job
    -s state-file-directory    specify the directory of the terraform state files (default: $STATEDIR)
    -d log-file-directory      specify the directory of the log directory (default: logs/$HMY_PROFILE)
-   -S                         disable state pruning for the node (default: $SYNC)
+   -S                         disable state pruning for the node (state pruning enabled by default )
    -N nodedb-directory        specify the directory of the nodedb (default: $NODEDB)
 
    -i <instance type>         specify instance type (default: $INSTANCE)
@@ -102,21 +102,13 @@ EXAMPLES:
    $ME -v
 
    $ME new 20 30 5
-
-   $ME -S -i c5.large new 20 30 5
-
-   $ME -S rclone 12.34.56.78 123.234.123.234
-
+   $ME -i c5.large new 20 30 5
+   $ME rclone 12.34.56.78 123.234.123.234
    $ME wait 12.34.56.78 123.234.123.234
-
    $ME uptime 12.34.56.78 123.234.123.234 > upt.sh
-
    $ME replace 200 20 10 > repl.sh
-
    $ME -M 100 multikey 100 200 300
-
    $ME -M 10 mkuptime 10 22 42 > upmk.sh
-
    $ME newmk 20 40 80
 
 EOF
