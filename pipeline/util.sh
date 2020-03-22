@@ -244,7 +244,7 @@ find_key_from_host()
 		fi
       case "$WHOAMI" in
          # keep it backward compatible
-         "HARMONY"|"OS"|"PS"|"LRTN")
+         "HARMONY"|"PS"|"LRTN")
             echo ${REGION_KEY[$reg]}
             ;;
          # all new network should use new testnet keypair
