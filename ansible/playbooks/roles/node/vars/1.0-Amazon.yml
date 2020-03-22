@@ -1,0 +1,9 @@
+---
+
+PACKAGES:
+   - unzip
+
+USER:
+   user: ec2-user
+   group: ec2-user
+   home: /home/ec2-user

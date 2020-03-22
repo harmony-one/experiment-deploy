@@ -1,0 +1,9 @@
+---
+- hosts: '{{ inventory }}'
+  remote_user: root
+  gather_facts: no
+  vars_files:
+    - ../vars/eng.secret
+  become: yes
+  roles:
+  - ryandaniels.create_users

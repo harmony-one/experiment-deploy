@@ -1,0 +1,4 @@
+sentry:
+   hosts:
+      sentry0:
+         ansible_host: 23.106.248.150
