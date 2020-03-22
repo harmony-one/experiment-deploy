@@ -64,7 +64,7 @@
 
 - name: copy bls pass
   copy:
-    src: "bls.pass"
+    src: "{{ inventory_hostname }}/bls.pass"
     dest: "{{ USER.home }}/.hmy/blskeys/"
 
 - name: enable harmony service
