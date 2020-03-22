@@ -9,7 +9,7 @@ Restart=always
 RestartSec=1
 User=root
 WorkingDirectory=/root
-ExecStart=/root/node.sh -N staking -1 -P -p /root/bls.pass -M -D -T explorer -i 2 -A
+ExecStart=/root/node.sh -N staking -1 -P -p /root/.hmy/blskeys/bls.pass -M -D -T explorer -i 1 -A
 
 [Install]
 WantedBy=multi-user.target

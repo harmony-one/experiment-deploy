@@ -52,6 +52,16 @@
     src: harmony.service
     dest: /lib/systemd/system
 
+- name: check if we have specific harmony service file
+  local_action: stat path={{ role_path }}/files/{{ inventory_hostname }}/harmony.service
+  register: optional_harmony_service
+
+- name: upload specific harmony service
+  copy:
+    src: "{{ inventory_hostname }}/harmony.service"
+    dest: /lib/systemd/system
+  when: optional_harmony_service.stat.exists
+
 - name: create .hmy/blskeys directory
   file:
     path: "{{ USER.home }}/.hmy/blskeys"
@@ -73,5 +83,3 @@
     daemon_reload: yes
     enabled: yes
     state: started
-
-
