@@ -65,7 +65,7 @@ userip="${1-}"
 shift 1 2> /dev/null || usage "missing IP address"
 
 unset -v key_file
-KEYDIR=${HSSH_KEY_DIR:-${progdir}/../keys}
+KEYDIR=${HSSH_KEY_DIR:-~/.ssh/keys}
 
 case "${userip}" in
 *@*)
@@ -122,11 +122,6 @@ then
 	set -- "$@" -i "${key_file}"
 else
 	node_ssh_info "key file does not exist; proceeding without one"
-fi
-
-if [ -f "$KEYDIR/harmony-node.pem" ]
-then
-	set -- "$@" -i "$KEYDIR/harmony-node.pem"
 fi
 
 if ${exit_mux_first}
