@@ -36,6 +36,7 @@ This script automates the benchmark test based on profile.
    reinit <ip>       re-run init command on hosts (list of ips)
    replace <ip>      start a new node to replace existing nodes with ip (list of ips)
    multikey <ip>     start multi-bls-key migration
+   restart <shard>   restart the shard or all if no <shard> is specified (default: all)
    all               do everything (default)
 
 
@@ -46,8 +47,6 @@ This script automates the benchmark test based on profile.
    $ME -p devnet -k
 
    $ME -p testnet log
-
-   $ME -p banjo reinit 1.2.3.4 2.3.4.5
 
 EOT
    exit 0
@@ -586,6 +585,30 @@ function do_multikey
    ./restart_node.sh -p $PROFILE -y -M $mkhost
 }
 
+function do_restart_network
+{
+   local shard=$1
+
+   local logdir=logs/$PROFILE
+
+   if [ -n "$shard" ]; then
+      if [ ! -f $logdir/shard${shard}.txt ]; then
+         echo "ERROR: can't find $logdir/shard${shard}.txt"
+      else
+         cat $logdir/shard${shard}.txt | xargs -P ${configs[parallel]} -I{} bash -c "./restart-node.sh -d $logdir -p $PROFILE -y -t 0 -r 0 -R 0 {}"
+      fi
+   else
+      # run on all shards
+      for s in {0..${configs[benchmark.shards]}}; do
+         if [ ! -f $logdir/shard${shard}.txt ]; then
+            echo "ERROR: can't find $logdir/shard${shard}.txt"
+         else
+            cat $logdir/shard${shard}.txt | xargs -P ${configs[parallel]} -I{} bash -c "./restart-node.sh -d $logdir -p $PROFILE -y -t 0 -r 0 -R 0 {}"
+         fi
+      done
+   fi
+}
+
 function do_all
 {
    do_launch_bootnode
@@ -600,6 +623,7 @@ function do_all
    download_logs
    analyze_logs
    do_sync_logs
+   do_restart_network
    if [ "$KEEP" == "false" ]; then
       do_deinit
    fi
@@ -696,6 +720,8 @@ case $ACTION in
          do_replace $* ;;
    multikey)
          do_multikey $* ;;
+   restart)
+         do_restart_network $* ;;
    *)
       echo "unknown action! \"$ACTION\""
       ;;
