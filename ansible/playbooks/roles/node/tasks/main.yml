@@ -52,22 +52,34 @@
     src: harmony.service
     dest: /lib/systemd/system
 
-- name: enable harmony service
-  systemd: 
-    name: harmony
-    daemon_reload: yes
-    enabled: yes
-#    state: started
+- name: check if we have specific harmony service file
+  local_action: stat path={{ role_path }}/files/{{ inventory_hostname }}/harmony.service
+  register: optional_harmony_service
+
+- name: upload specific harmony service
+  copy:
+    src: "{{ inventory_hostname }}/harmony.service"
+    dest: /lib/systemd/system
+  when: optional_harmony_service.stat.exists
 
 - name: create .hmy/blskeys directory
   file:
     path: "{{ USER.home }}/.hmy/blskeys"
     state: directory
 
-- name: copy blskey files
+- name: copy all bls keys
   copy:
-    src: "{{ inventory_hostname }}/{{ item }}"
-    dest: "{{ USER.home }}/.hmy/blskeys"
-  with_items:
-    - bls.pass
-    - bls.key
+    src: "{{ inventory_hostname }}/"
+    dest: "{{ USER.home }}/.hmy/blskeys/"
+
+- name: copy bls pass
+  copy:
+    src: "{{ inventory_hostname }}/bls.pass"
+    dest: "{{ USER.home }}/.hmy/blskeys/"
+
+- name: enable harmony service
+  systemd: 
+    name: harmony
+    daemon_reload: yes
+    enabled: yes
+    state: started
