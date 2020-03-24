@@ -18,6 +18,7 @@ CFG=configuration.txt
 SCP='scp -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
 SSH='ssh -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
 UNAME=ec2-user
+KEYDIR=${HSSH_KEY_DIR:-~/.ssh/keys}
 
 function usage
 {
@@ -91,7 +92,7 @@ function download_logs
             ${SCP} -r ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
          else
             key=$(find_key_from_ip ${IP[$i]})
-            rsync -a -e "${SSH} -i $DIR/../keys/$key" ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
+            rsync -a -e "${SSH} -i $KEYDIR/$key" ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
             # key=$(${GREP} ^$r ${CFG} | cut -f 3 -d ,)
          fi
          (( count++ ))
@@ -150,13 +151,13 @@ function run_cmd
          r=${REGION[$i]}
          key=$(find_key_from_ip ${IP[$i]})
          if [ "$r" == "node" ]; then
-            ${SSH} -i $DIR/../keys/$key ${UNAME}@${IP[$i]} "$CMD" 2>&1 | tee $logdir/${IP[$i]}.log &
+            ${SSH} -i $KEYDIR/$key ${UNAME}@${IP[$i]} "$CMD" 2>&1 | tee $logdir/${IP[$i]}.log &
          else
             # key=$(${GREP} ^$r ${CFG} | cut -f 3 -d ,)
             if [ "$cmd" == "db" ]; then
                CMD=$(echo $NCMD | sed "s/IP/${IP[$i]}/")
             fi
-            ${SSH} -i $DIR/../keys/$key ${UNAME}@${IP[$i]} "$CMD" 2>&1 | tee $logdir/${IP[$i]}.log &
+            ${SSH} -i $KEYDIR/$key ${UNAME}@${IP[$i]} "$CMD" 2>&1 | tee $logdir/${IP[$i]}.log &
          fi
          (( count++ ))
       done

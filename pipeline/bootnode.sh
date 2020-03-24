@@ -149,9 +149,10 @@ if [ "$CMD" = "" ]; then
 fi
 
 KEY=$(find_key_from_ip $SERVER)
+KEYDIR=${HSSH_KEY_DIR:-~/.ssh/keys}
 
-SSH="/usr/bin/ssh -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
-SCP="/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i ../keys/$KEY"
+SSH="/usr/bin/ssh -o StrictHostKeyChecking=no -o LogLevel=error -i $KEYDIR/$KEY"
+SCP="/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i $KEYDIR/$KEY"
 
 if [ -n "$SESSION" ]; then
    SUFFIX=$SESSION
