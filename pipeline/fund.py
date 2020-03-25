@@ -206,7 +206,7 @@ def fund_from_csv_data(shard, data):
     transactions = []
     nonce = get_nonce(endpoints[shard], faucet_addr)
     print(f"{util.Typgpy.HEADER}Preparing transactions for shard {shard} "
-          f"({len(args.accounts)} transaction(s)){util.Typgpy.ENDC}")
+          f"({len(data)} transaction(s)){util.Typgpy.ENDC}")
     for dat in data:
         fund_amount = float(dat['amount']) - get_balance(dat['address'], endpoints[shard])  # WARNING: Always fund the difference.
         if fund_amount > 0:
