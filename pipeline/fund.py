@@ -5,16 +5,17 @@ This is a script to fund accounts without the use of an endpoint.
 Note that this script assumes that the faucet key is in the CLI's keystore.
 
 Example usage:
-    python3 fund.py --amount 100000 --check --shards "0, 2, 3" 
+    python3 fund.py --amount 100000 --shards "0, 2, 3"
 """
 
 import json
-import random
+import sys
 import time
 import argparse
 import os
 import csv
 from multiprocessing.pool import ThreadPool
+from threading import Lock
 from decimal import Decimal
 
 from pyhmy import (
@@ -27,14 +28,14 @@ import requests
 faucet_addr = "one1zksj3evekayy90xt4psrz8h6j2v3hla4qwz4ur"  # Assumes that this is in the CLI's keystore.
 # From: https://docs.google.com/spreadsheets/d/1Z5Jsf_wPkCKWrzYfSUApMFyBZy9Ye9EKBEb_-C89pYQ/edit#gid=0
 accounts = [
-    "one1kvfsza4u4e5ml6qv92j2pmsal2am9mcv9u4g83",
+    "one17dcjcyauyr43rqh29sa9zeyvfvqc54yzuwyd64",
     "one1ujljr2nuymtxm0thjm32f64xsa9uzs54swreyw",
-    "one1kvfsza4u4e5ml6qv92j2pmsal2am9mcv9u4g83",
     "one1p5hv9qv90dyrag9fj3wzrvvrs273ypcq8mz7zn",
     "one1egemh5e9xjy3x8d3cq0kq7mw4sw4jjwgkc7axs",
     "one1y5n7p8a845v96xyx2gh75wn5eyhtw5002lah27",
     "one10qq0uqa4gvgdufqjph89pp7nj6yeatz94xdjrt",
     "one1j33qtvx86j4ugy0a8exwwhtldm5wv4daksrwsl",
+    "one16xh2u9r4677egx4x3s0u966ave90l37hh7wq72",
     "one1fv5ku7szkm60h4j4tcd2yanvjaw2ym3ugnls33",
     "one1rcv3chw86tprvhpw4fjnpy2gnvqy4gp4fmhdd9",
     "one1qyvwqh6klj2cfnzk4mcrlwae3790dm33jgy6kw",
@@ -46,14 +47,19 @@ accounts = [
     "one1tpxl87y4g8ecsm6ceqay49qxyl5vs94jjyfvd9",
     "one103q7qe5t2505lypvltkqtddaef5tzfxwsse4z7",
     "one18jcl4uxjadq3qm3fj0clct3svugfxdkqy7f27s",
+    "one1fd094898rfktel7rezmk65zql3cjzhw9zgxcff",
     "one1tewvfjk0d4whmajpqvcvzfpx6wftrh0gagsa7n",
     "one18xfcqu7jf0cq5apweyu5jxr30x9cvetegwqfss",
-    "one1tnnncpjdqdjyk7y4d9gaxrg9qk927ueqptmptz",
+    "one1m8szmssfzsud6l03jjarlhn00f0c262egf0rdr",
+    "one1925zlp5celp8r8jj3utpcxpjtncuuv2nu2449v",
     "one1337twjy8nfcwxzjqrc6lgqxxhs0zeult242ttw",
     "one15ap4frdwexw2zcue4hq5jjad5jjzz678urwkyw",
+    "one16226n7h7fu326plzlqt4k60yfyza5vk299ypr2",
     "one12sujm2at8j8terh7nmw2gnxtrmk74wza3tvjd9",
     "one1wxlm29z9u08udhwuulgssnnh902vh9wfnt5tyh",
     "one1m4f8qng3h0lad30kygyr9c6nwsxpzehxm9av93",
+    "one176yqutxhzpyxq3tedn390qjgxn2xrg0ixjf6ue",
+    "one1mfemj84yxg6dfdakdgdf3dmufdpcmzxflq0dl8",
     "one1m6j80t6rhc3ypaumtsfmqwjwp0mrqk9ff50prh",
     "one10fjqteq6q75nm62cx8vejqsk7mc8t5hle8ewnl",
     "one1vzsj3julf0ljcj3hhxuqpu6zvadu488zfrtttz",
@@ -61,8 +67,17 @@ accounts = [
     "one1xmx3fd69jp06ad23ptsj2pxuy2vsquhha76w0a",
     "one13upa4q2ntl4rjawrw2tjtj8n347yud0kv5eqk2",
     "one164e2dwupqxd7ssr85ncnkx3quk7fexy0eta2vy",
-    "one1zc4et7xmtp8lna54ucye9phxlvw73kfgqeh5um"
+    "one1zc4et7xmtp8lna54ucye9phxlvw73kfgqeh5um",
+    "one1cjqud4mqvye7328np009hweajymx22fj7fs2kk",
+    "one1awswe9xrx5rcjxvtdd6lwta9py2t09g6cet05h",
+    "one1fxmqtjp2ujj9597mse22kxcdf0895u7c6myp42",
+    "one1kt98rm83e9p2fja4p8nj5mwkgfxc8374qwtvrg"
 ]
+fund_log_lock = Lock()
+fund_log = {
+    "block-height": 0,
+    "funded-accounts": {}
+}
 
 
 def parse_args():
@@ -72,8 +87,7 @@ def parse_args():
     parser.add_argument("--accounts", dest="accounts", default=None, help="String in CSV format of one1... addresses")
     parser.add_argument("--shards", dest="shards", default=None,
                         help="String in CSV format of shards to fund, default is all.")
-    parser.add_argument("--check", action="store_true", help="Spot check balances after funding")
-    parser.add_argument("--force", action="store_true", help="Send transactions even if network appears to be offline")
+    parser.add_argument("--force", action="store_true", help="Force send transactions, ignoring all checks")
     parser.add_argument("--yes", action="store_true", help="Say yes to profile check")
     parser.add_argument("--from_csv", dest="csv", help="Path to CSV file of keys, i.e: (harmony.one/keys2). "
                                                        "Note the file format assumption. "
@@ -94,6 +108,28 @@ def setup():
     env = cli.download("./bin/hmy", replace=False)
     cli.environment.update(env)
     cli.set_binary("./bin/hmy")
+
+
+def load_log():
+    global fund_log
+    log_dir = f"{os.path.dirname(os.path.realpath(__file__))}/logs/{os.environ['HMY_PROFILE']}"
+    file = f"{log_dir}/funding.json"
+    if os.path.isfile(file):
+        with open(file, 'r') as f:
+            loaded_fund_log = json.load(f)
+        curr_height = json.loads(cli.single_call(f"hmy blockchain "
+                                                 f"latest-header -n {endpoints[0]}"))["result"]["blockNumber"]
+        if loaded_fund_log['block-height'] <= curr_height:
+            fund_log = loaded_fund_log
+
+
+def save_log():
+    fund_log["block-height"] = json.loads(cli.single_call(f"hmy blockchain "
+                                                          f"latest-header -n {endpoints[0]}"))["result"]["blockNumber"]
+    log_dir = f"{os.path.dirname(os.path.realpath(__file__))}/logs/{os.environ['HMY_PROFILE']}"
+    file = f"{log_dir}/funding.json"
+    with open(file, 'w') as f:
+        json.dump(fund_log, f, indent=4)
 
 
 def get_balance(address, endpoint):
@@ -171,15 +207,20 @@ def fund_from_param(shard):
     print(f"{util.Typgpy.HEADER}Preparing transactions for shard {shard} "
           f"({len(args.accounts)} transaction(s)){util.Typgpy.ENDC}")
     for acc in args.accounts:
-        fund_amount = float(args.amount) - get_balance(acc, endpoints[shard])  # WARNING: Always fund the difference.
-        if fund_amount > 0:
+        fund_log_lock.acquire()
+        if dat['address'] not in fund_log['funded-accounts'].keys():
+            fund_log['funded-accounts'][dat['address']] = {str(i): 0 for i in range(len(endpoints))}
+        balance_log = fund_log['funded-accounts'][dat['address']]
+        fund_log_lock.release()
+        fund_amount = float(args.amount) - balance_log[str(shard)]  # WARNING: Always fund the difference.
+        if fund_amount > 0 or args.force:
             transactions.append({
                 "from": faucet_addr,
                 "to": acc,
                 "from-shard": str(shard),
                 "to-shard": str(shard),
                 "passphrase-string": "",
-                "amount": str(fund_amount),
+                "amount": str(fund_amount) if fund_amount > 0 else str(args.amount),
                 "nonce": str(nonce),
             })
             nonce += 1
@@ -208,15 +249,20 @@ def fund_from_csv_data(shard, data):
     print(f"{util.Typgpy.HEADER}Preparing transactions for shard {shard} "
           f"({len(data)} transaction(s)){util.Typgpy.ENDC}")
     for dat in data:
-        fund_amount = float(dat['amount']) - get_balance(dat['address'], endpoints[shard])  # WARNING: Always fund the difference.
-        if fund_amount > 0:
+        fund_log_lock.acquire()
+        if dat['address'] not in fund_log['funded-accounts'].keys():
+            fund_log['funded-accounts'][dat['address']] = {str(i): 0 for i in range(len(endpoints))}
+        balance_log = fund_log['funded-accounts'][dat['address']]
+        fund_log_lock.release()
+        fund_amount = float(dat['amount']) - balance_log[str(shard)]  # WARNING: Always fund the difference.
+        if fund_amount > 0 or args.force:
             transactions.append({
                 "from": faucet_addr,
                 "to": dat['address'],
                 "from-shard": str(shard),
                 "to-shard": str(shard),
                 "passphrase-string": "",
-                "amount": str(fund_amount),
+                "amount": str(fund_amount) if fund_amount > 0 else str(dat['amount']),
                 "nonce": str(nonce),
             })
             nonce += 1
@@ -241,7 +287,8 @@ def parse_csv():
     if args.csv is not None:
         with open(args.csv, 'r') as f:
             for row in csv.DictReader(f):
-                raw_amount, raw_address = row['funded'], row['validator address']  # WARNING: Assumption of column name of CSV
+                raw_amount, raw_address = row['funded'], row[
+                    'validator address']  # WARNING: Assumption of column name of CSV
                 if raw_amount and 'one1' in raw_address:
                     data.append({
                         'amount': float(raw_amount.strip().replace(',', '')),
@@ -281,6 +328,7 @@ if __name__ == "__main__":
     if os.environ['HMY_PROFILE'] is None:
         raise RuntimeError(f"{util.Typgpy.FAIL}Profile is not set, exiting...{util.Typgpy.ENDC}")
 
+    load_log()
     csv_data = parse_csv()
     print(f"{util.Typgpy.HEADER}Funding using endpoints: {util.Typgpy.OKGREEN}{endpoints}{util.Typgpy.ENDC}")
     print(f"{util.Typgpy.HEADER}Funding on shards: {util.Typgpy.OKGREEN}{args.shards}{util.Typgpy.ENDC}")
@@ -315,27 +363,35 @@ if __name__ == "__main__":
         threads.clear()
 
     print(f"{util.Typgpy.HEADER}Finished sending transactions!{util.Typgpy.ENDC}")
-    if args.check:
-        if csv_data:
-            check_data = random.sample(csv_data, max(len(csv_data) // 10, 1))
-        else:
-            check_data = []
-            for addr in random.sample(args.accounts, max(len(args.accounts) // 10, 1)):
-                check_data.append({
-                    'amount': args.amount,
-                    'address': addr
-                })
-        print(f"{util.Typgpy.HEADER}Sleeping 60 seconds before checking balances{util.Typgpy.ENDC}")
-        time.sleep(60)
-        print(f"{util.Typgpy.HEADER}Spot checking {len(check_data)} balances....{util.Typgpy.ENDC}")
-        failed = False
-        for dat in check_data:
-            for bal in get_balance_from_node_ip(dat['address'], endpoints):
-                if int(bal["shard"]) in args.shards and float(bal["amount"]) < float(dat["amount"]):
-                    print(f"{util.Typgpy.FAIL}{dat['address']} did not get funded!{util.Typgpy.ENDC}")
-                    failed = True
-                    break
-        if not failed:
-            print(f"{util.Typgpy.HEADER}Successfully checked {len(check_data)} balances....{util.Typgpy.ENDC}")
-        else:
-            exit(-1)
+    if csv_data:
+        check_data = csv_data
+    else:
+        check_data = []
+        for addr in args.accounts:
+            check_data.append({
+                'amount': args.amount,
+                'address': addr
+            })
+    print(f"{util.Typgpy.HEADER}Sleeping 60 seconds before checking balances{util.Typgpy.ENDC}")
+    time.sleep(60)
+    print(f"{util.Typgpy.HEADER}Checking {len(check_data)} balances....{util.Typgpy.ENDC}")
+    failed = False
+    for j, dat in enumerate(check_data):
+        sys.stdout.write(f"\rChecked {j}/{len(check_data)} balances")
+        sys.stdout.flush()
+        fund_log_lock.acquire()
+        if dat['address'] not in fund_log['funded-accounts'].keys():
+            fund_log['funded-accounts'][dat['address']] = {str(i): 0 for i in range(len(endpoints))}
+        balance_log = fund_log['funded-accounts'][dat['address']]
+        fund_log_lock.release()
+        for bal in get_balance_from_node_ip(dat['address'], endpoints):
+            shard, balance = str(bal["shard"]), float(bal["amount"])
+            balance_log[shard] = max(balance_log[shard], balance)
+            if shard in args.shards and balance < float(dat["amount"]):
+                print(f"{util.Typgpy.FAIL}{dat['address']} did not get funded on shard {shard}{util.Typgpy.ENDC}")
+                failed = True
+    sys.stdout.write(f"\r")
+    sys.stdout.flush()
+    save_log()
+    if not failed:
+        print(f"{util.Typgpy.HEADER}Successfully checked {len(check_data)} balances!{util.Typgpy.ENDC}")
