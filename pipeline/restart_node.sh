@@ -16,7 +16,9 @@ esac
 . "${progdir}/common_opts.sh"
 
 unset -v default_timeout default_step_retries default_cycle_retries \
-	default_bucket default_folder default_public_rpc default_multi_key
+	default_bucket default_folder default_public_rpc default_multi_key \
+	default_clean_dht
+
 default_timeout=450
 default_step_retries=2
 default_cycle_retries=2
@@ -24,6 +26,7 @@ default_bucket=unique-bucket-bin
 default_folder="${WHOAMI}"
 default_public_rpc=true
 default_multi_key=false
+default_clean_dht=false
 
 print_usage() {
 	cat <<- ENDEND
@@ -53,6 +56,8 @@ print_usage() {
 		-M          support multi-key
                   (default: ${default_multi_key})
 		-y          say yes to restart confirmation     
+		-D          clean .dht directory
+                  (default: ${default_clean_dht})
 
 		arguments:
 		ip		the IP address to upgrade
@@ -60,12 +65,13 @@ print_usage() {
 	ENDEND
 }
 
-unset -v timeout step_retries cycle_retries upgrade bucket folder force_yes
+unset -v timeout step_retries cycle_retries upgrade bucket folder force_yes clean_dht
 upgrade=false
 force_yes=false
+clean_dht=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}t:r:R:UB:F:PMy" opt
+while getopts ":${common_getopts_spec}t:r:R:UB:F:PMyD" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -80,6 +86,7 @@ do
 	P) public_rpc=false;;
 	M) multi_key=true;;
 	y) force_yes=true;;
+	D) clean_dht=true;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -93,6 +100,7 @@ default_common_opts
 : ${folder="${default_folder}"}
 : ${public_rpc="${default_public_rpc}"}
 : ${multi_key="${default_multi_key}"}
+: ${clean_dbh="${default_clean_dht}"}
 
 node_ssh() {
 	local ip=$1
@@ -439,6 +447,13 @@ upgrade_binaries() {
 	'
 }
 
+clean_dht() {
+   rn_info "clean .dht-*"
+   node_ssh "${ip}" '
+      sudo rm -rf .dht-*
+   '
+}
+
 unset -v logsize zerologsize
 _get_logfile_size() {
 	rn_info "getting logfile size"
@@ -555,6 +570,10 @@ do
 			run_with_retries upgrade_binaries || break
 		fi
 		run_with_retries get_logfile_size || break
+		if ${clean_dht}
+		then
+			run_with_retries clean_dht || break
+		fi
 		run_with_retries start_harmony || break
 		wait_for_consensus || break
 		break 2
@@ -571,3 +590,5 @@ done
 
 rn_info "finished"
 exit 0
+
+# vim: set noexpandtab:
