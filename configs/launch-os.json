@@ -2,9 +2,33 @@
    "launch": [
       {
          "region": "iad",
-         "type": "m5a.large",
+         "type": "t3.small",
          "ondemand": 0,
-         "spot": 76,
+         "spot": 19,
+         "protection": false,
+         "root": 15
+      },
+      {
+         "region": "sfo",
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 19,
+         "protection": false,
+         "root": 15
+      },
+      {
+         "region": "cmh",
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 19,
+         "protection": false,
+         "root": 15
+      },
+      {
+         "region": "pdx",
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 19,
          "protection": false,
          "root": 15
       }

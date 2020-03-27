@@ -6,16 +6,16 @@
     "regions": "iad"
   },
   "leader": {
-    "num_vm": 4,
+    "num_vm": 1,
     "type": "m5a.large",
-    "regions": "iad",
+    "regions": "iad,sfo,cmh,pdx",
     "protection": false,
     "root": 15
   },
   "explorer_node": {
-    "num_vm": 4,
+    "num_vm": 1,
     "type": "m5a.large",
-    "regions": "iad",
+    "regions": "iad,sfo,cmh,pdx",
     "root": 25,
     "protection": false
   },
@@ -58,7 +58,7 @@
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
-    "commit_delay": "4s",
+    "commit_delay": "1s",
     "network_type": "pangaea",
     "bls": true
   },
@@ -75,7 +75,7 @@
     "reset": "false"
   },
   "explorer": {
-    "name": "explorer.harmony.one",
+    "name": "explorer.os.hmny.io",
     "port": 4444,
     "reset": "false"
   },

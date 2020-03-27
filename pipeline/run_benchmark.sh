@@ -207,7 +207,7 @@ EOT
 
    cmd_file=$LOGDIR/run_init.sh
    mk_file=$LOGDIR/multi_keys.csv
-   echo ip,index,key > $mk_file
+   echo index,key,ip > $mk_file
    echo "#!/usr/bin/env bash" > $cmd_file
 
 # send commands to leaders at first
@@ -231,7 +231,7 @@ EOT
                   for k in ${keys[@]}; do
                      bls=${blskey[$k]}
                      echo MK: k =\> $k, bls =\> $bls
-                     echo $ip,$k,$bls >> $mk_file
+                     echo $k,$bls,$ip >> $mk_file
                      ./node_ssh.sh -d $LOGDIR ec2-user@$ip "mkdir -p ${configs[multikey.blskey_folder]} && aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls ${configs[multikey.blskey_folder]}/$bls"
                   done
                fi
@@ -299,7 +299,7 @@ EOT
                      for k in ${keys[@]}; do
                         bls=${blskey[$k]}
                         echo MK: k =\> $k, bls =\> $bls
-                        echo $ip,$k,$bls >> $mk_file
+                        echo $k,$bls,$ip >> $mk_file
                         ./node_ssh.sh -d $LOGDIR ec2-user@$ip "mkdir -p ${configs[multikey.blskey_folder]} && aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls ${configs[multikey.blskey_folder]}/$bls"
                      done
                   fi
