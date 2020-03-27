@@ -24,6 +24,7 @@ This script automates the benchmark test based on profile.
    -k                keep all the instances, skip deinit (default: $KEEP)
    -t                do not run txgen (default: $TXGEN), overriding profile configuration
    -w                run wallet test (default: $WALLET)
+   -U                upgrade the node during restart (default: $UPGRADE)
 
 [ACTIONS]
    launch            do launch only
@@ -591,19 +592,24 @@ function do_restart_network
 
    local logdir=logs/$PROFILE
 
+   local restart_opt="-y -t 0 -r 0 -R 0"
+   if $UPGRADE; then
+      restart_opt+=" -U"
+   fi
+
    if [ -n "$shard" ]; then
       if [ ! -f $logdir/shard${shard}.txt ]; then
          echo "ERROR: can't find $logdir/shard${shard}.txt"
       else
-         cat $logdir/shard${shard}.txt | xargs -P ${configs[parallel]} -I{} bash -c "./restart-node.sh -d $logdir -p $PROFILE -y -t 0 -r 0 -R 0 {}"
+         cat $logdir/shard${shard}.txt | xargs -P ${configs[parallel]} -I{} bash -c "./restart-node.sh -d $logdir -p $PROFILE $restart_opt {}"
       fi
    else
       # run on all shards
-      for s in {0..${configs[benchmark.shards]}}; do
+      for shard in $(seq 0 $(( ${configs[benchmark.shards]} - 1 ))); do
          if [ ! -f $logdir/shard${shard}.txt ]; then
             echo "ERROR: can't find $logdir/shard${shard}.txt"
          else
-            cat $logdir/shard${shard}.txt | xargs -P ${configs[parallel]} -I{} bash -c "./restart-node.sh -d $logdir -p $PROFILE -y -t 0 -r 0 -R 0 {}"
+            cat $logdir/shard${shard}.txt | xargs -P ${configs[parallel]} -I{} bash -c "./restart-node.sh -d $logdir -p $PROFILE $restart_opt {}"
          fi
       done
    fi
@@ -649,8 +655,9 @@ KEEP=false
 TAG=${WHOAMI}
 TXGEN=true
 WALLET=false
+UPGRADE=false
 
-while getopts "hp:vktw" option; do
+while getopts "hp:vktwU" option; do
    case $option in
       h) usage ;;
       p)
@@ -663,6 +670,7 @@ while getopts "hp:vktw" option; do
       k) KEEP=true ;;
       t) TXGEN=false ;;
       w) WALLET=true ;;
+      U) UPGRADE=true ;;
    esac
 done
 
