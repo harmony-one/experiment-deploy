@@ -3,7 +3,16 @@
 #set -euxo pipefail
 # set -x
 
-source ./common.sh || exit 1
+unset -v progname progdir
+progname="${0##*/}"
+case "${0}" in
+*/*) progdir="${0%/*}";;
+*) progdir=".";;
+esac
+
+
+. "${progdir}/util.sh"
+. "${progdir}/common.sh"
 
 RETRY_LAUNCH_TIME=10
 
@@ -400,28 +409,26 @@ function do_reset_explorer
 {
    explorer=${1:-explorer}
 
-   if [ "${configs[${explorer}.reset]}" == "true" ]; then
-      echo "resetting explorer ..."
-      if [ ${#EXPLORER_NODE_IP[@]} -gt 0 ]; then
-         for l in "${EXPLORER_NODE_IP[@]}"; do
-            explorer_nodes+="\"$l:5000\"",
-         done
-      else
-         for l in "${LEADER_IP[@]}"; do
-            explorer_nodes+="\"$l:5000\"",
-         done
-      fi
-      explorer_nodes=$(echo $explorer_nodes | sed s/,$//)
-      cat > explorer.reset.json<<EOT
-{
-   "secret":"426669",
-   "leaders":[$explorer_nodes]
-}
-EOT
-      echo curl -m 3 -X POST https://${configs[${explorer}.name]}/reset -H 'content-type: application/json' -d@explorer.reset.json
-      curl -m 3 -X POST https://${configs[${explorer}.name]}/reset -H 'content-type: application/json' -d@explorer.reset.json
+   [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
+   TS=$(cat $SESSION_FILE | $JQ .sessionID)
 
-      [ -e explorer.reset.json ] && cp explorer.reset.json logs/$TS
+   if [ "${configs[${explorer}.reset]}" == "true" ]; then
+      host=$(host ${configs[${explorer}.name]} | awk ' { print $NF } ')
+      KEY=$(find_key_from_ip $host)
+      KEYDIR=${HSSH_KEY_DIR:-~/.ssh/keys}
+      SCP="/usr/bin/scp -o StrictHostKeyChecking=no -o LogLevel=error -i $KEYDIR/$KEY"
+
+      echo "resetting explorer ..."
+      explorer_nodes=( $(grep explorer_node ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d" ") )
+      for ex in ${explorer_nodes[@]}; do
+         exp+="\"$ex\","
+      done
+      exp=$(echo $exp | sed s/,$//)
+      cat > leaders.json<<EOT
+[ $exp ]
+EOT
+      [ -e leaders.json ] && cp leaders.json logs/$TS
+      ${SCP} logs/$TS/leaders.json ec2-user@${host}:projects/harmony-dashboard-backend/
    fi
 }
 
