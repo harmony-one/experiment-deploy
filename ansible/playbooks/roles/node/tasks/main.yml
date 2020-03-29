@@ -67,14 +67,9 @@
     path: "{{ USER.home }}/.hmy/blskeys"
     state: directory
 
-- name: copy all bls keys
+- name: copy all bls keys and pass
   copy:
     src: "{{ inventory_hostname }}/"
-    dest: "{{ USER.home }}/.hmy/blskeys/"
-
-- name: copy bls pass
-  copy:
-    src: "{{ inventory_hostname }}/bls.pass"
     dest: "{{ USER.home }}/.hmy/blskeys/"
 
 - name: enable harmony service
