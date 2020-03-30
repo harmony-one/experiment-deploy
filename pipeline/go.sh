@@ -373,11 +373,11 @@ function do_sync_logs
    wait
    logging sync log to s3
    # optimize S3 log folder path such that all logs for the same day are stored in a signle folder
-   YEAR=${TS:0:4}
-   MONTH=${TS:4:2}
-   DAY=${TS:6:2}
-   TIME=${TS:9:6}
-   TSDIR="$YEAR/$MONTH/$DAY/$TIME"
+   YEAR=$(date +"%y")
+   MONTH=$(date +"%m")
+   DAY=$(date +"%d")
+   TIME=$(date +"%T")
+   TSDIR="$PROFILE/$YEAR/$MONTH/$DAY/$TIME"
    aws s3 sync logs/$TS s3://harmony-benchmark/logs/$TSDIR 2>&1 > /dev/null
    S3URL=s3://harmony-benchmark/logs/$TSDIR
    echo $S3URL
