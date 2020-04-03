@@ -6,8 +6,8 @@
 # github credentials for nodedb exist for current user
 # ssh watchdog is correctly configured
 
-base=`pwd`
 nodedb=$(realpath ../../nodedb)
+watchdog="/home/jl/watchdog/nodedb"
 
 help() {
   echo ""
@@ -35,10 +35,10 @@ do
 done
 
 # Update repo & reset
-if [[ ${upload} == true ]]; then
+if [[ "${upload}" == true ]]; then
   pushd ${nodedb}
-  git reset --hard HEAD
-  git checkout master
+  git reset --hard origin/master
+  git clean -xdf
   git pull
   popd
 fi
@@ -54,7 +54,7 @@ else
 fi
 
 # Push to master on nodedb
-if [[ ${upload} == true ]]; then
+if [[ "${upload}" == true ]]; then
   pushd ${nodedb}
   git add ${target}/*
   git commit -m "[update_watchdog] Updating ip lists for ${target}"
@@ -62,7 +62,7 @@ if [[ ${upload} == true ]]; then
   popd
   # Restart Watchdog
   if [[ ${restart} == true ]]; then
-    ssh watchdog 'sudo sh -c "cd /home/jl/watchdog/nodedb && git stash && git pull -r"'
+    ssh watchdog "sudo sh -c \"cd ${watchdog} && git reset --hard origin/master && git clean -xdf && git pull\""
     ssh watchdog "sudo systemctl restart harmony-watchdogd@${target}.service && echo \"Restarting harmony-watchdogd@${chain}.service\""
   fi
 fi
