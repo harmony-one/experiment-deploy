@@ -11,8 +11,8 @@ watchdog="/home/jl/watchdog/nodedb"
 
 help() {
   echo ""
-  echo "Usage; ${0} -p [profile] -t [target chain] -u"
-  echo -e "\t-p WHOAMI (default = OS)"
+  echo "Usage: ${0} -w [whoami] -t [target chain] -u -p -r"
+  echo -e "\t-w WHOAMI (default = OS)"
   echo -e "\t-t Target directory in nodedb (default = ostn)"
   echo -e "\t-u Update the nodedb repo (default = false)"
   echo -e "\t-p Push the nodedb update (default = false)"
@@ -37,7 +37,7 @@ do
     p ) push=true ;;
     r ) restart=true ;;
     y ) yes=true ;;
-    ? ) help ;;
+    * ) help ;;
   esac
 done
 
@@ -61,6 +61,11 @@ if [[ "${update}" == true ]]; then
     python3 -u testnet_nodedb.py --profile ${whoami} --network ${target}
     status=$?
     popd
+  fi
+
+  if [[ "${status}" == "50" ]]; then
+    echo "!! Target directory must exist in nodedb repo !!"
+    exit 1
   fi
 
   if [[ "${status}" == "100" ]]; then
