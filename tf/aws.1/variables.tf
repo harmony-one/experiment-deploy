@@ -12,7 +12,7 @@ variable "private_key_path" {
 
 variable "node_volume_size" {
   description = "Root Volume size of the ec2 node instance"
-  default     = 200
+  default     = 50
 }
 
 variable "node_instance_type" {
@@ -32,17 +32,17 @@ variable "node_owner" {
 
 variable "spot_instance_price" {
   description = "The spot instance price"
-  default     = "0.086"
+  default     = "0.1"
 }
 
 variable "spot_type" {
-  type        = "string"
+  type        = string
   description = "(Optional; Default: 'persistent') If set to 'one-time', after the instance is terminated, the spot request will be closed. Also, Terraform can't manage one-time spot requests, just launch them."
   default     = "one-time"
 }
 
 variable "instance_interruption_behaviour" {
-  type        = "string"
+  type        = string
   description = "Whether a Spot instance stops or terminates when it is interrupted, can be stop or terminate"
   default     = "terminate"
 }
