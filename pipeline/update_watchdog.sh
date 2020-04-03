@@ -3,6 +3,8 @@
 # Assumptions:
 # experiment-deploy & nodedb repos are set up in the path
 # python3 installed & requests package is installed
+# github credentials for nodedb exist for current user
+# ssh watchdog is correctly configured
 
 base=`pwd`
 nodedb=$(realpath ../../nodedb)
@@ -10,30 +12,27 @@ nodedb=$(realpath ../../nodedb)
 help() {
   echo ""
   echo "Usage; ${0} -p [profile] -t [target chain] -u"
-  echo "\t-p WHOAMI (required)"
-  echo "\t-t Target directory in nodedb (required)"
-  echo "\t-u Update the nodedb repo"
+  echo -e "\t-p WHOAMI (default = OS)"
+  echo -e "\t-t Target directory in nodedb (default = ostn)"
+  echo -e "\t-u Update the nodedb repo"
   exit 1
 }
 
-unset OPTARG whoami target upload
+unset OPTARG whoami target upload restart
 whoami="OS"
 target="ostn"
 upload=false
-while getopts "t:w:u" opt
+restart=false
+while getopts "t:w:ur" opt
 do
   case "${opt}" in
     w ) whoami="${OPTARG}" ;;
     t ) target="${OPTARG}" ;;
     u ) upload=true ;;
+    r ) restart=true ;;
     ? ) help ;;
   esac
 done
-
-# Check for required arguments
-if [[ -z "${whoami}" ]] || [[ -z "${target}" ]]; then
-  help
-fi
 
 # Update repo & reset
 if [[ ${upload} == true ]]; then
@@ -50,7 +49,7 @@ if [[ "${whoami}" == "s3" ]]; then
 else
   # Run testnet update
   pushd ${nodedb}
-  python3 testnet_nodedb.py --profile ${whoami} --network ${target}
+  python3 -u testnet_nodedb.py --profile ${whoami} --network ${target}
   popd
 fi
 
@@ -59,6 +58,11 @@ if [[ ${upload} == true ]]; then
   pushd ${nodedb}
   git add ${target}/*
   git commit -m "[db] Update ip lists for ${target}"
-  # git push -f
+  git push -f
   popd
+  # Restart Watchdog
+  if [[ ${restart} == true ]]; then
+    ssh watchdog 'sudo sh -c "cd /home/jl/watchdog/nodedb && git stash && git pull -r"'
+    ssh watchdog "sudo systemctl restart harmony-watchdogd@${target}.service && echo \"Restarting harmony-watchdogd@${chain}.service\""
+  fi
 fi
