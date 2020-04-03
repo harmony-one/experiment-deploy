@@ -14,28 +14,35 @@ help() {
   echo "Usage; ${0} -p [profile] -t [target chain] -u"
   echo -e "\t-p WHOAMI (default = OS)"
   echo -e "\t-t Target directory in nodedb (default = ostn)"
-  echo -e "\t-u Update the nodedb repo"
-  exit 1
+  echo -e "\t-u Update the nodedb repo (default = false)"
+  echo -e "\t-p Push the nodedb update (default = false)"
+  echo -e "\t-r Restart Watchdog (default = false)"
+  echo -e "\t-y Force yes (default = false)"
+  exit
 }
 
-unset OPTARG whoami target upload restart
+unset OPTARG whoami target update restart push yes
 whoami="OS"
 target="ostn"
-upload=false
+update=false
+push=false
 restart=false
-while getopts "t:w:ur" opt
+yes=false
+while getopts "t:w:upry" opt
 do
   case "${opt}" in
     w ) whoami="${OPTARG}" ;;
     t ) target="${OPTARG}" ;;
-    u ) upload=true ;;
+    u ) update=true;;
+    p ) push=true ;;
     r ) restart=true ;;
+    y ) yes=true ;;
     ? ) help ;;
   esac
 done
 
 # Update repo & reset
-if [[ "${upload}" == true ]]; then
+if [[ "${push}" == true ]]; then
   pushd ${nodedb}
   git reset --hard origin/master
   git clean -xdf
@@ -43,26 +50,48 @@ if [[ "${upload}" == true ]]; then
   popd
 fi
 
-if [[ "${whoami}" == "s3" ]]; then
-  # TODO: Mainnet nodedb update with nodedb.sh
-  echo "Mainnet nodedb update not implemented"
+if [[ "${update}" == true ]]; then
+  echo "-- Updating nodedb for ${whoami} --"
+  if [[ "${whoami}" == "s3" ]]; then
+    # TODO: Mainnet nodedb update with nodedb.sh
+    echo "Mainnet nodedb update not implemented"
+  else
+    # Run testnet update
+    pushd ${nodedb}
+    python3 -u testnet_nodedb.py --profile ${whoami} --network ${target}
+    status=$?
+    popd
+  fi
+
+  if [[ "${status}" == "100" ]]; then
+    echo "!! Failures detected sorting IP lists. Exiting... !!"
+    exit 1
+  fi
 else
-  # Run testnet update
-  pushd ${nodedb}
-  python3 -u testnet_nodedb.py --profile ${whoami} --network ${target}
-  popd
+  echo "-- Skipping nodedb update --"
 fi
 
 # Push to master on nodedb
-if [[ "${upload}" == true ]]; then
+if [[ "${push}" == true ]]; then
+  if [[ "${yes}" == true ]]; then
+    echo "-- Pushing nodedb update --"
+  else
+    read -rp "Push nodedb update? [Y/N]" reply
+    echo
+    if [[ "${reply}" != "Y" ]]; then
+      exit
+    fi
+  fi
   pushd ${nodedb}
   git add ${target}/*
   git commit -m "[update_watchdog] Updating ip lists for ${target}"
   git push -f
   popd
-  # Restart Watchdog
-  if [[ ${restart} == true ]]; then
-    ssh watchdog "sudo sh -c \"cd ${watchdog} && git reset --hard origin/master && git clean -xdf && git pull\""
-    ssh watchdog "sudo systemctl restart harmony-watchdogd@${target}.service && echo \"Restarting harmony-watchdogd@${chain}.service\""
-  fi
+fi
+
+# Restart Watchdog
+if [[ "${restart}" == true ]]; then
+  echo "-- Restarting Watchdog for ${target} --"
+  ssh watchdog "sudo sh -c \"cd ${watchdog} && git reset --hard origin/master && git clean -xdf && git pull\""
+  ssh watchdog "sudo systemctl restart harmony-watchdogd@${target}.service && echo \"Restarting harmony-watchdogd@${chain}.service\""
 fi
