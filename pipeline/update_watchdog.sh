@@ -57,7 +57,7 @@ fi
 if [[ ${upload} == true ]]; then
   pushd ${nodedb}
   git add ${target}/*
-  git commit -m "[db] Update ip lists for ${target}"
+  git commit -m "[update_watchdog] Updating ip lists for ${target}"
   git push -f
   popd
   # Restart Watchdog
