@@ -27,6 +27,7 @@ default_folder="${WHOAMI}"
 default_public_rpc=true
 default_multi_key=false
 default_clean_dht=false
+default_static_build=true
 
 print_usage() {
 	cat <<- ENDEND
@@ -55,6 +56,8 @@ print_usage() {
 		-P          disable public RPC
 		-M          support multi-key
                   (default: ${default_multi_key})
+		-i          disable static build binary
+                  (default: ${default_static_build})
 		-y          say yes to restart confirmation     
 		-D          clean .dht directory
                   (default: ${default_clean_dht})
@@ -65,13 +68,15 @@ print_usage() {
 	ENDEND
 }
 
-unset -v timeout step_retries cycle_retries upgrade bucket folder force_yes clean_dht
+unset -v timeout step_retries cycle_retries upgrade bucket folder force_yes clean_dht \
+static_build
+
 upgrade=false
 force_yes=false
 clean_dht=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}t:r:R:UB:F:PMyD" opt
+while getopts ":${common_getopts_spec}t:r:R:UB:F:PMyDi" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -87,6 +92,7 @@ do
 	M) multi_key=true;;
 	y) force_yes=true;;
 	D) clean_dht=true;;
+	i) static_build=false;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -101,6 +107,7 @@ default_common_opts
 : ${public_rpc="${default_public_rpc}"}
 : ${multi_key="${default_multi_key}"}
 : ${clean_dbh="${default_clean_dht}"}
+: ${static_build="${default_static_build}"}
 
 node_ssh() {
 	local ip=$1
@@ -347,6 +354,10 @@ get_logfile() {
 
 unset -v s3_folder
 s3_folder="s3://${bucket}/${folder}"
+if ${static_build}
+then
+	s3_folder+="/static"
+fi
 rn_debug "s3_folder=$(shell_quote "${s3_folder}")"
 
 fetch_binaries() {
@@ -591,4 +602,4 @@ done
 rn_info "finished"
 exit 0
 
-# vim: set noexpandtab:
+# vim: set noexpandtab:ts=3
