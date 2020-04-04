@@ -385,8 +385,8 @@ if __name__ == "__main__":
         balance_log = fund_log['funded-accounts'][dat['address']]
         fund_log_lock.release()
         for bal in get_balance_from_node_ip(dat['address'], endpoints):
-            shard, balance = str(bal["shard"]), float(bal["amount"])
-            balance_log[shard] = max(balance_log[shard], balance)
+            shard, balance = bal["shard"], float(bal["amount"])
+            balance_log[shard] = max(balance_log[str(shard)], balance)
             if shard in args.shards and balance < float(dat["amount"]):
                 print(f"{util.Typgpy.FAIL}{dat['address']} did not get funded on shard {shard}{util.Typgpy.ENDC}")
                 failed = True
