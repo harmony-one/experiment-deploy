@@ -163,7 +163,7 @@ resource "aws_spot_instance_request" "foundation-node" {
       "sudo systemctl start node_exporter",
       "echo ${var.blskey_index} > index.txt",
       "echo ${var.default_shard} > shard.txt",
-      "mkdir harmony_db_0; if [ ${var.default_shard} -ne 0 ]; then mkdir harmony_db_${var.default_shard}; fi",
+      "mkdir -p harmony_db_0; harmony_db_${var.default_shard}",
     ]
     connection {
       host        = aws_spot_instance_request.foundation-node.public_ip
