@@ -7,6 +7,7 @@
 # ssh watchdog is correctly configured
 
 nodedb=$(realpath ../../nodedb)
+logs=$(realpath logs)
 watchdog="/home/jl/watchdog/nodedb"
 
 help() {
@@ -14,32 +15,42 @@ help() {
   echo "Usage: ${0} -w [whoami] -t [target chain] -u -p -r"
   echo -e "\t-w WHOAMI (default = OS)"
   echo -e "\t-t Target directory in nodedb (default = ostn)"
-  echo -e "\t-u Update the nodedb repo (default = false)"
+  echo -e "\t-u Update the nodedb repo, if update fails, will try to copy files (default = false)"
+  echo -e "\t-c Copy shard?.txt files from /logs to nodedb (default = false)"
   echo -e "\t-p Push the nodedb update (default = false)"
   echo -e "\t-r Restart Watchdog (default = false)"
   echo -e "\t-y Force yes (default = false)"
   exit
 }
 
-unset OPTARG whoami target update restart push yes
+unset OPTARG whoami target update copy restart push yes
 whoami="OS"
 target="ostn"
 update=false
+copy=false
 push=false
 restart=false
 yes=false
-while getopts "t:w:upry" opt
+while getopts "t:w:ucpry" opt
 do
   case "${opt}" in
     w ) whoami="${OPTARG}" ;;
     t ) target="${OPTARG}" ;;
-    u ) update=true;;
+    u ) update=true ;;
+    c ) copy=true ;;
     p ) push=true ;;
     r ) restart=true ;;
     y ) yes=true ;;
     * ) help ;;
   esac
 done
+
+# Only one of update or copy is true
+if [[ "${copy}" == true ]] && [[ "${update}" == true ]]; then
+  echo "?? [Warning] Cannot use -c & -u at the same time ??"
+  echo "?? [Warning] Running using -u ??"
+  copy=false
+fi
 
 # Update repo & reset
 if [[ "${push}" == true ]]; then
@@ -64,16 +75,24 @@ if [[ "${update}" == true ]]; then
   fi
 
   if [[ "${status}" == "50" ]]; then
-    echo "!! Target directory must exist in nodedb repo !!"
-    exit 1
+    echo "!! [ERROR] Target directory must exist in nodedb repo !!"
+    push=false
+    copy=true
   fi
 
   if [[ "${status}" == "100" ]]; then
-    echo "!! Failures detected sorting IP lists. Exiting... !!"
-    exit 1
+    echo "!! [ERROR] Failures detected sorting IP lists !!"
+    push=false
+    copy=true
   fi
 else
   echo "-- Skipping nodedb update --"
+fi
+
+if [[ "${copy}" == true ]]; then
+  echo "-- Copying files to nodedb for ${whoami} --"
+  # Assuming deploy log directory link is lowercase of WHOAMI
+  cp ${logs}/${whoami,,}/shard?.txt ${nodedb}/${target} -v
 fi
 
 # Push to master on nodedb
@@ -96,7 +115,11 @@ fi
 
 # Restart Watchdog
 if [[ "${restart}" == true ]]; then
-  echo "-- Restarting Watchdog for ${target} --"
+  if [[ "${push}" == false ]]; then
+    echo "-- Restarting watchdog for ${target} with existing nodedb --"
+  else
+    echo "-- Restarting Watchdog for ${target} with updated IPs --"
+  fi
   ssh watchdog "sudo sh -c \"cd ${watchdog} && git reset --hard origin/master && git clean -xdf && git pull\""
-  ssh watchdog "sudo systemctl restart harmony-watchdogd@${target}.service && echo \"Restarting harmony-watchdogd@${chain}.service\""
+  ssh watchdog "sudo systemctl restart harmony-watchdogd@${target}.service"
 fi
