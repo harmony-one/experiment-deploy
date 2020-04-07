@@ -70,14 +70,14 @@
     "db": false
   },
   "dashboard": {
-    "name": "1.harmony.one",
+    "name": "staking.harmony.one",
     "port": 3000,
-    "reset": "false"
+    "reset": "true"
   },
   "explorer": {
-    "name": "explorer.harmony.one",
+    "name": "explorer.stn.hmny.io",
     "port": 4444,
-    "reset": "false"
+    "reset": "true"
   },
   "explorer2": {
     "name": "34.220.94.30",
@@ -107,6 +107,18 @@
      "enable": true,
      "keys_per_node": 3,
      "blskey_folder": ".hmy/blskeys"
+  },
+  "sentry1": {
+     "enable" true,
+     "ip": "52.11.85.154",
+     "user": "ec2-user",
+     "shard": 0
+  },
+  "sentry2": {
+     "enable" true,
+     "ip": "54.202.197.141",
+     "user": "ec2-user",
+     "shard": 1
   },
   "genesis": "genesis.txt",
   "libp2p": true

@@ -80,6 +80,10 @@ function read_profile
       wallet.enable
       benchmark.bls bls.pass bls.bucket bls.folder bls.keyfile
       multikey.enable multikey.keys_per_node multikey.blskey_folder
+      sentry1.ip sentry1.user sentry1.shard sentry1.enable
+      sentry2.ip sentry2.user sentry2.shard sentry2.enable
+      sentry3.ip sentry3.user sentry3.shard sentry3.enable
+      sentry4.ip sentry4.user sentry4.shard sentry4.enable
    )
    
    managednodekey=.managednodes.nodes
