@@ -17,7 +17,7 @@ esac
 
 unset -v default_timeout default_step_retries default_cycle_retries \
 	default_bucket default_folder default_public_rpc default_multi_key \
-	default_clean_dht
+	default_clean_dht default_clean_db
 
 default_timeout=450
 default_step_retries=2
@@ -28,6 +28,7 @@ default_public_rpc=true
 default_multi_key=false
 default_clean_dht=false
 default_static_build=true
+default_clean_db=false
 
 print_usage() {
 	cat <<- ENDEND
@@ -61,6 +62,8 @@ print_usage() {
 		-y          say yes to restart confirmation     
 		-D          clean .dht directory
                   (default: ${default_clean_dht})
+		-X				clean up harmony db, harmony.err, and tmp_log/*.*
+						(default: ${default_clean_db})
 
 		arguments:
 		ip		the IP address to upgrade
@@ -69,14 +72,14 @@ print_usage() {
 }
 
 unset -v timeout step_retries cycle_retries upgrade bucket folder force_yes clean_dht \
-static_build
+static_build clean_db
 
 upgrade=false
 force_yes=false
 clean_dht=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}t:r:R:UB:F:PMyDi" opt
+while getopts ":${common_getopts_spec}t:r:R:UB:F:PMyDiX" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -93,6 +96,7 @@ do
 	y) force_yes=true;;
 	D) clean_dht=true;;
 	i) static_build=false;;
+	X) clean_db=true;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -106,8 +110,9 @@ default_common_opts
 : ${folder="${default_folder}"}
 : ${public_rpc="${default_public_rpc}"}
 : ${multi_key="${default_multi_key}"}
-: ${clean_dbh="${default_clean_dht}"}
+: ${clean_dht="${default_clean_dht}"}
 : ${static_build="${default_static_build}"}
+: ${clean_db="${default_clean_db}"}
 
 node_ssh() {
 	local ip=$1
@@ -465,6 +470,13 @@ clean_dht() {
    '
 }
 
+clean_db() {
+   rn_info "clean harmony_db"
+   node_ssh "${ip}" '
+      sudo rm -rf harmony_db_* harmony.err /home/tmp_log/*/*
+   '
+}
+
 unset -v logsize zerologsize
 _get_logfile_size() {
 	rn_info "getting logfile size"
@@ -584,6 +596,10 @@ do
 		if ${clean_dht}
 		then
 			run_with_retries clean_dht || break
+		fi
+		if ${clean_db}
+		then
+			run_with_retries clean_db || break
 		fi
 		run_with_retries start_harmony || break
 		wait_for_consensus || break
