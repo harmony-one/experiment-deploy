@@ -62,7 +62,7 @@ print_usage() {
 		-y          say yes to restart confirmation     
 		-D          clean .dht directory
                   (default: ${default_clean_dht})
-		-X				clean up harmony db, harmony.err, and tmp_log/*.*
+		-X				clean up harmony db, harmony.err
 						(default: ${default_clean_db})
 
 		arguments:
@@ -477,7 +477,7 @@ clean_dht() {
 clean_db() {
    rn_info "clean harmony_db"
    node_ssh "${ip}" '
-      sudo rm -rf harmony_db_* harmony.err /home/tmp_log/*/*
+      sudo rm -rf harmony_db_* harmony.err
    '
 }
 
