@@ -1,5 +1,5 @@
 {
-  "description": "aws 160 nodes, 4 shards",
+  "description": "aws 20 nodes, 2 shards",
   "client": {
     "num_vm": 0,
     "type": "m5a.large",
@@ -7,14 +7,14 @@
   },
   "leader": {
     "num_vm": 1,
-    "type": "m5a.xlarge",
+    "type": "c5.large",
     "regions": "sfo,pdx",
     "protection": false,
-    "root": 15
+    "root": 10
   },
   "explorer_node": {
     "num_vm": 1,
-    "type": "m5a.xlarge",
+    "type": "c5.large",
     "regions": "sfo,pdx",
     "root": 25,
     "protection": false
@@ -90,12 +90,12 @@
      "port": 8000
   },
   "parallel": 50,
-  "userdata": "userdata-soldier-http.sh",
+  "userdata": "userdata-soldier-http-static.sh",
   "flow": {
      "wait_for_launch": 60,
      "reserved_account": "",
      "rpczone": "stn",
-     "rpcnode": 10
+     "rpcnode": 3
   },
   "bls": {
      "pass": "blsnopass.txt",
