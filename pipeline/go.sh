@@ -608,7 +608,7 @@ function do_restart_network
       if [ ! -f $logdir/shard${shard}.txt ]; then
          echo "ERROR: can't find $logdir/shard${shard}.txt"
       else
-         cat $logdir/shard${shard}.txt | xargs -P ${configs[parallel]} -I{} bash -c "./restart-node.sh -d $logdir -p $PROFILE $restart_opt {}"
+         cat $logdir/shard${shard}.txt | xargs -P ${configs[parallel]} -I{} bash -c "./restart_node.sh -d $logdir -p $PROFILE $restart_opt {}"
       fi
    else
       # run on all shards
@@ -616,7 +616,7 @@ function do_restart_network
          if [ ! -f $logdir/shard${shard}.txt ]; then
             echo "ERROR: can't find $logdir/shard${shard}.txt"
          else
-            cat $logdir/shard${shard}.txt | xargs -P ${configs[parallel]} -I{} bash -c "./restart-node.sh -d $logdir -p $PROFILE $restart_opt {}"
+            cat $logdir/shard${shard}.txt | xargs -P ${configs[parallel]} -I{} bash -c "./restart_node.sh -d $logdir -p $PROFILE $restart_opt {}"
          fi
       done
    fi
