@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
 # Assumptions:
-# experiment-deploy & nodedb repos are set up in the path
-# python3 installed & requests package is installed
+# run from the pipeline directory
+# experiment-deploy & nodedb repos are set up at the same level
 # github credentials for nodedb exist for current user
 # ssh watchdog is correctly configured
 
+base=$(basename `realpath .`)
 nodedb=$(realpath ../../nodedb)
 logs=$(realpath logs)
 watchdog="/home/jl/watchdog/nodedb"
@@ -45,6 +46,17 @@ do
   esac
 done
 
+# Sanity check all the assumptions
+if [[ "${base}" != "pipeline" ]]; then
+  echo "!! [ERROR] Only run this script from experiment-deploy/pipeline !!"
+  exit
+fi
+
+if [[ ! -d ${nodedb} ]]; then
+  echo "!! [ERROR] Nodedb path does not exist !!"
+  exit
+fi
+
 # Only one of update or copy is true
 if [[ "${copy}" == true ]] && [[ "${update}" == true ]]; then
   echo "?? [Warning] Cannot use -c & -u at the same time ??"
@@ -56,8 +68,13 @@ fi
 if [[ "${push}" == true ]]; then
   pushd ${nodedb}
   git reset --hard origin/master
-  git clean -xdf
-  git pull
+  if git remote -v | grep -q nodedb; then
+    git clean -xdf
+    git pull
+  else
+    echo "!! [ERROR] Not in nodedb directory. !!"
+    popd
+    exit
   popd
 fi
 
