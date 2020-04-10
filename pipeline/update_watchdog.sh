@@ -75,6 +75,7 @@ if [[ "${push}" == true ]]; then
     echo "!! [ERROR] Not in nodedb directory. !!"
     popd
     exit
+  fi
   popd
 fi
 
