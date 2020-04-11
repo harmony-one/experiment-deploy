@@ -231,8 +231,36 @@ function do_reset
    restart_sentry
 }
 
+function check_env
+{
+   # check firebase installation
+   if ! which firebase > /dev/null; then
+      msg "please install firebase on your host"
+      return false
+   fi
+
+   # check firebase project access: staking explorer
+   if ! firebase projects:list | grep staking-explorer; then
+      msg "you don't have access to firebase staking dashboard"
+      msg "try 'firebase login --no-localhost'"
+      return false
+   fi
+
+   # check firebase project access: harmony explorer
+   if ! firebase projects:list | grep harmony-explorer; then
+      msg "you don't have access to firebase harmony explorer"
+      msg "try 'firebase login --no-localhost'"
+      return false
+   fi
+
+   return true
+}
+
 ######### main ###########
 read_profile $BENCHMARK_FILE
+if ! check_env; then
+   err 90 "ERR: environment setup checking failed"
+fi
 
 case "${outdir+set}" in
 '')
