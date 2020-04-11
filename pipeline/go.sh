@@ -31,7 +31,6 @@ This script automates the benchmark test based on profile.
                      supported profiles (${PROFILES[@]})
    -v                verbose output
    -k                keep all the instances, skip deinit (default: $KEEP)
-   -t                do not run txgen (default: $TXGEN), overriding profile configuration
    -w                run wallet test (default: $WALLET)
    -U                upgrade the node during restart (default: $UPGRADE)
 
@@ -289,31 +288,11 @@ function do_run
 
    ./run_benchmark.sh -n ${configs[parallel]} ${RUN_OPTS} "${NODE_OPTS[@]}" -p $PROFILE -R init
 
-# An example on how to call wallet on each node to generate transactions
-#   if [ "${configs[wallet.enable]}" == "true" ]; then
-#      ./run_benchmark.sh -n ${configs[parallel]} -p $PROFILE wallet
-#   fi
-
    [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
    TS=$(cat $SESSION_FILE | $JQ .sessionID)
 
    # save the bootnode multiaddress
    [ -e bootnode-ma.txt ] && mv -f bootnode*-ma.txt logs/$TS
-
-   if [[ "$TXGEN" == "true" && "${configs[txgen.enable]}" == "true" ]]; then
-      if [ ${configs[client.num_vm]} -gt 0 ]; then
-         echo "running txgen on $(cat client.config.txt)"
-         ./run_benchmark.sh -n 1 ${RUN_OPTS} -p $PROFILE -f client.config.txt -c init
-         cp client.config.txt logs/$TS
-         rm -f client.config.txt
-      fi
-
-      echo waiting for txgen benchmarking ${configs[benchmark.duration]} ...
-      sleep ${configs[benchmark.duration]}
-   fi
-
-#  no need to kill as we will terminate the instances
-#   ./run_benchmark.sh -p $PROFILE kill &
 
    expense run
 }
@@ -661,11 +640,10 @@ VERBOSE=
 THEPWD=$(pwd)
 KEEP=false
 TAG=${WHOAMI}
-TXGEN=true
 WALLET=false
 UPGRADE=false
 
-while getopts "hp:vktwU" option; do
+while getopts "hp:vkwU" option; do
    case $option in
       h) usage ;;
       p)
@@ -676,7 +654,6 @@ while getopts "hp:vktwU" option; do
          ;;
       v) VERBOSE=1 ;;
       k) KEEP=true ;;
-      t) TXGEN=false ;;
       w) WALLET=true ;;
       U) UPGRADE=true ;;
    esac
