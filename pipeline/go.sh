@@ -31,7 +31,6 @@ This script automates the benchmark test based on profile.
                      supported profiles (${PROFILES[@]})
    -v                verbose output
    -k                keep all the instances, skip deinit (default: $KEEP)
-   -w                run wallet test (default: $WALLET)
    -U                upgrade the node during restart (default: $UPGRADE)
 
 [ACTIONS]
@@ -40,8 +39,8 @@ This script automates the benchmark test based on profile.
    log               download logs
    deinit            sync logs & terminate instances
    reset             reset dashboard and explorer
+   dns               re-run dns setup
    bootnode          launch bootnode(s) only
-   wallet            generate wallet.ini file
    reinit <ip>       re-run init command on hosts (list of ips)
    replace <ip>      start a new node to replace existing nodes with ip (list of ips)
    multikey <ip>     start multi-bls-key migration
@@ -207,8 +206,8 @@ function do_dns_setup
 # execute the r53 command to set dns
    ${R53}
 
-   echo wait for dns records update ... 120s
-   sleep 120
+   echo wait for dns records update ... 60s
+   sleep 60
 }
 
 function do_launch_bootnode
@@ -411,60 +410,6 @@ EOT
    fi
 }
 
-function do_wallet_ini
-{
-   SECTION=default
-   declare -A RPCS
-
-   local NUM_RPC=5
-   local RPC_PORT=14555
-
-   [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
-   TS=$(cat $SESSION_FILE | $JQ .sessionID)
-
-   INI=${THEPWD}/logs/$TS/wallet.ini
-
-   echo "[$SECTION]" > $INI
-   for bnf in $(ls ${THEPWD}/logs/$TS/bootnode*-ma.txt); do
-      bn=$(cat $bnf)
-      echo "bootnode = $bn" >> $INI
-   done
-   local shards=$(wc -l ${THEPWD}/logs/$TS/all-leaders.txt | cut -f1 -d' ')
-   echo "shards = $shards" >> $INI
-   local n=1
-
-   echo >> $INI
-   echo "[$SECTION.shard0.rpc]" >> $INI
-   leader=$(grep leader ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' | head -n 1)
-   echo "rpc = $leader:$RPC_PORT" >> $INI
-   RPCS[0]="$leader"
-   # randomly choose some validators
-   # TODO: choose the running nodes
-   grep -l node/beacon ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log | awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' > ${THEPWD}/logs/$TS/validator/shard0.txt
-   for ip in $(sort -R ${THEPWD}/logs/$TS/validator/shard0.txt | head -n $NUM_RPC); do
-      echo "rpc = $ip:$RPC_PORT" >> $INI
-      RPCS[0]+=" $ip"
-   done
-
-   while [ $n -lt $shards ]; do
-      echo >> $INI
-      echo "[$SECTION.shard$n.rpc]" >> $INI
-      t=$(( n + 1 ))
-      leader=$(grep leader ${THEPWD}/logs/$TS/distribution_config.txt | cut -f1 -d' ' | head -n $t | tail -n 1)
-      echo "rpc = $leader:$RPC_PORT" >> $INI
-      RPCS[$n]="$leader"
-      grep -l node/shard/$n ${THEPWD}/logs/$TS/validator/tmp_log/log-$TS/validator-*.log | awk -F/ '{ print $NF }' | awk -F- '{ print $2 }' > ${THEPWD}/logs/$TS/validator/shard$n.txt
-      # randomly choose some validators
-      # TODO: choose the running nodes
-      for ip in $(sort -R ${THEPWD}/logs/$TS/validator/shard$n.txt | head -n $NUM_RPC); do
-         echo "rpc = $ip:$RPC_PORT" >> $INI
-         RPCS[$n]+=" $ip"
-      done
-      (( n++ ))
-   done
-   echo Please use $INI for your wallet to access the blockchain!
-}
-
 reinit_ip() {
    local ip pfx f ok
    ip="${1}"
@@ -620,7 +565,6 @@ function do_all
    if [ "$KEEP" == "false" ]; then
       do_deinit
    fi
-#   do_wallet_ini
    echo all logs are uploaded to
    echo $S3URL
 }
@@ -640,10 +584,9 @@ VERBOSE=
 THEPWD=$(pwd)
 KEEP=false
 TAG=${WHOAMI}
-WALLET=false
 UPGRADE=false
 
-while getopts "hp:vkwU" option; do
+while getopts "hp:vkU" option; do
    case $option in
       h) usage ;;
       p)
@@ -654,7 +597,6 @@ while getopts "hp:vkwU" option; do
          ;;
       v) VERBOSE=1 ;;
       k) KEEP=true ;;
-      w) WALLET=true ;;
       U) UPGRADE=true ;;
    esac
 done
@@ -705,7 +647,7 @@ case $ACTION in
    reset)
          do_reset_explorer
          do_reset_explorer explorer2 ;;
-   wallet)
+   dns)
          do_dns_setup ;;
    reinit)
          do_reinit $* ;;
