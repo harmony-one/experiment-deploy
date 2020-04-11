@@ -69,7 +69,6 @@ function read_profile
       benchmark.commit_delay benchmark.log_conn benchmark.network_type
       explorer.name explorer.port explorer.reset
       explorer2.name explorer2.port explorer2.reset
-      txgen.ip txgen.port txgen.enable
       bootnode.port bootnode.server bootnode.key bootnode.enable bootnode.p2pkey
       bootnode.log_conn
       bootnode1.port bootnode1.server bootnode1.key bootnode1.enable
