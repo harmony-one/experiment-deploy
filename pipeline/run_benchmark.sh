@@ -232,7 +232,7 @@ EOT
                      bls=${blskey[$k]}
                      echo MK: k =\> $k, bls =\> $bls
                      echo $k,$bls,$ip >> $mk_file
-                     ./node_ssh.sh -d $LOGDIR ec2-user@$ip "mkdir -p ${configs[multikey.blskey_folder]} && aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls ${configs[multikey.blskey_folder]}/$bls"
+                     ./node_ssh.sh -d $LOGDIR ec2-user@$ip "mkdir -p ${configs[multikey.blskey_folder]} && aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls ${configs[multikey.blskey_folder]}/$bls" &
                   done
                fi
             fi
@@ -244,6 +244,7 @@ EOT
       echo $n =\> $CMD
       echo "$TIMEOUT -s SIGINT ${CURL_TIMEOUT} $CMD > $LOGDIR/$cmd/$cmd.$ip.log" >> $cmd_file
    done
+   wait
 
    if [ ${configs[explorer_node.num_vm]} -gt 0 ]; then
 # send commands to explorers at second
@@ -300,7 +301,7 @@ EOT
                         bls=${blskey[$k]}
                         echo MK: k =\> $k, bls =\> $bls
                         echo $k,$bls,$ip >> $mk_file
-                        ./node_ssh.sh -d $LOGDIR ec2-user@$ip "mkdir -p ${configs[multikey.blskey_folder]} && aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls ${configs[multikey.blskey_folder]}/$bls"
+                        ./node_ssh.sh -d $LOGDIR ec2-user@$ip "mkdir -p ${configs[multikey.blskey_folder]} && aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls ${configs[multikey.blskey_folder]}/$bls" &
                      done
                   fi
                fi
@@ -317,6 +318,7 @@ EOT
       echo "wait" >> $cmd_file
       (( group++ ))
    done
+   wait
 
    # run the curl commands to init the harmony nodes
    # we only do it after the blskey file downloaded to each node
