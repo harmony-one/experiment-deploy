@@ -359,11 +359,8 @@ get_logfile() {
 
 unset -v s3_folder
 s3_folder="s3://${bucket}/${folder}"
-if ${static_build}
-then
-	s3_folder+="/static"
-fi
 rn_debug "s3_folder=$(shell_quote "${s3_folder}")"
+dest_folder="staging"
 
 fetch_binaries() {
 	case "${node_type}" in
@@ -376,11 +373,18 @@ fetch_binaries() {
 	*)
 		rn_info "fetching upgrade binaries"
 		node_ssh "${ip}" "
-			rm -f staging/*
+			rm -rf ${dest_folder}/*
 		"
-		node_ssh "${ip}" "
-			aws s3 sync $(shell_quote "${s3_folder}") staging
-		"
+		# only sync harmony static binary
+		if ${static_build}; then
+			node_ssh "${ip}" "
+				aws s3 cp $(shell_quote "${s3_folder}/static/harmony") ${dest_folder}
+			"
+		else
+			node_ssh "${ip}" "
+				aws s3 sync $(shell_quote "${s3_folder}") ${dest_folder}
+			"
+		fi
 		;;
 	esac
 }
