@@ -253,6 +253,17 @@ function check_env
       return false
    fi
 
+   if ! which gcloud; then
+      msg "gcloud command is not found"
+      msg "install from https://cloud.google.com/sdk/gcloud/"
+      return false
+   fi
+   if ! gcloud auth list | grep ACTIVE 2>/dev/null; then
+      msg "gcloud account is not configured"
+      msg "please run 'gcloud init' and 'gcloud auth login'"
+      return false
+   fi
+
    return true
 }
 
