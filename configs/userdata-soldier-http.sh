@@ -183,7 +183,7 @@ if [ "$IS_AWS" != "200" ]; then
 # NOT AWS, Assuming Azure
    PUB_IP=$(curl -H Metadata:true "http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-04-02&format=text")
 else
-   yum -y install jq
+   yum -y install jq nc
    PUB_IP=$(curl -sL http://169.254.169.254/latest/meta-data/public-ipv4)
    REGION=$(curl -sL http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
    mkdir -p ~/.aws
