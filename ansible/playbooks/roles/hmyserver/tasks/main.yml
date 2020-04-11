@@ -1,0 +1,23 @@
+---
+- name: install required packages
+  package:
+    name: '{{ item }}'
+    state: present
+  become: true
+  with_items: '{{ PACKAGES }}'
+
+- name: install the_silver_searcher
+  become: true
+  copy:
+    src: ag
+    dest: /usr/bin/ag
+    mode: '0755'
+
+- name: install firebase
+  get_url:
+    url: 'https://firebase.tools/bin/linux/latest'
+    dest: /usr/bin/firebase
+    mode: '0755'
+
+
+# vim: set expandtab:ts=2
