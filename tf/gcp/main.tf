@@ -92,6 +92,17 @@ resource "google_compute_instance" "fn" {
   }
 
   provisioner "file" {
+    source      = "files/node_exporter.service"
+    destination = "/home/gce-user/node_exporter.service"
+    connection {
+      host  = "${google_compute_instance.fn.network_interface.0.access_config.0.nat_ip}"
+      type  = "ssh"
+      user  = "gce-user"
+      agent = true
+    }
+  }
+
+  provisioner "file" {
     source      = "files/rclone.conf"
     destination = "/home/gce-user/rclone.conf"
     connection {
@@ -123,8 +134,16 @@ resource "google_compute_instance" "fn" {
       "mv -f /home/gce-user/.hmy/*.key /home/gce-user/.hmy/blskeys",
       "/home/gce-user/node.sh -I -d && cp -f /home/gce-user/staging/harmony /home/gce-user",
       "sudo cp -f harmony.service /lib/systemd/system/harmony.service",
-      "sudo systemctl enable harmony.service",
+      "curl -LO https://github.com/prometheus/node_exporter/releases/download/v0.18.1/node_exporter-0.18.1.linux-amd64.tar.gz",
+      "tar xfz node_exporter-0.18.1.linux-amd64.tar.gz",
+      "sudo mv -f node_exporter-0.18.1.linux-amd64/node_exporter /usr/local/bin",
+      "sudo useradd -rs /bin/false node_exporter",
+      "rm -rf node_exporter-0.18.1.linux-amd64.tar.gz node_exporter-0.18.1.linux-amd64",
+      "sudo cp -f node_exporter.service /etc/systemd/system/node_exporter.service",
       "sudo systemctl daemon-reload",
+      "sudo systemctl enable harmony.service",
+      "sudo systemctl enable node_exporter",
+      "sudo systemctl start node_exporter",
       "crontab crontab",
       "curl https://rclone.org/install.sh | sudo bash",
       "echo ${var.shard} > shard.txt",
