@@ -8,14 +8,14 @@
   "leader": {
     "num_vm": 1,
     "type": "t3.small",
-    "regions": "iad,pdx",
+    "regions": "iad,pdx,cmh",
     "protection": false,
     "root": 10
   },
   "explorer_node": {
     "num_vm": 1,
     "type": "t3.small",
-    "regions": "iad,pdx",
+    "regions": "iad,pdx,cmh",
     "root": 10,
     "protection": false
   },
@@ -48,13 +48,13 @@
     ]
   },
   "benchmark": {
-    "shards": 2,
+    "shards": 3,
     "duration": 120,
     "dashboard": false,
-    "crosstx": 30,
+    "crosstx": 0,
     "attacked_mode": 0,
-    "peer_per_shard": 30,
-    "minpeer": 6,
+    "peer_per_shard": 10,
+    "minpeer": 3,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
@@ -105,7 +105,7 @@
   },
   "multikey": {
      "enable": true,
-     "keys_per_node": 3,
+     "keys_per_node": 2,
      "blskey_folder": ".hmy/blskeys"
   },
   "genesis": "genesis.txt",
