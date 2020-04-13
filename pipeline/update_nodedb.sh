@@ -48,19 +48,24 @@ done
 
 # Sanity check all the assumptions
 if [[ "${base}" != "pipeline" ]]; then
-  echo "!! [ERROR] Only run this script from experiment-deploy/pipeline !!"
+  echo "[ERROR] Only run this script from experiment-deploy/pipeline"
   exit
 fi
 
 if [[ ! -d ${nodedb} ]]; then
-  echo "!! [ERROR] Nodedb path does not exist !!"
+  echo "[ERROR] Nodedb path does not exist"
+  exit
+fi
+
+if [[ ! -d ${nodedb}/${target} ]]; then
+  echo "[ERROR] Target directory must exist in Nodedb"
   exit
 fi
 
 # Only one of update or copy is true
 if [[ "${copy}" == true ]] && [[ "${update}" == true ]]; then
-  echo "?? [Warning] Cannot use -c & -u at the same time ??"
-  echo "?? [Warning] Running using -u ??"
+  echo "[WARNING] Cannot use -c & -u at the same time"
+  echo "[WARNING] Running using -u"
   copy=false
 fi
 
@@ -72,7 +77,7 @@ if [[ "${push}" == true ]]; then
     git clean -xdf
     git pull
   else
-    echo "!! [ERROR] Not in nodedb directory. !!"
+    echo "[ERROR] Not in nodedb directory"
     popd
     exit
   fi
@@ -83,7 +88,7 @@ if [[ "${update}" == true ]]; then
   echo "-- Updating nodedb for ${whoami} --"
   if [[ "${whoami}" == "s3" ]]; then
     # TODO: Mainnet nodedb update with nodedb.sh
-    echo "Mainnet nodedb update not implemented"
+    echo "[ERROR] Mainnet nodedb update not implemented"
   else
     # Run testnet update
     pushd ${nodedb}
@@ -93,13 +98,13 @@ if [[ "${update}" == true ]]; then
   fi
 
   if [[ "${status}" == "50" ]]; then
-    echo "!! [ERROR] Target directory must exist in nodedb repo !!"
+    echo "[ERROR] Target directory must exist in nodedb repo"
     push=false
     copy=true
   fi
 
   if [[ "${status}" == "100" ]]; then
-    echo "!! [ERROR] Failures detected sorting IP lists !!"
+    echo "[ERROR] Failures detected sorting IP lists"
     push=false
     copy=true
   fi
@@ -109,35 +114,36 @@ fi
 
 if [[ "${copy}" == true ]]; then
   echo "-- Copying files to nodedb for ${whoami} --"
+  if [[ ! -d ${logs}/${whoami,,} ]]; then
+    echo "[ERROR] Log path does not exist"
+    exit
+  fi
   # Assuming deploy log directory link is lowercase of WHOAMI
-  cp ${logs}/${whoami,,}/shard?.txt ${nodedb}/${target} -v
+  cp ${logs}/${whoami,,}/shard?.txt ${nodedb}/${target}
+  cp -r ${logs}/${whoami,,}/init ${nodedb}/${target}
 fi
 
 # Push to master on nodedb
 if [[ "${push}" == true ]]; then
+  pushd ${nodedb}
+  git add ${target}/*
   if [[ "${yes}" == true ]]; then
     echo "-- Pushing nodedb update --"
   else
+    git status
     read -rp "Push nodedb update? [Y/N]" reply
     echo
     if [[ "${reply}" != "Y" ]]; then
       exit
+      popd
     fi
   fi
-  pushd ${nodedb}
-  git add ${target}/*
-  git commit -m "[update_watchdog] Updating ip lists for ${target}"
+  git commit -m "[update_nodedb] Updating ip lists & init files for ${target}"
   git push -f
   popd
 fi
 
 # Restart Watchdog
 if [[ "${restart}" == true ]]; then
-  if [[ "${push}" == false ]]; then
-    echo "-- Restarting watchdog for ${target} with existing nodedb --"
-  else
-    echo "-- Restarting Watchdog for ${target} with updated IPs --"
-  fi
-  ssh watchdog "sudo sh -c \"cd ${watchdog} && git reset --hard origin/master && git clean -xdf && git pull\""
-  ssh watchdog "sudo systemctl restart harmony-watchdogd@${target}.service"
+  ./restart_watchdog.sh -a restart -s ${target} -u
 fi
