@@ -42,7 +42,6 @@ This script automates the benchmark test based on profile.
    dns               re-run dns setup
    bootnode          launch bootnode(s) only
    reinit <ip>       re-run init command on hosts (list of ips)
-   replace <ip>      start a new node to replace existing nodes with ip (list of ips)
    multikey <ip>     start multi-bls-key migration
    restart <shard>   restart the shard or all if no <shard> is specified (default: all)
    all               do everything (default)
@@ -448,63 +447,6 @@ function do_reinit
    fi
 }
 
-launch_instance() {
-   local ip region launch_opt
-   ip="${1}"
-   region=${REGIONS[$RANDOM % ${#REGIONS[@]}]}
-
-   logging launching one new node in $region
-
-   ../bin/instance \
-   -config_dir $CONFIG_DIR \
-   -instance_count 1 \
-   -instance_type m5.large \
-   -launch_region ${region} \
-   -ip_file raw_ip-newnode-${ip}.txt \
-   -output instance_ids_output-newnode-${ip}.txt \
-   -tag_file instance_output-newnode-${ip}.txt \
-   -tag ${TAG}-newnode \
-   -root_volume ${configs[leader.root]} \
-   -protection=true \
-   -launch_profile launch-${PROFILE}.json
-
-   awk ' { print $1, 9000, "newnode", 0, $2 } ' < raw_ip-newnode-${ip}.txt > dist-${ip}.txt
-   sleep 60
-}
-
-# replace existing nodes with new nodes
-function do_replace
-{
-   soldiers=$*
-
-   [ ! -e $SESSION_FILE ] && errexit "can't find profile config file : $SESSION_FILE"
-   TS=$(cat $SESSION_FILE | $JQ .sessionID)
-
-   for s in $soldiers; do
-      ok=false
-      launch_instance "${s}"
-      ip=$(cat raw_ip-newnode-${s}.txt | cut -f1 -d' ')
-      cat dist-$s.txt >> logs/${TS}/distribution_config.txt
-      for pfx in init leader.init
-      do
-         f="logs/${TS}/init/${pfx}-${s}.json"
-         [ -f "${f}" ] || continue
-         sed -i s/dns=false/dns=true/ ${f}
-         fn="logs/${TS}/init/${pfx}-${ip}.json"
-         sed -e "s/${s}/${ip}/" ${f} > ${fn}
-         bls=$(grep -o 'blskey_file.*.key' ${f} | cut -f2 -d' ')
-         ./node_ssh.sh -d logs/$TS ec2-user@$ip "aws s3 cp s3://${configs[bls.bucket]}/${configs[bls.folder]}/$bls $bls"
-         sleep 15
-         ok=true
-         echo curl -m 3 -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${fn}"
-         curl -m 3 -X GET -s http://$ip:19000/init -H "Content-Type: application/json" -d@"${fn}"
-      done
-      ${ok} || echo "WARNING: could not find init JSON file for ${s}; skipped it" >&2
-   done
-
-#   do_sync_logs
-}
-
 # re-init a node with multi-key, pause other nodes
 function do_multikey
 {
@@ -528,6 +470,7 @@ function do_restart_network
       restart_opt+=" -U"
    fi
 
+   logging restart network
    if [ -n "$shard" ]; then
       if [ ! -f $logdir/shard${shard}.txt ]; then
          echo "ERROR: can't find $logdir/shard${shard}.txt"
@@ -545,6 +488,7 @@ function do_restart_network
       done
    fi
    wait
+   expense restart
 }
 
 function do_all
@@ -651,8 +595,6 @@ case $ACTION in
          do_dns_setup ;;
    reinit)
          do_reinit $* ;;
-   replace)
-         do_replace $* ;;
    multikey)
          do_multikey $* ;;
    restart)
