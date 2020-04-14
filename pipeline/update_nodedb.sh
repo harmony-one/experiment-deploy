@@ -13,7 +13,7 @@ watchdog="/home/jl/watchdog/nodedb"
 
 help() {
   echo ""
-  echo "Usage: ${0} -w [whoami] -t [target chain] -u -p -r"
+  echo "Usage: ${0} -w [whoami] -t [target nodedb directory] -u -p -r"
   echo -e "\t-w WHOAMI (default = OS)"
   echo -e "\t-t Target directory in nodedb (default = ostn)"
   echo -e "\t-u Update the nodedb repo, if update fails, will try to copy files (default = false)"
@@ -124,14 +124,14 @@ fi
 # Push to master on nodedb
 if [[ "${push}" == true ]]; then
   pushd ${nodedb}
-  git add ${target}/* > /dev/null 2&>1
+  git add ${target}/*
   if [[ -z $(git status --porcelain) ]]; then
     echo "[INFO] No changes detected in nodedb, skipping commit & push"
   else
+    git diff --cached --stat
     if [[ "${yes}" == true ]]; then
       echo "-- Pushing nodedb update --"
     else
-      git status
       read -rp "Push nodedb update? [Y/N]" reply
       echo
       if [[ "${reply}" != "Y" ]]; then
