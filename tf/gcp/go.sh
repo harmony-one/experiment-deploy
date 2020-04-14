@@ -129,6 +129,7 @@ function _do_launch_one
    NAME=$(terraform output | grep 'name = ' | awk -F= ' { print $2 } ' | tr -d ' ')
    sleep 1
    mv -f terraform.tfstate states/terraform.tfstate.gcp.$index
+
 }
 
 function new_instance
