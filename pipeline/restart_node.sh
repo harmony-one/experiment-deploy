@@ -62,11 +62,11 @@ print_usage() {
 		-y          say yes to restart confirmation     
 		-D          clean .dht directory
                   (default: ${default_clean_dht})
-		-X				clean up harmony db, harmony.err
-						(default: ${default_clean_db})
+		-X          clean up harmony db, harmony.err, and logs
+                  (default: ${default_clean_db})
 
 		arguments:
-		ip		the IP address to upgrade
+		ip          the IP address to upgrade
 
 	ENDEND
 }
@@ -475,9 +475,9 @@ clean_dht() {
 }
 
 clean_db() {
-   rn_info "clean harmony_db"
+   rn_info "clean harmony_db harmny.err and logs"
    node_ssh "${ip}" '
-      sudo rm -rf harmony_db_* harmony.err
+      sudo rm -rf harmony_db_* harmony.err /home/tmp_log/*/* latest/*.gz
    '
 }
 
