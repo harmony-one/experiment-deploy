@@ -59,7 +59,7 @@ echo "Service: ${service}"
 
 if [[ "${build}" == true ]]; then
   echo "-- Building new Watchdog binary --"
-  ssh watchdog "sudo sh -c \"cd ${watchdog}/master && git reset --hard origin/master && git clean -xdf && git pull && PATH=$PATH:/usr/local/go/bin/go make\""
+  ssh watchdog "sudo sh -c \"cd ${watchdog}/master && git reset --hard origin/master && git clean -xdf && git pull && PATH=\$PATH:/usr/local/go/bin make\""
 fi
 
 # Pull nodedb
