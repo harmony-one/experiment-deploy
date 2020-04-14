@@ -7,26 +7,30 @@
 # ssh watchdog is correctly configured
 
 base=$(basename `realpath .`)
-watchdog="/home/jl/watchdog/nodedb"
+watchdog="/home/jl/watchdog"
+nodedb="/home/jl/watchdog/nodedb"
 
 help() {
   echo ""
   echo "Usage: ${0} -a [action] -s [service] -u"
   echo -e "\t-a "
   echo -e "\t-s Target service to restart (default = ostn)"
+  echo -e "\t-b Build latest Watchdog binaries"
   echo -e "\t-u Pull the nodedb repo on the Watchdog machine (default = false)"
   exit
 }
 
-unset OPTARG action service update
+unset OPTARG action service build update
 action="restart"
 service="ostn"
+build=false
 update=false
-while getopts "a:s:u" opt
+while getopts "a:s:bu" opt
 do
   case "${opt}" in
     a ) action="$OPTARG" ;;
     s ) service="${OPTARG}" ;;
+    b ) build=true ;;
     u ) update=true ;;
     * ) help ;;
   esac
@@ -53,14 +57,19 @@ case ${service} in
 esac
 echo "Service: ${service}"
 
+if [[ "${build}" == true ]]; then
+  echo "-- Building new Watchdog binary --"
+  ssh watchdog "sudo sh -c \"cd ${watchdog}/master && git reset --hard origin/master && git clean -xdf && git pull && PATH=$PATH:/usr/local/go/bin/go make\""
+fi
+
 # Pull nodedb
 if [[ "${update}" == true ]]; then
   echo "-- Pulling new nodedb --"
-  ssh watchdog "sudo sh -c \"cd ${watchdog} && git reset --hard origin/master && git clean -xdf && git pull\"" > /dev/null 2&>1
+  ssh watchdog "sudo sh -c \"cd ${nodedb} && git reset --hard origin/master && git clean -xdf && git pull\"" > /dev/null
 else
   echo "-- Using existing nodedb --"
 fi
-ssh watchdog "sudo sh -c \"cd ${watchdog} && git show --oneline -s\""
+ssh watchdog "sudo sh -c \"cd ${nodedb} && git show --oneline -s\""
 
 # Watchdog
 ssh watchdog "sudo systemctl ${action} harmony-watchdogd@${service}.service"
