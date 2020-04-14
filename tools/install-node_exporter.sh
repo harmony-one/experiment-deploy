@@ -2,7 +2,7 @@
 # Noted the port 9100 has to be open to your prometheus server.
 #
 # [Release]
-# aws s3 cp install-node_exporter.sh s3://haochen-harmony-pub/pub/node_exporter/install.sh
+# aws s3 cp install-node_exporter.sh s3://haochen-harmony-pub/pub/node_exporter/install.sh --acl public-read
 #
 # [Usage]
 # bash <(curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/node_exporter/install.sh)
