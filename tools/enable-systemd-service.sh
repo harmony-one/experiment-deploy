@@ -18,13 +18,15 @@
 # s3://haochen-harmony-pub/pub/systemd/master/explorer/harmony.service
 #
 # [USAGE]
-# curl -LO https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh
-# chmod +x install.sh
+# bash -s [parameters ] < (curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh)
 #
-# [EXAMPLE]
-# ./install.sh stn
-# ./install.sh ostn
-# ./install.sh stn explorer 1
+# [EXAMPLES]
+# bash -s stn < (curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh)
+# bash -s ostn < (curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh)
+# bash -s stn explorer 1 < (curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh)
+#
+# TODO: auto detect network/nodetype/shard, but since this is a one-time cost, we probably shouldn't invest too much in it
+# TODO: for testnet node, when we launch new testnet, we shall use systemd service from beginning
 
 function usage()
 {
