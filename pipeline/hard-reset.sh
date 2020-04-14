@@ -181,7 +181,10 @@ start_regresssion
 
 do_preparation
 {
-   msg "TODO: backup logs"
+   msg "backup logs and clean up logs"
+   ./go.sh -p "$net_profile" log
+   rm -rf "${logdir}/validator" "${logdir}/leader" "${logdir}/run_on_shard/*"
+
    msg "TODO: capture validator info"
    msg "TODO: disable pagerduty"
 }
