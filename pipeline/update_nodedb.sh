@@ -99,13 +99,11 @@ if [[ "${update}" == true ]]; then
 
   if [[ "${status}" == "50" ]]; then
     echo "[ERROR] Target directory must exist in nodedb repo"
-    push=false
     copy=true
   fi
 
   if [[ "${status}" == "100" ]]; then
     echo "[ERROR] Failures detected sorting IP lists"
-    push=false
     copy=true
   fi
 else
@@ -126,20 +124,24 @@ fi
 # Push to master on nodedb
 if [[ "${push}" == true ]]; then
   pushd ${nodedb}
-  git add ${target}/*
-  if [[ "${yes}" == true ]]; then
-    echo "-- Pushing nodedb update --"
+  git add ${target}/* > /dev/null 2&>1
+  if [[ -z $(git status --porcelain) ]]; then
+    echo "[INFO] No changes detected in nodedb, skipping commit & push"
   else
-    git status
-    read -rp "Push nodedb update? [Y/N]" reply
-    echo
-    if [[ "${reply}" != "Y" ]]; then
-      exit
-      popd
+    if [[ "${yes}" == true ]]; then
+      echo "-- Pushing nodedb update --"
+    else
+      git status
+      read -rp "Push nodedb update? [Y/N]" reply
+      echo
+      if [[ "${reply}" != "Y" ]]; then
+        exit
+        popd
+      fi
     fi
+    git commit -m "[update_nodedb] Updating ip lists & init files for ${target}"
+    git push -f
   fi
-  git commit -m "[update_nodedb] Updating ip lists & init files for ${target}"
-  git push -f
   popd
 fi
 
