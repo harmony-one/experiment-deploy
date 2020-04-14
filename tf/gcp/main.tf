@@ -126,6 +126,8 @@ resource "google_compute_instance" "fn" {
 
   provisioner "remote-exec" {
     inline = [
+      "sudo setenforce 0",
+      "sudo sed -i /etc/selinux/config -r -e 's/^SELINUX=.*/SELINUX=disabled/g'",
       "sudo yum install -y bind-utils jq psmisc unzip",
       "curl -LO https://harmony.one/node.sh",
       "chmod +x node.sh rclone.sh",
@@ -142,8 +144,8 @@ resource "google_compute_instance" "fn" {
       "sudo cp -f node_exporter.service /etc/systemd/system/node_exporter.service",
       "sudo systemctl daemon-reload",
       "sudo systemctl enable harmony.service",
-      "sudo systemctl enable node_exporter",
-      "sudo systemctl start node_exporter",
+      "sudo systemctl enable node_exporter.service",
+      "sudo systemctl start node_exporter.service",
       "crontab crontab",
       "curl https://rclone.org/install.sh | sudo bash",
       "echo ${var.shard} > shard.txt",
