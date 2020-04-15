@@ -441,6 +441,16 @@ wait_for_harmony_process_to_exit() {
 	done
 }
 
+function cleanup_exp_db
+{
+	# clean up explorer db if exist
+	exp_db="/home/ec2-user/explorer_storage_*"
+	if [ -e "$exp_db" ] ;then
+		rn_info "It is an explorer node, cleaning up its explorer db"	
+		node_ssh "${ip}" 'sudo rm -rf explorer_storage_*'
+	fi 
+}
+
 upgrade_binaries() {
 	rn_info "upgrading node software"
 # we have to skip md5sum.txt file as a different md5sum.txt will trigger
@@ -475,10 +485,12 @@ clean_dht() {
 }
 
 clean_db() {
-   rn_info "clean harmony_db harmny.err and logs"
-   node_ssh "${ip}" '
-      sudo rm -rf harmony_db_* harmony.err /home/tmp_log/*/* latest/*.gz
-   '
+   	rn_info "clean harmony_db harmny.err and logs"
+
+	# clean up blockhain db
+	node_ssh "${ip}" '
+		sudo rm -rf harmony_db_* harmony.err /home/tmp_log/*/* latest/*.gz
+	'
 }
 
 unset -v logsize zerologsize
@@ -591,6 +603,7 @@ do
 			run_with_retries fetch_binaries || break
 		fi
 		run_with_retries kill_harmony || break
+		run_with_retries cleanup_exp_db || break
 		run_with_retries wait_for_harmony_process_to_exit || break
 		if ${upgrade}
 		then
