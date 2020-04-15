@@ -503,7 +503,6 @@ function do_all
    do_reset_explorer
    do_reset_explorer explorer2
    download_logs
-   analyze_logs
    do_sync_logs
    do_restart_network
    if [ "$KEEP" == "false" ]; then
@@ -584,7 +583,6 @@ case $ACTION in
          do_run ;;
    log)  
          download_logs
-         analyze_logs
          do_sync_logs ;;
    deinit)
          do_deinit ;;

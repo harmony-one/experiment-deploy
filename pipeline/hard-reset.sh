@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 set -u
 
@@ -91,32 +91,32 @@ if [ "${force_yes}" = false ] ;then
 fi
 
 ######### functions ###########
-hard_reset_shard
+function hard_reset_shard
 {
    shard=$1
    msg "cat $logdir/shard${shard}.txt | xargs -i% -P50 bash -c \"./restart_node.sh -U -X -D -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %\""
    cat "$logdir/shard${shard}.txt" | xargs -i% -P50 bash -c "./restart_node.sh -U -X -D -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %"
 }
 
-check_consensus
+function check_consensus
 {
    shard=$1
    msg "./run_on_shard.sh -p ${net_profile} -T $shard 'tac /home/tmp_log/*/zeorlog*.log | grep -m 1 HOORAY'"
 }
 
-check_version
+function check_version
 {
    shard=$1
    msg "./run_on_shard.sh -p ${net_profile} -T $shard './harmony -version'"
 }
 
-restart_watchdog
+function restart_watchdog
 {
    msg "./restart_watchdog.sh -a restart -s $network"
    ./restart_watchdog.sh -a restart -s "$network"
 }
 
-_do_hard_reset_per_shard
+function _do_hard_reset_per_shard
 {
    shard=$1
    hard_reset_shard "${shard}"
@@ -124,13 +124,13 @@ _do_hard_reset_per_shard
    check_version "${shard}"
 }
 
-do_jenkins_release
+function do_jenkins_release
 {
    msg 'TODO: curl jenkins command'
    msg 'ex: https://jenkins.harmony.one/job/harmony-release/413/api/json'
 }
 
-restart_sentry
+function restart_sentry
 {
    msg "restart sentry"
 #   KEYDIR=${HSSH_KEY_DIR:-~/.ssh/keys}
@@ -151,7 +151,7 @@ restart_sentry
    done
 }
 
-restart_explorer
+function restart_explorer
 {
    msg "restart explorer backend"
 
@@ -162,7 +162,7 @@ restart_explorer
    firebase firestore:delete --all-collections --project "harmony-explorer-${net_profile}" $option
 }
 
-restart_dashboard
+function restart_dashboard
 {
    msg "clear dashboard db"
    if [ "${force_yes}" = true ] ;then
@@ -174,13 +174,13 @@ restart_dashboard
    done
 }
 
-start_regresssion
+function start_regresssion
 {
    msg "start regression test async using Jenkins"
    msg "TODO: @seb"
 }
 
-do_capture_validator_info
+function do_capture_validator_info
 {
    EP="https://api.s0.${net_profile}.hmny.io/"
    msg "capturing all validator info"
@@ -193,10 +193,10 @@ do_capture_validator_info
           "method":"hmy_getAllValidatorInformation",
           "params":[0],
           "id":1
-   }' > "$logdir/all-validator-info.json"
+   }' | jq . > "$logdir/all-validator-info.json"
 }
 
-do_pagerduty_maintenance
+function do_pagerduty_maintenance
 {
    if [ ! -e ~/bin/pagerduty_token.sh ]; then
       msg "ERR: can't find the pagerduty token."
@@ -204,34 +204,38 @@ do_pagerduty_maintenance
    fi
    . ~/bin/pagerduty_token.sh
 
-	local token="${PD[$network]}"
+   local id="${PDS[$network]}"
+
    datafile="${logdir}/$(mktemp pd.XXXXXX.json)"
-   now=$(date --rfc-3339=sec)
+   now=$(date --rfc-3339=sec | tr " " T)
    # default maintenance window is 1 hour
-   end=$(date -d "+1 hour" --rfc-3330=sec)
+   end=$(date -d "+1 hour" --rfc-3339=sec | tr " " T)
 
    cat>"$datafile"<<-EOT
 {
    "maintenance_window": {
       "start_time": "$now",
       "end_time": "$end",
-      "description": "$network hard reset",
-      "services": {
-         "summary": "$network consensus",
-         "type": "maintenance_window",
-      }
+      "description": "$network hard reset maintenance_window",
+      "type": "maintenance_window",
+      "services": [
+         { "id": "$id",
+           "type": "service_reference"
+         }
+      ]
    }
 }
 EOT
    curl --request POST \
      --url https://api.pagerduty.com/maintenance_windows \
      --header 'accept: application/vnd.pagerduty+json;version=2' \
-     --header "authorization: Token token=$token" \
-     --header 'from: devop@harmony.one' \
-     --data @"$datafile"
+     --header 'authorization: Token token='"${PDTOKEN}" \
+     --header 'content-type: application/json' \
+     --header 'from: pagerduty@harmony.one' \
+     --data @"${datafile}"
 }
 
-do_preparation
+function do_preparation
 {
    do_capture_validator_info
 
@@ -242,13 +246,12 @@ do_preparation
    do_pagerduty_maintenance
 }
 
-do_sanity_check
+function do_sanity_check
 {
    msg "TODO: check consensus/delgation info"
-   msg "TODO: restore pagerduty"
 }
 
-_clean_rclone_snapshot
+function _clean_rclone_snapshot
 {
    case "$net_profile" in
       "os")
@@ -259,7 +262,7 @@ _clean_rclone_snapshot
    esac
 }
 
-_do_hard_reset_once
+function _do_hard_reset_once
 {
    _clean_rclone_snapshot
 
@@ -278,7 +281,7 @@ _do_hard_reset_once
    #popd
 }
 
-_do_reset_network
+function _do_reset_network
 {
    msg "restart bootnodes"
    ./go.sh -p "${net_profile}" bootnode
@@ -306,8 +309,9 @@ _do_reset_network
    _do_hard_reset_once
 }
 
-do_reset
+function do_reset
 {
+   do_preparation
    _do_reset_network
    restart_explorer
    restart_dashboard
@@ -315,7 +319,7 @@ do_reset
    restart_sentry
 }
 
-check_env
+function check_env
 {
    # check firebase installation
    if ! which firebase > /dev/null; then

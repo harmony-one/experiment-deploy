@@ -97,16 +97,6 @@ function read_profile
    [ "${configs[leader.protection]}" == "null" ] && configs[leader.protection]=false
    [ "${configs[explorer_node.protection]}" == "null" ] && configs[explorer_node.protection]=false
 
-   nodes_num=$($JQ " $managednodekey | length " $BENCHMARK_PROFILE)
-   configs[managednodes.num]=$nodes_num
-   i=0
-   while [ $i -lt $nodes_num ]; do
-      for k in ${nodekeys[@]}; do
-         configs[managednode$i.$k]=$($JQ " $managednodekey[$i].$k " $BENCHMARK_PROFILE)
-      done
-      ((i++))
-   done
-
    if [ "${configs[genesis]}" != "null" ]; then
       genesis=( $(cat $CONFIG_DIR/${configs[genesis]}) )
    fi
