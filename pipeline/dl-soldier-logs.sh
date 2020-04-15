@@ -50,60 +50,48 @@ function download_logs
 {
    local type=$1
    local node=$2
-   mkdir -p logs/$SESSION/$node
 
-   IP=( $(${GREP} $node ${DC} | cut -f 1 -d ' ') )
-   REGION=( $(${GREP} $node ${DC} | cut -f 5 -d ' ' | cut -f 1 -d '-') )
+   for shard in $(seq 0 $(( ${configs[benchmark.shards]} - 1 ))); do
+      logging download log in shard: $shard
+      mkdir -p logs/$SESSION/$node/shard${shard}
 
-   end=0
-   group=0
+      readarray -t IP < logs/$SESSION/shard${shard}.txt
 
-   count=0
-   TOTAL=${#IP[@]}
-   execution=1
+      end=0
+      group=0
 
-   case $type in
-      benchmark)
-         FILE=/home/tmp_log
-         ;;
-      soldier)
-         FILE=soldier*.log
-         ;;
-      db)
-         FILE=db*.tgz
-         ;;
-   esac
+      count=0
+      TOTAL=${#IP[@]}
+      execution=1
 
-   SECONDS=0
-   while [ $execution -eq 1 ]; do
-      start=$(( $PARALLEL * $group ))
-      end=$(( $PARALLEL + $start - 1 ))
+      case $type in
+         benchmark) FILE=/home/tmp_log ;;
+         soldier) FILE=soldier*.log ;;
+         db) FILE=db*.tgz ;;
+      esac
 
-      if [ $end -ge $(( $TOTAL - 1 )) ]; then
-         end=$(( $TOTAL - 1 ))
-         execution=0
-      fi
+      while [ $execution -eq 1 ]; do
+         start=$(( $PARALLEL * $group ))
+         end=$(( $PARALLEL + $start - 1 ))
 
-      echo processing group: $group \($start to $end\)
-
-      for i in $(seq $start $end); do
-         r=${REGION[$i]}
-         if [ "$r" == "node" ]; then
-            ${SCP} -r ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
-         else
-            key=$(find_key_from_ip ${IP[$i]})
-            rsync -a -e "${SSH} -i $KEYDIR/$key" ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node 2> /dev/null &
-            # key=$(${GREP} ^$r ${CFG} | cut -f 3 -d ,)
+         if [ $end -ge $(( $TOTAL - 1 )) ]; then
+            end=$(( $TOTAL - 1 ))
+            execution=0
          fi
-         (( count++ ))
+
+         echo processing group: $group \($start to $end\)
+
+         for i in $(seq $start $end); do
+            key=$(find_key_from_ip ${IP[$i]})
+            rsync -a -e "${SSH} -i $KEYDIR/$key" ${UNAME}@${IP[$i]}:${FILE} logs/${SESSION}/$node/shard${shard} 2> /dev/null &
+            (( count++ ))
+         done
+         wait
+
+         (( group++ ))
       done
-      wait
-
-      (( group++ ))
+      expense downloadlog
    done
-   duration=$SECONDS
-
-   echo downloaded $count logs used $(( $duration / 60 )) minutes $(( $duration % 60 )) seconds
 }
 
 function run_cmd

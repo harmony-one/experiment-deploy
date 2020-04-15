@@ -109,13 +109,13 @@
      "blskey_folder": ".hmy/blskeys"
   },
   "sentry1": {
-     "enable" true,
+     "enable": true,
      "ip": "52.11.85.154",
      "user": "ec2-user",
      "shard": 0
   },
   "sentry2": {
-     "enable" true,
+     "enable": true,
      "ip": "54.202.197.141",
      "user": "ec2-user",
      "shard": 1
