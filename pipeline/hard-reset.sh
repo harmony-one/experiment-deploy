@@ -34,6 +34,7 @@ print_usage() {
 
       reset       do the hard reset, everything
 
+      prepare     do hard reset prepataion (collect log, validator info, pager duty maintainence window)
       network     do the network hard reset only
       explorer    reset explorer
       dashboard   reset staking dashboard
@@ -93,8 +94,8 @@ fi
 hard_reset_shard
 {
    shard=$1
-   msg "cat $logdir/shard${shard}.txt | xargs -i{} -P50 bash -c \"./restart_node.sh -U -X -D -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 {}\""
-   cat "$logdir/shard${shard}.txt" | xargs -i{} -P50 bash -c "./restart_node.sh -U -X -D -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 {}"
+   msg "cat $logdir/shard${shard}.txt | xargs -i% -P50 bash -c \"./restart_node.sh -U -X -D -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %\""
+   cat "$logdir/shard${shard}.txt" | xargs -i% -P50 bash -c "./restart_node.sh -U -X -D -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %"
 }
 
 check_consensus
@@ -179,14 +180,66 @@ start_regresssion
    msg "TODO: @seb"
 }
 
+do_capture_validator_info
+{
+   EP="https://api.s0.${net_profile}.hmny.io/"
+   msg "capturing all validator info"
+
+   curl --location --request POST "$EP" \
+   --header 'Content-Type: application/json' \
+   --header 'Content-Type: text/plain' \
+   --data-raw '{
+          "jsonrpc":"2.0",
+          "method":"hmy_getAllValidatorInformation",
+          "params":[0],
+          "id":1
+   }' > "$logdir/all-validator-info.json"
+}
+
+do_pagerduty_maintenance
+{
+   if [ ! -e ~/bin/pagerduty_token.sh ]; then
+      msg "ERR: can't find the pagerduty token."
+      return
+   fi
+   . ~/bin/pagerduty_token.sh
+
+	local token="${PD[$network]}"
+   datafile="${logdir}/$(mktemp pd.XXXXXX.json)"
+   now=$(date --rfc-3339=sec)
+   # default maintenance window is 1 hour
+   end=$(date -d "+1 hour" --rfc-3330=sec)
+
+   cat>"$datafile"<<-EOT
+{
+   "maintenance_window": {
+      "start_time": "$now",
+      "end_time": "$end",
+      "description": "$network hard reset",
+      "services": {
+         "summary": "$network consensus",
+         "type": "maintenance_window",
+      }
+   }
+}
+EOT
+   curl --request POST \
+     --url https://api.pagerduty.com/maintenance_windows \
+     --header 'accept: application/vnd.pagerduty+json;version=2' \
+     --header "authorization: Token token=$token" \
+     --header 'from: devop@harmony.one' \
+     --data @"$datafile"
+}
+
 do_preparation
 {
+   do_capture_validator_info
+
    msg "backup logs and clean up logs"
    ./go.sh -p "$net_profile" log
    rm -rf "${logdir}/validator" "${logdir}/leader" "${logdir}/run_on_shard/*"
 
-   msg "TODO: capture validator info"
-   msg "TODO: disable pagerduty"
+   do_pagerduty_maintenance
 }
 
 do_sanity_check
@@ -344,3 +397,5 @@ case "${cmd}" in
    *)
       print_usage ;;
 esac
+
+# vim: set expandtab:ts=3
