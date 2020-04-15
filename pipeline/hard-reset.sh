@@ -32,12 +32,17 @@ print_usage() {
 
       commands:
 
-      reset       do the hard reset, everything
+      reset       do the hard reset, one-click-do-everything
 
       prepare     do hard reset prepataion (collect log, validator info, pager duty maintainence window)
+      check       do sanity check (consensus, version)
+
       network     do the network hard reset only
       explorer    reset explorer
       dashboard   reset staking dashboard
+      watchdog    reset watchdog
+
+      === not implemented yet ===
       sentry      reset/launch sentry nodes
       regression  start regression test
             
@@ -86,7 +91,7 @@ esac
 cmd="${1-}"
 shift 1 2> /dev/null || usage "missing command argument"
 case "${cmd}" in
-   prepare|reset|network|explorer|dashboard|sentry|regression|watchdog) msg "commmand: ${cmd}" ;;
+   prepare|reset|network|explorer|dashboard|sentry|regression|watchdog|check) msg "commmand: ${cmd}" ;;
    *) usage "invalid command: ${cmd}" ;;
 esac
 
@@ -113,12 +118,14 @@ function check_consensus
 {
    local shard=$1
    msg "./run_on_shard.sh -p ${net_profile} -T $shard 'tac /home/tmp_log/*/zeorlog*.log | grep -m 1 HOORAY'"
+   ./run_on_shard.sh -p ${net_profile} -T $shard 'tac /home/tmp_log/*/zeorlog*.log | grep -m 1 HOORAY'
 }
 
 function check_version
 {
    local shard=$1
    msg "./run_on_shard.sh -p ${net_profile} -T $shard './harmony -version'"
+   ./run_on_shard.sh -p ${net_profile} -T $shard './harmony -version'
 }
 
 function restart_watchdog
@@ -127,12 +134,19 @@ function restart_watchdog
    ./restart_watchdog.sh -a restart -s "$network"
 }
 
-function _do_hard_reset_per_shard
+function do_sanity_check
 {
    local shard=$1
-   hard_reset_shard "${shard}"
-   check_consensus "${shard}"
-   check_version "${shard}"
+   if [ "$shard" = "all" ]; then
+      # run on all shards
+      for s in $(seq 0 $(( ${configs[benchmark.shards]} - 1 ))); do
+         check_consensus "${s}"
+         check_version "${s}"
+      done
+   else
+      check_consensus "${shard}"
+      check_version "${shard}"
+   fi
 }
 
 function do_jenkins_release
@@ -257,11 +271,6 @@ function do_preparation
    do_pagerduty_maintenance
 }
 
-function do_sanity_check
-{
-   msg "TODO: check consensus/delgation info"
-}
-
 function _clean_rclone_snapshot
 {
    case "$net_profile" in
@@ -306,7 +315,7 @@ function _do_reset_network
             msg "ERR: can't find $logdir/shard${shard}.txt"
          else
             msg "do hard reset of all shards in $net_profile"
-            _do_hard_reset_per_shard "${shard}" &
+            hard_reset_shard "${shard}" &
          fi
       done
    else
@@ -314,7 +323,7 @@ function _do_reset_network
          msg "ERR: can't find $logdir/shard${shard}.txt"
       else
          msg "do hard reset of shard ${shard} in $net_profile"
-         _do_hard_reset_per_shard "${shard}"
+         hard_reset_shard "${shard}"
       fi
    fi
 
@@ -326,6 +335,8 @@ function do_reset
 {
    do_preparation
    _do_reset_network "$SHARD"
+   do_sanity_check "$SHARD"
+
    restart_explorer
    restart_dashboard
    do_jenkins_release
@@ -399,6 +410,8 @@ case "${cmd}" in
       do_reset ;;
    "prepare")
       do_preparation ;;
+   "check")
+      do_sanity_check "$SHARD" ;;
    "network")
       _do_reset_network "$SHARD" ;;
    "explorer")
