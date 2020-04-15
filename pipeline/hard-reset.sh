@@ -59,7 +59,6 @@ do
    p) net_profile="${OPTARG}"
       BENCHMARK_FILE="$CONFIG_DIR/benchmark-${net_profile}.json"
       [ ! -e "$BENCHMARK_FILE" ] && errexit "can't find benchmark config file : $BENCHMARK_FILE"
-      export HMY_PROFILE=${net_profile}
       ;;
    y) force_yes=true;;
    *) err 70 "unhandled option -${OPTARG}";;
@@ -67,18 +66,30 @@ do
 done
 shift $(( OPTIND - 1 ))
 
-#### cmdline checking ####1
-unset -v shard cmd
-shard="${1-}"
+#### cmdline checking ####
+case ${net_profile} in
+   os|stn|pstn)
+      msg "profile: ${net_profile}"
+      export HMY_PROFILE=${net_profile}
+      ;;
+   *) usage "invalid profile for hard-reset: ${net_profile}" ;;
+esac
+
+unset -v SHARD cmd
+SHARD="${1-}"
 shift 1 2> /dev/null || usage "missing shard argument"
+case "$SHARD" in
+   all|0|1|2|3) msg "shard: $SHARD" ;;
+   *) usage "invalid shard number: $SHARD" ;;
+esac
+
 cmd="${1-}"
 shift 1 2> /dev/null || usage "missing command argument"
+case "${cmd}" in
+   prepare|reset|network|explorer|dashboard|sentry|regression|watchdog) msg "commmand: ${cmd}" ;;
+   *) usage "invalid command: ${cmd}" ;;
+esac
 
-if [ -z "${net_profile}" ] ;then
-   msg "profile not set, exiting..."
-   msg "please use -p option to specify profile"
-   exit 1
-fi
 logdir="logs/${net_profile}"
 msg "profile: ${net_profile}"
 msg "execute: ${cmd}"
@@ -93,20 +104,20 @@ fi
 ######### functions ###########
 function hard_reset_shard
 {
-   shard=$1
+   local shard=$1
    msg "cat $logdir/shard${shard}.txt | xargs -i% -P50 bash -c \"./restart_node.sh -U -X -D -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %\""
    cat "$logdir/shard${shard}.txt" | xargs -i% -P50 bash -c "./restart_node.sh -U -X -D -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %"
 }
 
 function check_consensus
 {
-   shard=$1
+   local shard=$1
    msg "./run_on_shard.sh -p ${net_profile} -T $shard 'tac /home/tmp_log/*/zeorlog*.log | grep -m 1 HOORAY'"
 }
 
 function check_version
 {
-   shard=$1
+   local shard=$1
    msg "./run_on_shard.sh -p ${net_profile} -T $shard './harmony -version'"
 }
 
@@ -118,7 +129,7 @@ function restart_watchdog
 
 function _do_hard_reset_per_shard
 {
-   shard=$1
+   local shard=$1
    hard_reset_shard "${shard}"
    check_consensus "${shard}"
    check_version "${shard}"
@@ -283,6 +294,8 @@ function _do_hard_reset_once
 
 function _do_reset_network
 {
+   local shard=$1
+
    msg "restart bootnodes"
    ./go.sh -p "${net_profile}" bootnode
 
@@ -312,7 +325,7 @@ function _do_reset_network
 function do_reset
 {
    do_preparation
-   _do_reset_network
+   _do_reset_network "$SHARD"
    restart_explorer
    restart_dashboard
    do_jenkins_release
@@ -387,7 +400,7 @@ case "${cmd}" in
    "prepare")
       do_preparation ;;
    "network")
-      _do_reset_network ;;
+      _do_reset_network "$SHARD" ;;
    "explorer")
       restart_explorer ;;
    "dashboard") 
