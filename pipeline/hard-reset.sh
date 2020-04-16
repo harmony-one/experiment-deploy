@@ -197,7 +197,7 @@ function restart_explorer
    fi
 
    firebase firestore:delete --all-collections --project "harmony-explorer-${net_profile}" $option
-   host=$(host ${configs[${explorer}.name]} | awk ' { print $NF } ')
+   host=$(host "${configs[explorer.name]}" | awk ' { print $NF } ')
    $SSH "$host" "nohup /home/ec2-user/projects/harmony-dashboard-backend/restart_be.sh 1>/dev/null 2>/dev/null &"
 }
 
@@ -272,6 +272,8 @@ EOT
      --header 'content-type: application/json' \
      --header 'from: pagerduty@harmony.one' \
      --data @"${datafile}"
+
+   rm -f "${datafile}"
 }
 
 function do_preparation
@@ -291,6 +293,10 @@ function _clean_rclone_snapshot
       "os")
          msg "cleaning harmony_db_0 rclone snapshot, only for ostn"
          aws s3 rm s3://pub.harmony.one/ostn/harmony_db_0/
+         # clean and stop ostn nodes setup for rclone snapshot
+         popd "$progdir/../ansible"
+         ansible-playbook playbooks/cleanup.yml -i inventory/ostn.ankr.yml -e 'user=root inventory=ostnexp'
+         popd
          ;;
       *) msg "rclone snapshot for ostn only, skipping" ;;
    esac
