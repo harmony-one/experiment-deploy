@@ -41,6 +41,7 @@ print_usage() {
       explorer    reset explorer
       dashboard   reset staking dashboard
       watchdog    reset watchdog
+      fund        do funding using fund.sh
 
       === not implemented yet ===
       sentry      reset/launch sentry nodes
@@ -121,7 +122,7 @@ function check_consensus
       option='-y'
    fi
 
-   ./run_on_shard.sh -p ${net_profile} -rST $option $shard 'sudo tac /home/tmp_log/*/zerolog*.log latest/zerolog*.log 2>/dev/null | grep -m 1 HOORAY'
+   ./run_on_shard.sh -p "${net_profile}" -rST $option "$shard" 'sudo tac /home/tmp_log/*/zerolog*.log latest/zerolog*.log 2>/dev/null | grep -m 1 HOORAY'
 }
 
 function check_version
@@ -132,7 +133,7 @@ function check_version
       option='-y'
    fi
 
-   ver=$(./run_on_shard.sh -p ${net_profile} -rST $option $shard './harmony -version' 2>&1 | grep -oE 'version\s\S+\s' | sort -u)
+   ver=$(./run_on_shard.sh -p "${net_profile}" -rST $option "$shard" './harmony -version' 2>&1 | grep -oE 'version\s\S+\s' | sort -u)
 
    msg "**** FOUND: $ver"
 }
@@ -298,11 +299,6 @@ function _do_hard_reset_once
    msg 'restart watchdog'
    restart_watchdog
 
-   msg 'do funding and faucet. waiting for 10 minutes ...'
-   # FIXME: when to do the funding and not breaking consensus. 10m is 2 epoch.
-   sleep 10m
-   ./fund.sh -f -c
-
    # FIXME: this script can only be run on devop machine using ec2-user account
    # the faucet_deploy.sh won't push to public repo
    #pushd ~/CF
@@ -348,6 +344,12 @@ function do_reset
 
    restart_explorer
    restart_dashboard
+
+   msg 'do funding and faucet. waiting for 10 minutes ...'
+   # FIXME: when to do the funding and not breaking consensus. 10m is 2 epoch.
+   sleep 10m
+   ./fund.sh -f -c
+
    do_jenkins_release
    restart_sentry
 }
@@ -423,6 +425,8 @@ case "${cmd}" in
       do_sanity_check "$SHARD" ;;
    "network")
       _do_reset_network "$SHARD" ;;
+   "fund")
+      ./fund.sh -f -c ;;
    "explorer")
       restart_explorer ;;
    "dashboard") 
