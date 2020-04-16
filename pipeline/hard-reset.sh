@@ -9,6 +9,8 @@ case "${0}" in
 *) progdir=".";;
 esac
 
+SSH='ssh -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
+
 . "${progdir}/msg.sh"
 . "${progdir}/usage.sh"
 . "${progdir}/util.sh"
@@ -195,6 +197,8 @@ function restart_explorer
    fi
 
    firebase firestore:delete --all-collections --project "harmony-explorer-${net_profile}" $option
+   host=$(host ${configs[${explorer}.name]} | awk ' { print $NF } ')
+   $SSH "$host" "nohup /home/ec2-user/projects/harmony-dashboard-backend/restart_be.sh 1>/dev/null 2>/dev/null &"
 }
 
 function restart_dashboard
