@@ -444,8 +444,8 @@ wait_for_harmony_process_to_exit() {
 function cleanup_exp_db
 {
 	# clean up explorer db if exist
-	exp_db="/home/ec2-user/explorer_storage_*"
-	if [ -e "$exp_db" ] ;then
+	exp_db="explorer_storage_*"
+	if [ "$exp_db" ] ;then
 		rn_info "It is an explorer node, cleaning up its explorer db"	
 		node_ssh "${ip}" 'sudo rm -rf explorer_storage_*'
 	fi 
@@ -603,7 +603,11 @@ do
 			run_with_retries fetch_binaries || break
 		fi
 		run_with_retries kill_harmony || break
-		run_with_retries cleanup_exp_db || break
+		# clean up explorer_db
+		if ${is_explorer}
+		then
+			cleanup_exp_db || break
+		fi
 		run_with_retries wait_for_harmony_process_to_exit || break
 		if ${upgrade}
 		then
