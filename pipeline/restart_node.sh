@@ -366,9 +366,16 @@ fetch_binaries() {
 	case "${node_type}" in
 	tf)
 		rn_info "fetching upgrade binaries on tf node"
-		node_ssh "${ip}" "
-			./node.sh -U upgrade -I -d
-		"
+		# s3 profile is for mainnet
+		if [ "${profile}" = "s3" ]; then
+			node_ssh "${ip}" "
+				./node.sh -U upgrade -I -d
+			"
+		else
+			node_ssh "${ip}" "
+				./node.sh -U ${folder} -I -d
+			"
+		fi
 		;;
 	*)
 		rn_info "fetching upgrade binaries"
