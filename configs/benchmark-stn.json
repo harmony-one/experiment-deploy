@@ -7,14 +7,14 @@
   },
   "leader": {
     "num_vm": 1,
-    "type": "c5.large",
+    "type": "t3.small",
     "regions": "sfo,pdx",
     "protection": false,
     "root": 10
   },
   "explorer_node": {
     "num_vm": 1,
-    "type": "c5.large",
+    "type": "t3.small",
     "regions": "sfo,pdx",
     "root": 25,
     "protection": false
@@ -72,7 +72,7 @@
   "dashboard": {
     "name": "staking.harmony.one",
     "port": 3000,
-    "reset": "true"
+    "reset": "false"
   },
   "explorer": {
     "name": "explorer.stn.hmny.io",
@@ -90,7 +90,7 @@
      "port": 8000
   },
   "parallel": 50,
-  "userdata": "userdata-soldier-http-static.sh",
+  "userdata": "userdata-systemd-static.sh.aws",
   "flow": {
      "wait_for_launch": 60,
      "reserved_account": "",

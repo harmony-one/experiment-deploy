@@ -13,11 +13,17 @@ CONFIG_DIR=$(realpath $ROOTDIR)/configs
 JQ='jq -M -r'
 
 declare -A configs
-declare -A managednodes
 declare -a genesis
 declare -a blskey
+declare -A testnets
 
 REGIONS=( nrt sfo iad pdx fra sin cmh dub )
+
+# supported testnets
+testnets[os]=ostn
+testnets[ps]=pstn
+testnets[stn]=stn
+testnets[lrtn]=testnet
 
 function expense
 {
@@ -34,7 +40,7 @@ function verbose
 function errexit
 {
    logging "$@ . Exiting ..."
-   exit -1
+   exit 1
 }
 
 function _join
@@ -87,9 +93,6 @@ function read_profile
       sentry4.ip sentry4.user sentry4.shard sentry4.enable
    )
    
-   managednodekey=.managednodes.nodes
-   nodekeys=( role ip port key )
-
    for k in ${keys[@]}; do
       configs[$k]=$($JQ .$k $BENCHMARK_PROFILE)
    done
