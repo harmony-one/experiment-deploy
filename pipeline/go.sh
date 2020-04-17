@@ -44,6 +44,8 @@ This script automates the benchmark test based on profile.
    reinit <ip>       re-run init command on hosts (list of ips)
    multikey <ip>     start multi-bls-key migration
    restart <shard>   restart the shard or all if no <shard> is specified (default: all)
+   replace <ip>      launch a new node to replace an existing node which may be failed (testnet only)
+
    all               do everything (default)
 
 
@@ -460,6 +462,90 @@ function do_multikey
    ./restart_node.sh -p $PROFILE -y -M $mkhost
 }
 
+function launch_one_instance
+{
+   local ip keys region launch_opt num_regions random_region
+
+   ip=${1}
+   tag=${2}
+   shift 2
+   keys="$*"
+
+   num_regions=$(jq '.launch | length ' $CONFIG_DIR/launch-${PROFILE}.json)
+   random_region=$(( $RANDOM % ${num_regions} ))
+
+   launch_opt=$(jq ".launch[${random_region}]" $CONFIG_DIR/launch-${PROFILE}.json)
+
+   region=$(echo $launch_opt | jq -r ".region")
+   inst_type=$(echo $launch_opt | jq -r ".type")
+   root=$(echo $launch_opt | jq -r ".root")
+
+   ../bin/instance \
+   -config_dir $CONFIG_DIR \
+   -instance_count 1 \
+   -instance_type ${inst_type} \
+   -launch_region ${region} \
+   -ip_file replace-node-${ip}.txt \
+   -output instance-ids-replace-node-${ip}.txt \
+   -tag_file instance-tag-replace-node-${ip}.txt \
+   -tag ${TAG}-od-new-${tag} \
+   -root_volume ${root} \
+   -protection=false \
+   -launch_profile launch-${PROFILE}.json
+
+   sleep 30
+
+   newip=$(cut -f1 -d' ' < replace-node-${ip}.txt)
+   for key in $keys; do
+      ./node_ssh.sh $newip "aws s3 cp s3://harmony-secret-keys/bls-test/${key}.key .hmy/blskeys/${key}.key"
+   done
+
+   sleep 10
+
+   REPLACE_IP=$newip
+}
+
+function _find_keys
+{
+   local ip=$1
+   local logdir=logs/$PROFILE
+
+   keys=$(grep -E "^$ip:" $NODEDB/ip.idx.map | cut -f4 -d: | tr "\n" " ")
+   tag=$(grep -E "^$ip:" $NODEDB/ip.idx.map | cut -f2 -d: | tr "\n" "-" | sed 's/-$//')
+
+   echo $tag $keys
+}
+
+function do_replace_node
+{
+   set -x
+
+   NODEDB=$progdir/../../nodedb/${testnets[$PROFILE]}
+
+   if [ ! -f $NODEDB/ip.idx.map ]; then
+      echo "ERR: can't find the ip.idx.map in $NODEDB"
+      return
+   fi
+
+   local ip="${1}"
+   keys=$(_find_keys $ip)
+
+   if [ -z "${keys}" ]; then
+      echo "ERR: can't find bls keys for $ip"
+      return
+   fi
+
+   launch_one_instance $ip $keys
+   if [ -z "$REPLACE_IP" ]; then
+      echo "ERR: can't launch new instance"
+      return
+   fi
+   sleep 10
+   date
+   ./restart_node.sh -p ${PROFILE} -y -t 0 -r 0 -R 0 $REPLACE_IP
+   sed -i.orig "s/^${ip}:/${newip}:/g" $NODEDB/ip.idx.map
+}
+
 function do_restart_network
 {
    local shard=$1
@@ -598,6 +684,8 @@ case $ACTION in
          do_multikey $* ;;
    restart)
          do_restart_network $* ;;
+   replace)
+         do_replace_node $* ;;
    *)
       echo "unknown action! \"$ACTION\""
       ;;

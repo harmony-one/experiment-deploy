@@ -2,24 +2,24 @@
    "launch": [
         {
             "region": "sfo",
-            "type": "c5.large",
-            "ondemand": 9,
-            "spot": 0,
+            "type": "t3.small",
+            "ondemand": 0,
+            "spot": 9,
             "protection": false,
             "root": 10
         },
         {
             "region": "pdx",
-            "type": "c5.large",
-            "ondemand": 9,
-            "spot": 0,
+            "type": "t3.small",
+            "ondemand": 0,
+            "spot": 9,
             "protection": false,
             "root": 10
         }
     ],
     "userdata": {
        "name": "http",
-       "file": "userdata-soldier-http-static.sh.aws"
+       "file": "userdata-systemd-static.sh.aws"
     },
     "batch": 100 
 }
