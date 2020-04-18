@@ -18,12 +18,12 @@
 # s3://haochen-harmony-pub/pub/systemd/master/explorer/harmony.service
 #
 # [USAGE]
-# bash -s [parameters ] < (curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh)
+# curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh | bash -s <parameter>
 #
 # [EXAMPLES]
-# bash -s stn < (curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh)
-# bash -s ostn < (curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh)
-# bash -s stn explorer 1 < (curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh)
+# curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh | bash -s stn
+# curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh | bash -s ostn
+# curl -s -S -L https://haochen-harmony-pub.s3.amazonaws.com/pub/systemd/install.sh | bash -s ostn explorer 1
 #
 # TODO: auto detect network/nodetype/shard, but since this is a one-time cost, we probably shouldn't invest too much in it
 # TODO: for testnet node, when we launch new testnet, we shall use systemd service from beginning
@@ -133,7 +133,9 @@ sudo chown -R "${USER}"."${USER}" ./* ./.*
 
 mkdir -p .hmy/blskeys
 # create a dummy key for explorer which requires no blskey to run
-[ "$TYPE" == "explorer" ] && touch .hmy/blskeys/dummy.bls.key
+if [ "$TYPE" = "explorer" ]; then
+   touch .hmy/blskeys/dummy.bls.key
+fi
 
 sudo systemctl daemon-reload
 sudo systemctl enable harmony
