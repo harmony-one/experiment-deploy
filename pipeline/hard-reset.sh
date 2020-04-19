@@ -35,6 +35,7 @@ print_usage() {
       commands:
 
       reset       do the hard reset, one-click-do-everything
+      soft_reset  do a soft reset
 
       prepare     do hard reset prepataion (collect log, validator info, pager duty maintainence window)
       check       do sanity check (consensus, version)
@@ -94,7 +95,7 @@ esac
 cmd="${1-}"
 shift 1 2> /dev/null || usage "missing command argument"
 case "${cmd}" in
-   prepare|reset|network|explorer|dashboard|sentry|regression|watchdog|check) msg "commmand: ${cmd}" ;;
+   prepare|reset|network|soft_reset|explorer|dashboard|sentry|regression|watchdog|check) msg "commmand: ${cmd}" ;;
    *) usage "invalid command: ${cmd}" ;;
 esac
 
@@ -113,6 +114,13 @@ function hard_reset_shard
    local shard=$1
    msg "cat $logdir/shard${shard}.txt | xargs -i% -P50 bash -c \"./restart_node.sh -U -X -D -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %\""
    cat "$logdir/shard${shard}.txt" | xargs -i% -P50 bash -c "./restart_node.sh -U -X -D -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %"
+}
+
+function soft_reset_shard
+{
+   local shard=$1
+   msg "cat $logdir/shard${shard}.txt | xargs -i% -P50 bash -c \"./restart_node.sh -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %\""
+   cat "$logdir/shard${shard}.txt" | xargs -i% -P50 bash -c "./restart_node.sh -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %"
 }
 
 function check_consensus
@@ -345,6 +353,32 @@ function _do_reset_network
    _do_hard_reset_once
 }
 
+function do_soft_reset_network
+{
+   local shard=$1
+
+   if [ "$shard" = "all" ]; then
+      # run on all shards
+      for shard in $(seq 0 $(( ${configs[benchmark.shards]} - 1 ))); do
+         if [ ! -f "$logdir/shard${shard}.txt" ]; then
+            msg "ERR: can't find $logdir/shard${shard}.txt"
+         else
+            msg "do softr reset of all shards in $net_profile"
+            soft_reset_shard "${shard}" &
+         fi
+      done
+   else
+      if [ ! -f "$logdir/shard${shard}.txt" ]; then
+         msg "ERR: can't find $logdir/shard${shard}.txt"
+      else
+         msg "do soft reset of shard ${shard} in $net_profile"
+         soft_reset_shard "${shard}"
+      fi
+   fi
+
+   wait
+}
+
 function do_reset
 {
    do_preparation
@@ -434,6 +468,8 @@ case "${cmd}" in
       do_sanity_check "$SHARD" ;;
    "network")
       _do_reset_network "$SHARD" ;;
+   "soft_reset")
+      do_soft_reset_network "$SHARD" ;;
    "fund")
       ./fund.sh -f -c ;;
    "explorer")
