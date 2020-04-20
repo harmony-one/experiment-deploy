@@ -23,7 +23,7 @@ print_usage() {
 
       options:
       -p          mandatory: profile of network to run on
-                  (support only stn/os/ps)
+                  (support only stn/os/ps/mkeys)
 
       -o outdir   use the given output directory
                   (default: the hard-reset/YYYY-MM-DDTHH:MM:SSZ subdir logs/profile)
@@ -77,7 +77,7 @@ shift $(( OPTIND - 1 ))
 
 #### cmdline checking ####
 case ${net_profile} in
-   os|stn|pstn)
+   os|stn|pstn|mkeys)
       msg "profile: ${net_profile}"
       export HMY_PROFILE=${net_profile}
       ;;
@@ -441,6 +441,9 @@ case $net_profile in
        dbprefix=stressnet;;
    ps) network=pstn
        dbprefix=partnernet;;
+   mkeys)
+       network=mkeys;;
+       # TO-DO: dbprefix is unknown for mkeys atm, will add it later if needed 
    *) msg "ERR: unknown network profile for hard-reset: $net_profile, skipping"
       exit 1
 esac
