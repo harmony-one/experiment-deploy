@@ -18,7 +18,7 @@ resource "aws_spot_instance_request" "foundation-node" {
   root_block_device {
     volume_type           = "gp2"
     volume_size           = var.node_volume_size
-    delete_on_termination = false
+    delete_on_termination = true
   }
 
   tags = {
