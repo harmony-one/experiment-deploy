@@ -95,7 +95,7 @@ esac
 cmd="${1-}"
 shift 1 2> /dev/null || usage "missing command argument"
 case "${cmd}" in
-   prepare|reset|network|soft_reset|explorer|dashboard|sentry|regression|watchdog|check) msg "commmand: ${cmd}" ;;
+   prepare|reset|network|soft_reset|explorer|dashboard|sentry|regression|watchdog|check|fund) msg "commmand: ${cmd}" ;;
    *) usage "invalid command: ${cmd}" ;;
 esac
 
