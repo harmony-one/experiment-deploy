@@ -44,7 +44,7 @@ def get_metadata(endpoint):
     headers = {
         'Content-Type': 'application/json'
     }
-    response = requests.request('POST', url, headers=headers, data=payload, allow_redirects=False, timeout=30)
+    response = requests.request('POST', url, headers=headers, data=payload, allow_redirects=False, timeout=3)
     return json.loads(response.content)["result"]
 
 
@@ -56,9 +56,8 @@ def get_bls_keys_on_node(endpoint):
         metadata = get_metadata(endpoint)
     except Exception:  # Do not halt on any exception
         return None
-    bls_key_len = 96
     bls_keys = metadata["blskey"]
-    return [bls_keys[i*bls_key_len:(i+1)*bls_key_len] for i in range(len(bls_keys)//bls_key_len)]
+    return bls_keys
 
 
 def get_bls_distribution(shard):
