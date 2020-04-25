@@ -9,6 +9,9 @@ User=root
 WorkingDirectory=/root
 ExecStart=bash /root/node.sh -1 -p /root/bls.pass -k /root/bls.key -P
 Restart=always
+StandardError=file:/root/harmony.err
+LimitNOFILE=65536
+LimitNPROC=65536
 
 [Install]
 WantedBy=multi-user.target 
