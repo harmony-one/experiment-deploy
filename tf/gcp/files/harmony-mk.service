@@ -9,6 +9,9 @@ User=gce-user
 WorkingDirectory=/home/gce-user
 ExecStart=bash /home/gce-user/node.sh -1 -S -p /home/gce-user/bls.pass -M -P -D
 Restart=always
+StandardError=file:/home/gce-user/harmony.err
+LimitNOFILE=65536
+LimitNPROC=65536
 
 [Install]
 WantedBy=multi-user.target 
