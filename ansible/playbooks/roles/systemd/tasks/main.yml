@@ -1,0 +1,28 @@
+---
+- name: gather OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - '{{ ansible_bios_version }}-{{ ansible_distribution }}.yml'
+    - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml'
+    - '{{ ansible_distribution }}.yml'
+    - '{{ ansible_os_family }}.yml'
+  tags:
+    - vars
+   
+- name: update systemd harmony.service   
+  blockinfile:
+    path: "/lib/systemd/system/harmony.service"
+    state: present
+    insertafter: "^ExecStart"
+    block: |
+      StandardError=file:{{ USER.home }}/harmony.err
+      LimitNOFILE=65536
+      LimitNPROC=65536
+
+- name: reload systemd configs and restart harmony
+  systemd:
+    daemon_reload: yes
+    state: restarted
+    name: harmony
+  
+# vim: set expandtab:ts=2:ft=yaml

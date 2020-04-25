@@ -1,0 +1,9 @@
+---
+
+PACKAGES:
+   - unzip
+
+USER:
+   - user: gce-user
+   - group: gce-user
+   - home: /home/gce-user
