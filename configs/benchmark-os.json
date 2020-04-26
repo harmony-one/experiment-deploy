@@ -1,5 +1,5 @@
 {
-  "description": "aws 20 nodes on 4 shard in one region",
+  "description": "aws 40 nodes on 4 shard in four regions",
   "client": {
     "num_vm": 0,
     "type": "m5a.large",
@@ -14,9 +14,10 @@
   },
   "explorer_node": {
     "num_vm": 1,
-    "type": "m5a.large",
+    "type": "m5.large",
     "regions": "iad,sfo,cmh,pdx",
     "root": 25,
+    "userdata": "userdata-systemd-static-os-exp.sh",
     "protection": false
   },
   "bootnode": {
@@ -27,7 +28,7 @@
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
      "p2pkey": "b2-9870.key",
-     "log_conn": false
+     "log_conn": true
   },
   "bootnode1": {
      "enable": true,
@@ -37,7 +38,7 @@
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
      "p2pkey": "b1-9870.key",
-     "log_conn": false
+     "log_conn": true
   },
   "azure": {
     "num_vm": 0,
@@ -53,12 +54,12 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 60,
-    "minpeer": 12,
+    "peer_per_shard": 30,
+    "minpeer": 5,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
-    "commit_delay": "1s",
+    "commit_delay": "2s",
     "network_type": "pangaea",
     "bls": true
   },
@@ -66,7 +67,7 @@
     "leader": true,
     "client": false,
     "validator": true,
-    "soldier": true,
+    "soldier": false,
     "db": false
   },
   "dashboard": {
@@ -90,12 +91,12 @@
      "port": 8000
   },
   "parallel": 50,
-  "userdata": "userdata-soldier-http.sh",
+  "userdata": "userdata-systemd-static-os.sh.aws",
   "flow": {
      "wait_for_launch": 60,
      "reserved_account": "",
      "rpczone": "os",
-     "rpcnode": 5
+     "rpcnode": 3
   },
   "bls": {
      "pass": "blsnopass.txt",
