@@ -17,7 +17,6 @@ print_usage() {
 		usage: ${progname} [-t timestamp] [-qTOESrMpy] shard command
 
 		options:
-		-t timestamp	use the given timestamp (default: basename of realname of -d)
 		-o outdir	use the given output directory
 		 		(default: the run_on_shard/YYYY-MM-DDTHH:MM:SSZ subdir of -d)
 		-q		quiet; do not summarize outputs
@@ -38,7 +37,7 @@ print_usage() {
 	ENDEND
 }
 
-unset -v ts outdir quiet terse remove print_stdout print_stderr print_status use_ssh_mux net_profile force_yes
+unset -v outdir quiet terse remove print_stdout print_stderr print_status use_ssh_mux net_profile force_yes
 quiet=false
 terse=false
 remove=false
@@ -51,12 +50,11 @@ force_yes=false
 net_profile=
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts :t:o:qTOESrMp:y opt
+while getopts :o:qTOESrMp:y opt
 do
 	case "${opt}" in
 	'?') usage "unrecognized option -${OPTARG}";;
 	':') usage "missing argument for -${OPTARG}";;
-	t) ts="${OPTARG}";;
 	o) outdir="${OPTARG}";;
 	q) quiet=true;;
 	T) terse=true;;
@@ -97,19 +95,6 @@ if [ "${force_yes}" = false ] ;then
      exit
   fi
 fi
-
-case "${ts+set}" in
-'')
-	unset -v real_logdir
-	real_logdir=$(realpath "${logdir}")
-	ts="${real_logdir##*/}"
-	msg "using timestamp ${ts} (from ${logdir} -> ${real_logdir})"
-	;;
-esac
-case "${ts}" in
-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].[0-9][0-9][0-9][0-9][0-9][0-9]) ;;
-*) usage "timestamp ${ts} is not in YYYYMMDD.HHMMSS format";;
-esac
 
 case "${outdir+set}" in
 '')
@@ -155,7 +140,6 @@ grep -v '^$' < "${shard_ip_file}" | (
 			fi
 		fi
 		"${progdir}/node_ssh.sh" -d "${logdir}" -n "$@" "${ip}" '
-			ts='\'"${ts}"\''
 			ip='\'"${ip}"\''
 			'"${cmd}"'
 		' > "${outdir}/${ip}.out" 2> "${outdir}/${ip}.err" || echo $? > "${outdir}/${ip}.status"
