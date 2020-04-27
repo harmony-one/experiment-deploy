@@ -59,6 +59,7 @@ function read_profile
       description libp2p genesis aws.profile azure.num_vm azure.regions
       leader.regions leader.num_vm leader.type leader.root leader.protection
       explorer_node.regions explorer_node.num_vm explorer_node.type explorer_node.root explorer_node.protection
+      explorer_node.userdata
       client.regions client.num_vm client.type
       benchmark.shards benchmark.duration benchmark.dashboard benchmark.crosstx
       benchmark.attacked_mode benchmark.init_retry
