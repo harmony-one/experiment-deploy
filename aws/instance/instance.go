@@ -161,6 +161,7 @@ var (
 	launchRegion  = flag.String("launch_region", "pdx", "list of regions, separated by ',', will override profile")
 	rootVolume    = flag.Int64("root_volume", 0, "the size of the root volume in GB, will override profile")
 	protection    = flag.Bool("protection", false, "protect on-demand instance from termination")
+	userDataFile  = flag.String("user_data_file", "", "the userdata file")
 
 	userDataString string
 
@@ -581,7 +582,11 @@ func main() {
 
 	debugOutput(0, launches.RegionInstances)
 
-	if data, err := ioutil.ReadFile(filepath.Join(*configDir, launches.UserData.File)); err != nil {
+	dataFile := filepath.Join(*configDir, launches.UserData.File)
+	if len(*userDataFile) > 0 {
+		dataFile = filepath.Join(*configDir, *userDataFile)
+	}
+	if data, err := ioutil.ReadFile(dataFile); err != nil {
 		exitErrorf("Exiting ... : %v", err)
 	} else {
 		userDataString = base64.StdEncoding.EncodeToString(data)
