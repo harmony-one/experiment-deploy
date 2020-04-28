@@ -380,12 +380,12 @@ fetch_binaries() {
 	*)
 		rn_info "fetching upgrade binaries"
 		node_ssh "${ip}" "
-			rm -rf ${dest_folder}/*
+			rm -rf ${dest_folder}
 		"
 		# only sync harmony static binary
 		if ${static_build}; then
 			node_ssh "${ip}" "
-				aws s3 cp $(shell_quote "${s3_folder}/static/harmony") ${dest_folder}
+				aws s3 cp $(shell_quote "${s3_folder}/static/harmony") ${dest_folder}/
 			"
 		else
 			node_ssh "${ip}" "
