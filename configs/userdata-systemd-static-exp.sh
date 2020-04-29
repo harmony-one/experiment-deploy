@@ -28,6 +28,9 @@ mkdir -p /home/ec2-user/.hmy/blskeys
 mkdir -p /home/ec2-user/.config/rclone
 mkdir -p /home/ec2-user/latest
 
+touch /home/ec2-user/.hmy/blskeys/dummy.key
+touch /home/ec2-user/.hmy/blskeys/dummy.pass
+
 # Download the blspass file
 aws s3 cp s3://harmony-pass/blsnopass.txt bls.pass
 
@@ -155,7 +158,7 @@ Restart=always
 RestartSec=1
 User=ec2-user
 WorkingDirectory=/home/ec2-user
-ExecStart=/home/ec2-user/node.sh -N %NETWORK% -m %MINPEER% -1 -S -P -p /home/ec2-user/bls.pass -M -D
+ExecStart=/home/ec2-user/node.sh -N %NETWORK% -1 -S -P -p /home/ec2-user/bls.pass -M -D -T explorer -i SHARDID
 StandardError=syslog
 SyslogIdentifier=harmony
 StartLimitInterval=0
