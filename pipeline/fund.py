@@ -26,52 +26,8 @@ import pyhmy
 import requests
 
 faucet_addr = "one1zksj3evekayy90xt4psrz8h6j2v3hla4qwz4ur"  # Assumes that this is in the CLI's keystore.
-# From: https://docs.google.com/spreadsheets/d/1Z5Jsf_wPkCKWrzYfSUApMFyBZy9Ye9EKBEb_-C89pYQ/edit#gid=0
 accounts = [
     "one17dcjcyauyr43rqh29sa9zeyvfvqc54yzuwyd64",
-    "one1ujljr2nuymtxm0thjm32f64xsa9uzs54swreyw",
-    "one1p5hv9qv90dyrag9fj3wzrvvrs273ypcq8mz7zn",
-    "one1egemh5e9xjy3x8d3cq0kq7mw4sw4jjwgkc7axs",
-    "one1y5n7p8a845v96xyx2gh75wn5eyhtw5002lah27",
-    "one10qq0uqa4gvgdufqjph89pp7nj6yeatz94xdjrt",
-    "one1j33qtvx86j4ugy0a8exwwhtldm5wv4daksrwsl",
-    "one16xh2u9r4677egx4x3s0u966ave90l37hh7wq72",
-    "one1fv5ku7szkm60h4j4tcd2yanvjaw2ym3ugnls33",
-    "one1rcv3chw86tprvhpw4fjnpy2gnvqy4gp4fmhdd9",
-    "one1qyvwqh6klj2cfnzk4mcrlwae3790dm33jgy6kw",
-    "one19gr02mxulyatwz4lpuhl2z3pezwx62xg2uchtg",
-    "one1t0x76npc295gpsv64xzyf3qk9zml7a099v4cqj",
-    "one1k7hgd27qggp8wcmn7n5u9sdhrjy7d2ed3m3c75",
-    "one1xw94y2z7uc2qynyumze2ps8g4nq2w2qtzmdn8r",
-    "one18vn078vyp5jafma8q7kek6w0resrgex9yufqws",
-    "one1tpxl87y4g8ecsm6ceqay49qxyl5vs94jjyfvd9",
-    "one103q7qe5t2505lypvltkqtddaef5tzfxwsse4z7",
-    "one18jcl4uxjadq3qm3fj0clct3svugfxdkqy7f27s",
-    "one1fd094898rfktel7rezmk65zql3cjzhw9zgxcff",
-    "one1tewvfjk0d4whmajpqvcvzfpx6wftrh0gagsa7n",
-    "one18xfcqu7jf0cq5apweyu5jxr30x9cvetegwqfss",
-    "one1m8szmssfzsud6l03jjarlhn00f0c262egf0rdr",
-    "one1925zlp5celp8r8jj3utpcxpjtncuuv2nu2449v",
-    "one1337twjy8nfcwxzjqrc6lgqxxhs0zeult242ttw",
-    "one15ap4frdwexw2zcue4hq5jjad5jjzz678urwkyw",
-    "one16226n7h7fu326plzlqt4k60yfyza5vk299ypr2",
-    "one12sujm2at8j8terh7nmw2gnxtrmk74wza3tvjd9",
-    "one1wxlm29z9u08udhwuulgssnnh902vh9wfnt5tyh",
-    "one1m4f8qng3h0lad30kygyr9c6nwsxpzehxm9av93",
-    "one176yqutxhzpyxq3tedn390qjgxn2xrg0ixjf6ue",
-    "one1mfemj84yxg6dfdakdgdf3dmufdpcmzxflq0dl8",
-    "one1m6j80t6rhc3ypaumtsfmqwjwp0mrqk9ff50prh",
-    "one10fjqteq6q75nm62cx8vejqsk7mc8t5hle8ewnl",
-    "one1vzsj3julf0ljcj3hhxuqpu6zvadu488zfrtttz",
-    "one1marnnvc8hywmfxhrc8mtpjkvvdt32x9kxtwkvv",
-    "one1xmx3fd69jp06ad23ptsj2pxuy2vsquhha76w0a",
-    "one13upa4q2ntl4rjawrw2tjtj8n347yud0kv5eqk2",
-    "one164e2dwupqxd7ssr85ncnkx3quk7fexy0eta2vy",
-    "one1zc4et7xmtp8lna54ucye9phxlvw73kfgqeh5um",
-    "one1cjqud4mqvye7328np009hweajymx22fj7fs2kk",
-    "one1awswe9xrx5rcjxvtdd6lwta9py2t09g6cet05h",
-    "one1fxmqtjp2ujj9597mse22kxcdf0895u7c6myp42",
-    "one1kt98rm83e9p2fja4p8nj5mwkgfxc8374qwtvrg"
 ]
 fund_log_lock = Lock()
 fund_log = {
@@ -255,7 +211,8 @@ def fund_from_csv_data(shard, data):
         balance_log = fund_log['funded-accounts'][dat['address']]
         fund_log_lock.release()
         fund_amount = float(dat['amount']) - balance_log[str(shard)]  # WARNING: Always fund the difference.
-        if fund_amount > 0 or args.force:
+        balance = get_balance(dat['address'], endpoints[shard])
+        if fund_amount > 0 and balance < fund_amount or args.force:
             transactions.append({
                 "from": faucet_addr,
                 "to": dat['address'],
@@ -287,13 +244,19 @@ def parse_csv():
     if args.csv is not None:
         with open(args.csv, 'r') as f:
             for row in csv.DictReader(f):
-                raw_amount, raw_address = row['funded'], row[
-                    'validator address']  # WARNING: Assumption of column name of CSV
-                if raw_amount and 'one1' in raw_address:
-                    data.append({
-                        'amount': float(raw_amount.strip().replace(',', '')),
-                        'address': raw_address.strip()
-                    })
+                raw_amount, raw_address = row['funded'].strip(), row['validator address'].strip()
+                if raw_address and raw_address.startswith('one1') and raw_amount:
+                    sys.stdout.write(f"\rLoading address: {raw_address} to funding candidate from CSV.")
+                    sys.stdout.flush()
+                    try:
+                        cli.single_call(f"hmy utility bech32-to-addr {raw_address}")
+                        data.append({
+                            'amount': float(raw_amount.replace(',', '')),
+                            'address': raw_address
+                        })
+                    except Exception as e:  # catch all to not halt script
+                        print(f"{util.Typgpy.FAIL}\nError when parsing CSV file (addr `{raw_address}`). {e}{util.Typgpy.ENDC}")
+                        print(f"{util.Typgpy.WARNING}Skipping...{util.Typgpy.ENDC}")
     return data
 
 
@@ -377,21 +340,22 @@ if __name__ == "__main__":
     print(f"{util.Typgpy.HEADER}Checking {len(check_data)} balances....{util.Typgpy.ENDC}")
     failed = False
     for j, dat in enumerate(check_data):
-        sys.stdout.write(f"\rChecked {j}/{len(check_data)} balances")
-        sys.stdout.flush()
         fund_log_lock.acquire()
         if dat['address'] not in fund_log['funded-accounts'].keys():
             fund_log['funded-accounts'][dat['address']] = {str(i): 0 for i in range(len(endpoints))}
         balance_log = fund_log['funded-accounts'][dat['address']]
         fund_log_lock.release()
-        for bal in get_balance_from_node_ip(dat['address'], endpoints):
-            shard, balance = bal["shard"], float(bal["amount"])
+        for shard in args.shards:
+            balance = get_balance(dat['address'], endpoints[int(shard)])
+            print(json.dumps({
+                'address': dat['address'],
+                'balance': balance,
+                'shard': int(shard)
+            }))
             balance_log[shard] = max(balance_log[str(shard)], balance)
-            if shard in args.shards and balance < float(dat["amount"]):
+            save_log()
+            if balance < float(dat["amount"]):
                 print(f"{util.Typgpy.FAIL}{dat['address']} did not get funded on shard {shard}{util.Typgpy.ENDC}")
                 failed = True
-    sys.stdout.write(f"\r")
-    sys.stdout.flush()
-    save_log()
     if not failed:
         print(f"{util.Typgpy.HEADER}Successfully checked {len(check_data)} balances!{util.Typgpy.ENDC}")

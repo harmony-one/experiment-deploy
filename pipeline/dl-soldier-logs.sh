@@ -38,10 +38,11 @@ OPTIONS:
    -R retention   retention days of logs (default: $DAYS)
 
 ACTIONS:
-   benchmark      download benchmark logs
-   soldier        download soldier logs
-   version        execute 'benchmark -version' command
-   db             download local leveldb
+   benchmark         download benchmark logs
+   benchmark-legacy  download benchmark logs from legacy nodes
+   soldier           download soldier logs
+   version           execute 'benchmark -version' command
+   db                download local leveldb
 EOT
    exit 1
 }
@@ -65,7 +66,8 @@ function download_logs
       execution=1
 
       case $type in
-         benchmark) FILE=/home/tmp_log ;;
+         benchmark) FILE=~/latest ;;
+         benchmark-legacy) FILE=/home/tmp_log ;;
          soldier) FILE=soldier*.log ;;
          db) FILE=db*.tgz ;;
       esac
@@ -194,7 +196,7 @@ DC=logs/$SESSION/distribution_config.txt
 ACTION=$@
 
 case $ACTION in
-   benchmark|soldier)
+   benchmark|benchmark-legacy|soldier)
       if [ "$NODE" == "all" ]; then
          download_logs $ACTION leader
          download_logs $ACTION validator
