@@ -51,15 +51,15 @@ EOF
 
 function _do_download
 {
-   FILES=( bootnode libbls384_256.so libbls384.so libmcl.so )
+   FILES=( bootnode )
 	FN=go-bootnode-$PORT.sh
 
    echo "#!/bin/bash" > $FN
    for file in "${FILES[@]}"; do
-      echo "curl -O https://$BUCKET.s3.amazonaws.com/$FOLDER/$file" >> $FN
+      echo "curl -O https://$BUCKET.s3.amazonaws.com/$FOLDER/static/$file" >> $FN
    done
    echo "chmod +x bootnode" >> $FN
-   echo "LD_LIBRARY_PATH=. ./bootnode -version" >> $FN
+   echo "./bootnode -version" >> $FN
 	chmod +x $FN
 
    echo ${SSH} ec2-user@${SERVER}

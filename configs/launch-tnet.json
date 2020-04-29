@@ -1,0 +1,41 @@
+{
+   "launch": [
+      {
+         "region": "iad",
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 8,
+         "protection": false,
+         "root": 10
+      },
+      {
+         "region": "sfo",
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 8,
+         "protection": false,
+         "root": 10
+      },
+      {
+         "region": "cmh",
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 8,
+         "protection": false,
+         "root": 10
+      },
+      {
+         "region": "pdx",
+         "type": "t3.small",
+         "ondemand": 0,
+         "spot": 8,
+         "protection": false,
+         "root": 10
+      }
+   ],
+   "userdata": {
+      "name": "http",
+      "file": "userdata-systemd-static.sh.aws"
+   },
+   "batch": 100
+}

@@ -259,7 +259,7 @@ EOT
             init|update|wallet)
                sed "s/SHARDID/$explorer_shard_id/" $LOGDIR/$cmd/explorer.$cmd.json > $LOGDIR/$cmd/explorer.$cmd-$ip.json
                CMD+=$" -d@$LOGDIR/$cmd/explorer.$cmd-$ip.json"
-               ./node_ssh.sh -d $LOGDIR ec2-user@$ip "sudo sed -i 's/SHARDID/$explorer_shard_id/' /lib/systemd/system/harmony.service"
+               ./node_ssh.sh -d $LOGDIR ec2-user@$ip "sudo sed -i 's/SHARDID/$explorer_shard_id/;s/%NETWORK%/${testnets[$PROFILE]}/' /lib/systemd/system/harmony.service"
                (( explorer_shard_id ++ ))
                ;;
          esac

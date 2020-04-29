@@ -13,7 +13,6 @@ CONFIG_DIR=$(realpath $ROOTDIR)/configs
 JQ='jq -M -r'
 
 declare -A configs
-declare -a genesis
 declare -a blskey
 declare -A testnets
 
@@ -24,6 +23,7 @@ testnets[os]=ostn
 testnets[ps]=pstn
 testnets[stn]=stn
 testnets[lrtn]=testnet
+testnets[tnet]=tnet
 
 function expense
 {
@@ -62,7 +62,7 @@ function read_profile
    logging reading benchmark config file: $BENCHMARK_PROFILE
 
    keys=(
-      description libp2p genesis aws.profile azure.num_vm azure.regions
+      description libp2p aws.profile azure.num_vm azure.regions
       leader.regions leader.num_vm leader.type leader.root leader.protection
       explorer_node.regions explorer_node.num_vm explorer_node.type explorer_node.root explorer_node.protection
       explorer_node.userdata
@@ -101,10 +101,6 @@ function read_profile
    [ "${configs[leader.protection]}" == "null" ] && configs[leader.protection]=false
    [ "${configs[explorer_node.protection]}" == "null" ] && configs[explorer_node.protection]=false
 
-   if [ "${configs[genesis]}" != "null" ]; then
-      genesis=( $(cat $CONFIG_DIR/${configs[genesis]}) )
-   fi
-
    if [ "${configs[bls.keyfile]}" != "null" ]; then
       blskey=( $(cat $CONFIG_DIR/${configs[bls.keyfile]}) )
    fi
@@ -116,11 +112,13 @@ function gen_userdata
    BUCKET=$1
    FOLDER=$2
    USERDATA=$3
+   NETWORK=$4
+   MINPEER=$5
 
    [ ! -e $USERDATA ] && errexit "can't find userdata file: $USERDATA"
 
    echo "generating userdata file"
-   sed "-e s,^BUCKET=.*,BUCKET=${BUCKET}," -e "s,^FOLDER=.*,FOLDER=${FOLDER}," $USERDATA > $USERDATA.aws
+   sed "s,^BUCKET=.*,BUCKET=${BUCKET},;s,^FOLDER=.*,FOLDER=${FOLDER},;s,%NETWORK%,${NETWORK},;s,%MINPEER%,${MINPEER}," $USERDATA > $USERDATA.aws
    verbose ${configs[@]}
 }
 

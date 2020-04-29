@@ -114,7 +114,7 @@ function do_launch
       -tag ${TAG}-explorer_node \
       -root_volume ${configs[explorer_node.root]} \
       -protection=${configs[explorer_node.protection]} \
-      -user_data_file=${configs[explorer_node.userdata]} \
+      -user_data_file=${configs[explorer_node.userdata]}.aws \
       -launch_profile launch-${PROFILE}.json
       LAUNCH_OPT+=' -e raw_ip-explorer_node.txt'
       num_explorer_nodes=$(wc -l raw_ip-explorer_node.txt)
@@ -609,10 +609,9 @@ BENCHMARK_FILE=$CONFIG_DIR/benchmark-${PROFILE}.json
 BUCKET=unique-bucket-bin
 USERID=${WHOAMI}
 FOLDER=$USERID
-USERDATA=$CONFIG_DIR/userdata-soldier-http.sh
 VERBOSE=
 THEPWD=$(pwd)
-KEEP=false
+KEEP=true
 TAG=${WHOAMI}
 UPGRADE=false
 
@@ -641,7 +640,8 @@ if [ -z "$ACTION" ]; then
 fi
 
 read_profile $BENCHMARK_FILE
-gen_userdata $BUCKET $FOLDER $USERDATA
+gen_userdata $BUCKET $FOLDER $CONFIG_DIR/${configs[userdata]} ${testnets[$PROFILE]} ${configs[benchmark.minpeer]}
+gen_userdata $BUCKET $FOLDER $CONFIG_DIR/${configs[explorer_node.userdata]} ${testnets[$PROFILE]} ${configs[benchmark.minpeer]}
 
 case $ACTION in
    all)  
