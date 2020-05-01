@@ -1,0 +1,17 @@
+[Unit]
+Description=Harmony Service
+Wants=network.target network-online.target
+After=network.target network-online.target
+
+[Service]
+Type=simple
+User=hmy
+WorkingDirectory=/home/hmy
+ExecStart=bash /home/hmy/node.sh -1 -p /home/hmy/bls.pass -k /home/hmy/bls.key -P
+Restart=always
+StandardError=file:/home/hmy/harmony.err
+LimitNOFILE=65536
+LimitNPROC=65536
+
+[Install]
+WantedBy=multi-user.target 

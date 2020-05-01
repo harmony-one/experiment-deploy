@@ -1,0 +1,4 @@
+SHELL=/usr/bin/bash
+HOME=/home/hmy
+
+30 0 * * *  /home/hmy/uploadlog.sh >> $HOME/upload.log 2>&1
