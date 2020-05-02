@@ -47,30 +47,37 @@
   debug:
     msg: Ver={{ Ver }}
 
-- name: copy harmony service files
+- name: copy validator node harmony service files
   copy:
     src: harmony.service
     dest: /lib/systemd/system
+  when: "'exp' not in inventory"
 
-- name: check if we have specific harmony service file
-  local_action: stat path={{ role_path }}/files/{{ inventory_hostname }}/harmony.service
-  register: optional_harmony_service
-
-- name: upload specific harmony service
+- name: copy explorer node harmony service files
   copy:
-    src: "{{ inventory_hostname }}/harmony.service"
-    dest: /lib/systemd/system
-  when: optional_harmony_service.stat.exists
+    src: harmony.explorer.service
+    dest: /lib/systemd/system/harmony.service
+  when: "'exp' in inventory"
 
 - name: create .hmy/blskeys directory
   file:
     path: "{{ USER.home }}/.hmy/blskeys"
     state: directory
 
-- name: copy all bls keys and pass
+- name: copy all bls keys and pass for validator node
   copy:
     src: "{{ inventory_hostname }}/"
     dest: "{{ USER.home }}/.hmy/blskeys/"
+  when: "'exp' not in inventory"
+
+- name: create dummy bls key and pass for explorer node
+  file:
+    path: "{{ USER.home }}/.hmy/blskeys/{{ item }}"
+    state: touch
+  with_items:
+    - "bls.key"
+    - "bls.pass"
+  when: "'exp' in inventory"
 
 - name: enable harmony service
   systemd: 
