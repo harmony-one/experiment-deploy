@@ -369,7 +369,7 @@ fetch_binaries() {
 		# s3 profile is for mainnet
 		if [ "${profile}" = "s3" ]; then
 			node_ssh "${ip}" "
-				./node.sh -U upgrade -I -d
+				./node.sh -U upgrade -I -d -S
 			"
 		else
 			node_ssh "${ip}" "
