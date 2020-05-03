@@ -17,6 +17,7 @@
     "type": "m5a.large",
     "regions": "iad,pdx,nrt,dub",
     "root": 100,
+    "userdata": "userdata-systemd-static-exp.sh",
     "protection": true
   },
   "bootnode": {
