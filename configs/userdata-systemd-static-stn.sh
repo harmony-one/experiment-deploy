@@ -4,7 +4,7 @@ mkdir -p /home/ec2-user
 cd /home/ec2-user
 
 BUCKET=unique-bucket-bin
-FOLDER=OS
+FOLDER=STN
 
 TESTBIN=( harmony node.sh )
 
