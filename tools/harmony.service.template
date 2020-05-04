@@ -1,7 +1,6 @@
 [Unit]
 Description=harmony service
 After=network.target
-StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -10,7 +9,9 @@ RestartSec=1
 User=%%USER%%
 WorkingDirectory=%%HOME%% 
 ExecStart=%%HOME%%/node.sh -1 -S -P -M -D -N %%NETWORK%% -p %%HOME%%/%%BLSPASS%% -T %%NODETYPE%% %%EXTRA%%
-StandardError=file:%%HOME%%/harmony.err
+StandardError=syslog
+SyslogIdentifier=harmony
+StartLimitInterval=0
 LimitNOFILE=65536
 LimitNPROC=65536
 
