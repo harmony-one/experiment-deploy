@@ -19,11 +19,12 @@ declare -A testnets
 REGIONS=( nrt sfo iad pdx fra sin cmh dub )
 
 # supported testnets
-testnets[os]=ostn
+testnets[os]=staking
 testnets[ps]=pstn
 testnets[stn]=stn
 testnets[lrtn]=testnet
 testnets[tnet]=tnet
+testnets[dryrun]=dryrun
 
 function expense
 {
