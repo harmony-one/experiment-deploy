@@ -19,7 +19,7 @@
     ],
     "userdata": {
        "name": "http",
-       "file": "userdata-systemd-static.sh.aws"
+       "file": "userdata-systemd-static-stn.sh.aws"
     },
     "batch": 100 
 }

@@ -7,16 +7,17 @@
   },
   "leader": {
     "num_vm": 1,
-    "type": "t3.small",
+    "type": "c5.large",
     "regions": "sfo,pdx",
     "protection": false,
     "root": 10
   },
   "explorer_node": {
     "num_vm": 1,
-    "type": "t3.small",
+    "type": "c5.large",
     "regions": "sfo,pdx",
     "root": 25,
+    "userdata": "userdata-systemd-static-stn-exp.sh",
     "protection": false
   },
   "bootnode": {
@@ -90,7 +91,7 @@
      "port": 8000
   },
   "parallel": 50,
-  "userdata": "userdata-systemd-static.sh.aws",
+  "userdata": "userdata-systemd-static-stn.sh",
   "flow": {
      "wait_for_launch": 60,
      "reserved_account": "",
