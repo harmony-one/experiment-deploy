@@ -17,7 +17,7 @@
     "type": "m5.large",
     "regions": "iad,sfo,cmh,pdx",
     "root": 25,
-    "userdata": "userdata-systemd-static-os-exp.sh",
+    "userdata": "userdata-systemd-static-exp.sh",
     "protection": false
   },
   "bootnode": {
@@ -91,7 +91,7 @@
      "port": 8000
   },
   "parallel": 50,
-  "userdata": "userdata-systemd-static-os.sh.aws",
+  "userdata": "userdata-systemd-static.sh",
   "flow": {
      "wait_for_launch": 60,
      "reserved_account": "",

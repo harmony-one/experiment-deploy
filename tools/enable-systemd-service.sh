@@ -77,7 +77,7 @@ case $NETWORK in
       ;;
    mainnet)
       NODESH=node.sh
-      NET=mainnet
+      NET=main
       BLSPASS=blspass.txt
       ;;
    *) echo "unknown network type, exiting ..."
@@ -119,6 +119,9 @@ cp -f $BLSPASS bls.pass
 sed "s,%%USER%%,$USER,g;s,%%HOME%%,$HOME,g;s,%%NETWORK%%,$NET,;s,%%NODETYPE%%,$TYPE,;s,%%BLSPASS%%,bls.pass,;s,%%EXTRA%%,$EXTRA," harmony.service.template > harmony.service
 sudo cp -f harmony.service /lib/systemd/system/harmony.service
 
+# remove legacy harmony.service
+sudo rm -f /etc/systemd/system/harmony.service
+
 if pgrep harmony; then
    echo harmony node is still running, stop it
    if ! sudo pkill harmony; then
@@ -129,12 +132,20 @@ fi
 
 # remove tmp_log
 sudo rm -rf /home/tmp_log
+# remove latest symlink
+sudo rm -f latest
 sudo chown -R "${USER}"."${USER}" ./* ./.*
 
 mkdir -p .hmy/blskeys
 # create a dummy key for explorer which requires no blskey to run
 if [ "$TYPE" = "explorer" ]; then
    touch .hmy/blskeys/dummy.bls.key
+else
+   for i in *.key; do
+      n=${i%.key}
+      mv -f $i .hmy/blskeys
+      cp bls.pass .hmy/blskeys/${n}.pass
+   done
 fi
 
 sudo systemctl daemon-reload
@@ -143,4 +154,4 @@ sudo systemctl start harmony
 
 sleep 3s
 
-pgrep harmony > harmony.pid
+pgrep harmony | tee harmony.pid

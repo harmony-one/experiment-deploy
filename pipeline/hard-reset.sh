@@ -30,6 +30,8 @@ print_usage() {
 
       -y          say yes to cmd confirmation
 
+      -w time     how long to wait before starting to fund accounts
+
       shard       the shard number, such as 0-3 ('all' means all shards)
 
       commands:
@@ -45,21 +47,22 @@ print_usage() {
       dashboard   reset staking dashboard
       watchdog    reset watchdog
       fund        do funding using fund.sh
+      regression  start regression tests
 
       === not implemented yet ===
       sentry      reset/launch sentry nodes
-      regression  start regression test
             
 ENDEND
 }
 
 ######### variables #########
-unset -v net_profile force_yes network dbprefix
+unset -v net_profile force_yes network dbprefix wait_time
 force_yes=false
 net_profile=
+wait_time=10m
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts :o:p:y opt
+while getopts :o:p:yw: opt
 do
    case "${opt}" in
    '?') usage "unrecognized option -${OPTARG}";;
@@ -70,6 +73,7 @@ do
       [ ! -e "$BENCHMARK_FILE" ] && errexit "can't find benchmark config file : $BENCHMARK_FILE"
       ;;
    y) force_yes=true;;
+   w) wait_time="${OPTARG}";;
    *) err 70 "unhandled option -${OPTARG}";;
    esac
 done
@@ -171,8 +175,12 @@ function do_sanity_check
 
 function do_jenkins_release
 {
-   msg 'TODO: curl jenkins command'
-   msg 'ex: https://jenkins.harmony.one/job/harmony-release/413/api/json'
+   if [ ! -z "${JENKINS_CREDENTIALS}" ]; then
+      local params="{'parameter': [{'name':'BRANCH', 'value':'master'}, {'name':'BRANCH_RELEASE', 'value':false}, {'name':'BUILD_TYPE', 'value':'release'}, {'name':'NETWORK', 'value':'${release}'}, {'name':'STATIC_BINARY', 'value':true}]}"
+      curl -X POST https://jenkins.harmony.one/job/harmony-release/build?token=harmony-release \
+         --user $JENKINS_CREDENTIALS \
+         --data-urlencode json="${params}"
+   fi
 }
 
 function restart_sentry
@@ -220,10 +228,15 @@ function restart_dashboard
    done
 }
 
-function start_regresssion
+function start_regression_tests
 {
-   msg "start regression test async using Jenkins"
-   msg "TODO: @seb"
+   if [ ! -z "${JENKINS_CREDENTIALS}" ]; then
+      msg "starting regression tests"
+      local params="{'parameter': [{'name':'Network', 'value':'${net_profile^^}'}, {'name':'Run', 'value':'All tests'}]}"
+      curl -X POST https://jenkins.harmony.one/job/regression_test/build?token=regression_test \
+         --user $JENKINS_CREDENTIALS \
+         --data-urlencode json="${params}"
+   fi
 }
 
 function do_capture_validator_info
@@ -388,13 +401,23 @@ function do_reset
    restart_explorer
    restart_dashboard
 
-   msg 'do funding and faucet. waiting for 10 minutes ...'
+   msg "do funding and faucet. waiting for ${wait_time} ..."
    # FIXME: when to do the funding and not breaking consensus. 10m is 2 epoch.
-   sleep 10m
-   ./fund.sh -f -c
+   sleep $wait_time
 
-   do_jenkins_release
+   do_funding
+   # do_jenkins_release # disable for now - needs more testing
    restart_sentry
+}
+
+function do_funding
+{  
+   # Make sure that extra STN testing accounts (e.g. the Jenkins regression test account etc) are funded
+   if [ "${net_profile,,}" = "stn" ]; then
+      ./fund.sh -f -c -s 0,1 -u "https://docs.google.com/spreadsheets/d/e/2PACX-1vRPu3s3EGI4v1LJBsME26FJifnS9MwYzTNujOoGnKq8M5YmQ6bxoHaKEAIx5RVBVniHTcZxLMvg9WW-/pub?gid=0&single=true&output=csv"
+   fi
+   
+   ./fund.sh -f -c
 }
 
 function check_env
@@ -436,11 +459,14 @@ function check_env
 ######### main ###########
 case $net_profile in
    os) network=ostn
-       dbprefix=Openstakingnet;;
+       dbprefix=Openstakingnet
+       release=pangaea;;
    stn) network=stn
-       dbprefix=stressnet;;
+       dbprefix=stressnet
+       release=stressnet;;
    ps) network=pstn
-       dbprefix=partnernet;;
+       dbprefix=partnernet
+       release=partner;;
    mkeys)
        network=mkeys;;
        # TO-DO: dbprefix is unknown for mkeys atm, will add it later if needed 
@@ -474,7 +500,7 @@ case "${cmd}" in
    "soft_reset")
       do_soft_reset_network "$SHARD" ;;
    "fund")
-      ./fund.sh -f -c ;;
+     do_funding ;;
    "explorer")
       restart_explorer ;;
    "dashboard") 
@@ -484,7 +510,7 @@ case "${cmd}" in
    "sentry")
       restart_sentry ;;
    "regression")
-      start_regression ;;
+      start_regression_tests ;;
    *)
       print_usage ;;
 esac
