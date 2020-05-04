@@ -132,22 +132,15 @@ function check_consensus
    local shard=$1
    msg "./run_on_shard.sh -p ${net_profile} -T $shard 'sudo tac /home/tmp_log/*/zerolog*.log latest/zerolog*.log 2>/dev/null | grep -m 1 HOORAY'"
 
-   if [ "${force_yes}" = true ] ;then
-      option='-y'
-   fi
-
-   ./run_on_shard.sh -p "${net_profile}" -rST $option "$shard" 'sudo tac /home/tmp_log/*/zerolog*.log latest/zerolog*.log 2>/dev/null | grep -m 1 HOORAY'
+   ./run_on_shard.sh -p "${net_profile}" -ryST  "$shard" 'sudo tac /home/tmp_log/*/zerolog*.log latest/zerolog*.log 2>/dev/null | grep -m 1 HOORAY'
 }
 
 function check_version
 {
    local shard=$1
    msg "./run_on_shard.sh -p ${net_profile} -T $shard './harmony -version'"
-   if [ "${force_yes}" = true ] ;then
-      option='-y'
-   fi
 
-   ver=$(./run_on_shard.sh -p "${net_profile}" -rST $option "$shard" './harmony -version' 2>&1 | grep -oE 'version\s\S+\s' | sort -u)
+   ver=$(./run_on_shard.sh -p "${net_profile}" -ryST "$shard" './harmony -version' 2>&1 | grep -oE 'version\s\S+\s' | sort -u)
 
    msg "**** FOUND: $ver"
 }
