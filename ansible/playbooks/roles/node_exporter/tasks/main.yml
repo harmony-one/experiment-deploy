@@ -27,7 +27,11 @@
 
 - name: add node_exporter user
   become: true
-  shell: useradd -rs /bin/false node_exporter
+  user:
+    name: node_exporter
+    comment: user for node exporter
+    shell: /bin/false
+    system: yes
 
 - name: copy node_exporter service files
   become: true
