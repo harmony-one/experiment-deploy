@@ -7,14 +7,14 @@
   },
   "leader": {
     "num_vm": 1,
-    "type": "t3.small",
+    "type": "c5.large",
     "regions": "sfo,pdx",
     "protection": false,
     "root": 10
   },
   "explorer_node": {
     "num_vm": 1,
-    "type": "t3.small",
+    "type": "c5.large",
     "regions": "sfo,pdx",
     "root": 25,
     "userdata": "userdata-systemd-static-exp.sh",
@@ -55,7 +55,7 @@
     "crosstx": 30,
     "attacked_mode": 0,
     "peer_per_shard": 30,
-    "minpeer": 6,
+    "minpeer": 8,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
