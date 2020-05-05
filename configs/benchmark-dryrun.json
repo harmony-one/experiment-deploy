@@ -1,43 +1,44 @@
 {
-  "description": "aws 160 nodes on 4 shard in 6 regions",
+  "description": "dryrun network to open staking mainnet launch",
   "client": {
     "num_vm": 0,
-    "type": "t3.medium",
+    "type": "m5a.large",
     "regions": "iad"
   },
   "leader": {
     "num_vm": 1,
-    "type": "t3.small",
-    "regions": "iad,pdx,sfo,cmh",
+    "type": "c5.large",
+    "regions": "iad,sfo,cmh,pdx",
     "protection": false,
-    "root": 12
+    "root": 20
   },
   "explorer_node": {
     "num_vm": 1,
-    "type": "t3.small",
-    "regions": "iad,pdx,sfo,cmh",
+    "type": "c5.large",
+    "regions": "iad,sfo,cmh,pdx",
     "root": 20,
+    "userdata": "userdata-systemd-static-exp.sh",
     "protection": false
   },
   "bootnode": {
      "enable": true,
      "server": "52.40.84.2",
      "name": "b6.harmony.one",
-     "port": 9888,
+     "port": 9909,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
-     "p2pkey": "b2-8874.key",
-     "log_conn": false
+     "p2pkey": "b2-9870.key",
+     "log_conn": true
   },
   "bootnode1": {
      "enable": true,
      "server": "54.86.126.90",
      "name": "b5.harmony.one",
-     "port": 9888,
+     "port": 9909,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
-     "p2pkey": "b1-8874.key",
-     "log_conn": false
+     "p2pkey": "b1-9870.key",
+     "log_conn": true
   },
   "azure": {
     "num_vm": 0,
@@ -53,8 +54,8 @@
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 50,
-    "minpeer": 34,
+    "peer_per_shard": 170,
+    "minpeer": 12,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
@@ -66,7 +67,7 @@
     "leader": true,
     "client": false,
     "validator": true,
-    "soldier": true,
+    "soldier": false,
     "db": false
   },
   "dashboard": {
@@ -75,7 +76,7 @@
     "reset": "false"
   },
   "explorer": {
-    "name": "explorer.harmony.one",
+    "name": "explorer.os.hmny.io",
     "port": 4444,
     "reset": "false"
   },
@@ -84,23 +85,24 @@
     "port": 4444,
     "reset": "false"
   },
-  "txgen": {
-     "enable": "false",
-     "ip": "myip",
-     "port": 8000
-  },
   "parallel": 50,
-  "userdata": "userdata-soldier-http.sh",
+  "userdata": "userdata-systemd-static.sh",
   "flow": {
-     "wait_for_launch": 120,
+     "wait_for_launch": 60,
      "reserved_account": "",
-     "rpczone": "b"
+     "rpczone": "dr",
+     "rpcnode": 5
   },
   "bls": {
      "pass": "blspass.txt",
      "bucket": "harmony-secret-keys",
      "folder": "bls",
      "keyfile": "blskey.txt"
+  },
+  "multikey": {
+     "enable": true,
+     "keys_per_node": 10,
+     "blskey_folder": ".hmy/blskeys"
   },
   "genesis": "genesis.txt",
   "libp2p": true
