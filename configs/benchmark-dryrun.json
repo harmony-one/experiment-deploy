@@ -90,7 +90,7 @@
   "flow": {
      "wait_for_launch": 60,
      "reserved_account": "",
-     "rpczone": "dr",
+     "rpczone": "dry",
      "rpcnode": 5
   },
   "bls": {
