@@ -35,7 +35,7 @@
    ],
    "userdata": {
       "name": "http",
-      "file": "userdata-systemd-static.sh.aws"
+      "file": "userdata-systemd-static-dryrun.sh.aws"
    },
    "batch": 100
 }

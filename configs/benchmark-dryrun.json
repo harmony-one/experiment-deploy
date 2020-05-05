@@ -86,7 +86,7 @@
     "reset": "false"
   },
   "parallel": 50,
-  "userdata": "userdata-systemd-static.sh",
+  "userdata": "userdata-systemd-static-dryrun.sh",
   "flow": {
      "wait_for_launch": 60,
      "reserved_account": "",
