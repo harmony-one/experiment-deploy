@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
 
 TOOL_BUCKET=haochen-harmony-pub
-KEYS=( bucket folder snapshot shard )
+KEYS=( bucket folder snapshot shard cleanup )
 declare -A CONFIG_KV
 
 # This script is used to install harmony_db_* snapshot into the node
 # This script requires jq/rclone package, will install them automatically
 # This script assumes the harmony_db_? directory is in the home directory on the node.
+# This script works as the config_json file specified.
+# Example of the config json file
+# {
+#   "bucket": "pub.harmony.one",
+#   "folder": "mainnet.min",
+#   "snapshot": "snapshot.20200504",
+#   "shard": "all",
+#   "cleanup": true
+# }
 #
 # [Release]
 # aws s3 cp install-db_snapshot.sh s3://haochen-harmony-pub/pub/db_snapshot/install.sh --acl public-read
@@ -147,6 +156,10 @@ replace_db() {
          mv -f "$HOME/harmony_db_${s}" "$HOME/$backupdir"
          mv harmony_db_${s} "$HOME" || return $?
          echo "replaced harmony_db_${s}"
+         if [ "${CONFIG_KV[cleanup]}" = "true" ]; then
+            rm -rf "$backupdir"
+            echo "cleanup: removed $backupdir"
+         fi
       fi
    done
 }
