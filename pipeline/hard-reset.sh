@@ -81,7 +81,7 @@ shift $(( OPTIND - 1 ))
 
 #### cmdline checking ####
 case ${net_profile} in
-   os|stn|pstn|mkeys)
+   os|stn|pstn|mkeys|dryrun)
       msg "profile: ${net_profile}"
       export HMY_PROFILE=${net_profile}
       ;;
@@ -463,6 +463,8 @@ case $net_profile in
    mkeys)
        network=mkeys;;
        # TO-DO: dbprefix is unknown for mkeys atm, will add it later if needed 
+   dryrun) network=dryrun
+       release=dryrun ;;
    *) msg "ERR: unknown network profile for hard-reset: $net_profile, skipping"
       exit 1
 esac
