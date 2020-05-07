@@ -1,0 +1,7 @@
+{
+   "bucket": "pub.harmony.one",
+   "folder": "mainnet.min",
+   "snapshot": "snapshot.20200501",
+   "shard": "all",
+   "cleanup": true
+}
