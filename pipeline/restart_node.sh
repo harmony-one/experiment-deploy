@@ -17,7 +17,7 @@ esac
 
 unset -v default_timeout default_step_retries default_cycle_retries \
 	default_bucket default_folder default_public_rpc default_multi_key \
-	default_clean_dht default_clean_db
+	default_clean_dht default_clean_db default_copy_blspass
 
 default_timeout=450
 default_step_retries=2
@@ -29,6 +29,7 @@ default_multi_key=false
 default_clean_dht=false
 default_static_build=true
 default_clean_db=false
+default_copy_blspass=false
 
 print_usage() {
 	cat <<- ENDEND
@@ -64,6 +65,8 @@ print_usage() {
                   (default: ${default_clean_dht})
 		-X          clean up harmony db, harmony.err, and logs
                   (default: ${default_clean_db})
+		-K          copy bls.pass for multi-key upgrade
+                  (default: ${default_copy_blspass})
 
 		arguments:
 		ip          the IP address to upgrade
@@ -72,14 +75,14 @@ print_usage() {
 }
 
 unset -v timeout step_retries cycle_retries upgrade bucket folder force_yes clean_dht \
-static_build clean_db
+static_build clean_db copy_blspass
 
 upgrade=false
 force_yes=false
 clean_dht=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts ":${common_getopts_spec}t:r:R:UB:F:PMyDiX" opt
+while getopts ":${common_getopts_spec}t:r:R:UB:F:PMyDiXK" opt
 do
 	! process_common_opts "${opt}" || continue
 	case "${opt}" in
@@ -97,6 +100,7 @@ do
 	D) clean_dht=true;;
 	i) static_build=false;;
 	X) clean_db=true;;
+	K) copy_blspass=true;;
 	*) err 70 "unhandled option -${OPTARG}";;
 	esac
 done
@@ -113,6 +117,7 @@ default_common_opts
 : ${clean_dht="${default_clean_dht}"}
 : ${static_build="${default_static_build}"}
 : ${clean_db="${default_clean_db}"}
+: ${copy_blspass="${default_copy_blspass}"}
 
 node_ssh() {
 	local ip=$1
@@ -397,6 +402,18 @@ fetch_binaries() {
 	esac
 }
 
+copy_blspass() {
+	rn_info "copying bls.pass on ${ip}"
+	local status
+	status=0
+	case "${node_type}" in
+	*)
+		node_ssh "${ip}" 'for k in $(ls .hmy/blskeys/*.key); do p=${k%%.key}; cp ~/bls.pass ${p}.pass; done' || status=$?
+		;;
+	esac
+	return ${status}
+}
+
 kill_harmony() {
 	rn_info "killing harmony process"
 	local status
@@ -609,6 +626,10 @@ do
 		if ${upgrade}
 		then
 			run_with_retries fetch_binaries || break
+		fi
+		if ${copy_blspass}
+		then
+			run_with_retries copy_blspass || break
 		fi
 		run_with_retries kill_harmony || break
 # no need to clean explorer db anymore
