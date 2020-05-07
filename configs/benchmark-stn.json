@@ -1,5 +1,5 @@
 {
-  "description": "aws 20 nodes, 2 shards",
+  "description": "aws 300 nodes, 4 shards",
   "client": {
     "num_vm": 0,
     "type": "m5a.large",
@@ -49,12 +49,12 @@
     ]
   },
   "benchmark": {
-    "shards": 2,
+    "shards": 4,
     "duration": 120,
     "dashboard": false,
-    "crosstx": 30,
+    "crosstx": 75,
     "attacked_mode": 0,
-    "peer_per_shard": 30,
+    "peer_per_shard": 75,
     "minpeer": 8,
     "log_conn": false,
     "even_shard": true,
@@ -106,7 +106,7 @@
   },
   "multikey": {
      "enable": true,
-     "keys_per_node": 3,
+     "keys_per_node": 1,
      "blskey_folder": ".hmy/blskeys"
   },
   "sentry1": {
