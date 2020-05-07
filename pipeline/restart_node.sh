@@ -386,6 +386,7 @@ fetch_binaries() {
 		if ${static_build}; then
 			node_ssh "${ip}" "
 				aws s3 cp $(shell_quote "${s3_folder}/static/harmony") ${dest_folder}/
+				aws s3 cp $(shell_quote "${s3_folder}/static/node.sh") ${dest_folder}/
 			"
 		else
 			node_ssh "${ip}" "
@@ -471,12 +472,12 @@ upgrade_binaries() {
 	node_ssh "${ip}" '
 		set -eu
 		unset -v f
-		for f in harmony
+		for f in harmony node.sh
 		do
 			rm -f "${f}"
 			cp -fp "staging/${f}" "${f}"
 			case "${f}" in
-			harmony)
+			harmony|node.sh)
 				chmod a+x "${f}"
 				;;
 			esac
@@ -610,7 +611,8 @@ do
 			run_with_retries fetch_binaries || break
 		fi
 		run_with_retries kill_harmony || break
-		run_with_retries cleanup_exp_db || break
+# no need to clean explorer db anymore
+#		run_with_retries cleanup_exp_db || break
 		run_with_retries wait_for_harmony_process_to_exit || break
 		if ${upgrade}
 		then
