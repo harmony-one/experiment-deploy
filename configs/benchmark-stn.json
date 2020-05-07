@@ -3,19 +3,19 @@
   "client": {
     "num_vm": 0,
     "type": "m5a.large",
-    "regions": "sfo,pdx"
+    "regions": "iad,sfo,cmh,pdx"
   },
   "leader": {
     "num_vm": 1,
     "type": "c5.large",
-    "regions": "sfo,pdx",
+    "regions": "iad,sfo,cmh,pdx",
     "protection": false,
     "root": 10
   },
   "explorer_node": {
     "num_vm": 1,
     "type": "c5.large",
-    "regions": "sfo,pdx",
+    "regions": "iad,sfo,cmh,pdx",
     "root": 25,
     "userdata": "userdata-systemd-static-exp.sh",
     "protection": false
