@@ -81,7 +81,7 @@ shift $(( OPTIND - 1 ))
 
 #### cmdline checking ####
 case ${net_profile} in
-   os|stn|pstn|mkeys|dryrun)
+   os|stn|pstn|mkeys|dryrun|p2p)
       msg "profile: ${net_profile}"
       export HMY_PROFILE=${net_profile}
       ;;
@@ -457,6 +457,9 @@ case $net_profile in
    stn) network=stn
        dbprefix=stressnet
        release=stressnet;;
+   p2p) network=p2p
+       dbprefix=p2p
+       release=p2p;;
    ps) network=pstn
        dbprefix=partnernet
        release=partner;;
