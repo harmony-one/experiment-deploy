@@ -8,24 +8,19 @@ variable "blskey_index" {
   default     = "0"
 }
 
-variable "node_location" {
-  description = "the location of Azure vm for node"
-  default     = "westus2"
+variable "network" {
+  description = "the network of Azure vm for node"
+  default     = "mainnet"
 }
 
-variable "resource_group_name" {
-  description = "the name of Azure resource group for node"
-  default     = "haodi-test"
+variable "location" {
+  description = "the location of Azure vm for node"
+  default     = "eastus"
 }
 
 variable "vm_size" {
   description = "The size of the Azure vm"
   default     = "Standard_A2_v2"
-}
-
-// TODO
-variable "sub_net" {
-  default = "/subscriptions/5515ae82-ddcc-4548-a8a7-050512f095fe/resourceGroups/haodi-test/providers/Microsoft.Network/virtualNetworks/haodi-test-network/subnets/default"
 }
 
 variable "ssh_private_key_path" {
@@ -42,7 +37,18 @@ variable "default_key" {
   default = ""
 }
 
-variable "harmony_nodes_blskeys" {
+variable "harmony_sentry_node_blskeys" {
+  description = "The set of Harmony Sentry Node BlsKey"
+  type        = map(string)
+  default = {
+    "0"   = "1484952d700eeddecbcc5093e38628e7f342b1974d411858b21ab5eeddd3411c185b38a22537b95a3c29bcbd7124d383"
+    "1"   = "37644619ae24ffa2ab63dde85f8116effddaa500c6e28c57a5f100cb8a97262ed97f671d903a9c32a53301eec1100b96"
+    "2"   = "19101de3d0578c3146a1904f25a3344a998dcb0a18433dc5cc977d05f378676b0652b4a64fa8dff6c819cfd52dc94c14"
+    "3"   = "f531f442dc19d2967fbcdcab68e77b16bc49cd05698ed8a56b39f3704315915c2b2b0175be6982be7238290b3504d487"
+  }
+}
+
+variable "harmony_node_blskeys" {
   description = "The set of Harmony Node BlsKey"
   type        = map(string)
   default = {

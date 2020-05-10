@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-SSH='ssh -i ~/.ssh/do-node.pem -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
+SSH='ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o LogLevel=error -o ConnectTimeout=5 -o GlobalKnownHostsFile=/dev/null'
 
 function usage
 {
    local me=$(basename $0)
    cat<<EOT
 Usage: $me blskey_index
-This is a wrapper script used to manage/launch the DO nodes using terraform scripts.
+This is a wrapper script used to manage/launch the Azure nodes using terraform scripts.
 PREREQUISITE:
 * this script can only be run on devop.hmny.io host.
 * make sure you have set AZURE_CLIENT_SECRET environment variable.
@@ -28,9 +28,6 @@ EOT
 
    exit 0
 }
-
-declare -A gzones
-declare -a allzones
 
 function init_check
 {
@@ -64,8 +61,10 @@ function get_regions
    i=0
    while read -r line; do
       read location up <<< $line
-      alllocations[$i]=$location
-      (( i++ ))
+      if [ $up == "UP" ]; then
+         alllocations[$i]=$location
+         (( i++ ))
+      fi
    done < r.list
 }
 
@@ -78,7 +77,7 @@ function _do_launch_one
       return
    fi
 
-   if [[ $index -le 0 || $index -ge 680 ]]; then
+   if [[ $index -lt 0 || $index -ge 680 ]]; then
       echo index: $index is out of bound, ignoring
       return
    fi
@@ -87,14 +86,14 @@ function _do_launch_one
 
    shard=$(( $index % 4 ))
 
-   terraform apply -var "blskey_index=$index" -var "node_location=$location" -var "shard=$shard" -auto-approve || return
+   terraform apply -var "blskey_index=$index" -var "shard=$shard" -var "location=$location"  -auto-approve || return
    sleep 3
    IP=$(terraform output | grep 'public_ip = ' | awk -F= ' { print $2 } ' | tr -d ' ')
    sleep 1
-   mv -f terraform.tfstate states/terraform.tfstate.do.$index
+   mv -f terraform.tfstate states/terraform.tfstate.azure.$index
 
    # reboot the instance to ensure selinux is disabled - DO only
-   $SSH hmy@$IP './reboot.sh'
+   $SSH hmy@$IP 'sudo ./reboot.sh'
 }
 
 function new_instance
@@ -116,10 +115,10 @@ function rclone_sync
    else
      folder=mainnet
    fi
+
    for ip in $ips; do
-      # leave enough time to make sure the new droplet properly launched
-      sleep 15
-      $SSH hmy@$ip 'nohup /home/hmy/rclone.sh $folder > rclone.log 2> rclone.err < /dev/null &'
+      sleep 5
+      $SSH hmy@$ip "nohup /home/hmy/rclone.sh $folder > rclone.log 2> rclone.err < /dev/null &"
    done
 }
 
@@ -127,6 +126,7 @@ function do_wait
 {
    ips=$@
    declare -A DONE
+
    for ip in $ips; do
       DONE[$ip]=false
    done
@@ -189,8 +189,8 @@ SYNC=false
 while getopts "hvS" option; do
    case $option in
       v) VERBOSE=true ;;
-      h|?|*) usage ;;
       S) SYNC=true ;;
+      h|?|*) usage ;;
    esac
 done
 
