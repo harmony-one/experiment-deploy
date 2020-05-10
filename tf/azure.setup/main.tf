@@ -5,10 +5,15 @@ provider "azurerm" {
   features {}
 }
 
+resource "azurerm_resource_group" "main" {
+  name     = "${var.network}-${var.location}"
+  location = var.location
+}
+
 resource "azurerm_network_security_group" "main" {
   name                = "${var.network}-${var.location}-nsg"
   location            = var.location
-  resource_group_name = "${var.network}-${var.location}"
+  resource_group_name = azurerm_resource_group.main.name
 
   security_rule {
     name                       = "harmony"
@@ -50,13 +55,13 @@ resource "azurerm_network_security_group" "main" {
 resource "azurerm_network_ddos_protection_plan" "main" {
   name                = "${var.network}-${var.location}-ndpp"
   location            = var.location
-  resource_group_name = "${var.network}-${var.location}"
+  resource_group_name = azurerm_resource_group.main.name
 }
 
 resource "azurerm_virtual_network" "main" {
   name                = "${var.network}-${var.location}-vn"
   location            = var.location
-  resource_group_name = "${var.network}-${var.location}"
+  resource_group_name = azurerm_resource_group.main.name
   address_space       = ["10.0.0.0/8"]
 
   ddos_protection_plan {
