@@ -6,6 +6,7 @@
     - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml'
     - '{{ ansible_distribution }}.yml'
     - '{{ ansible_os_family }}.yml'
+    - '{{ cloud_platform }}-{{ ansible_distribution }}.yml'
   tags:
     - vars
 
@@ -37,7 +38,7 @@
     msg: ver={{ ver }}
 
 - name: download harmony binaries
-  shell: "{{ USER.home }}/node.sh -I -N staking -d && mv -f staging/harmony {{ USER.home }} > node.log 2> node.err"
+  shell: "{{ USER.home }}/node.sh -N {{ network }} -d && mv -f staging/harmony {{ USER.home }} > node.log 2> node.err"
 
 - name: get harmony version
   shell: "{{ USER.home }}/node.sh -V"
@@ -47,17 +48,10 @@
   debug:
     msg: Ver={{ Ver }}
 
-- name: copy validator node harmony service files
-  copy:
-    src: harmony.service
-    dest: /lib/systemd/system
-  when: "'exp' not in inventory"
-
-- name: copy explorer node harmony service files
-  copy:
-    src: harmony.explorer.service
-    dest: /lib/systemd/system/harmony.service
-  when: "'exp' in inventory"
+- name: copy harmony service files
+  template:
+    src: harmony.service.j2
+    dest: "{{ USER.home }}/harmony.service"
 
 - name: create .hmy/blskeys directory
   file:
