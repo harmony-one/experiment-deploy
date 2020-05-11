@@ -106,7 +106,7 @@
   },
   "multikey": {
      "enable": true,
-     "keys_per_node": 3,
+     "keys_per_node": 1,
      "blskey_folder": ".hmy/blskeys"
   },
   "sentry1": {
