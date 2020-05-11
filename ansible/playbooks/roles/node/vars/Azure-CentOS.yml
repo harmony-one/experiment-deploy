@@ -1,0 +1,11 @@
+---
+
+PACKAGES:
+   - unzip
+   - bind-utils
+   - psmisc
+
+USER:
+  user: hmy
+  group: hmy
+  home: /home/hmy
