@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 TOOL_BUCKET=haochen-harmony-pub
-KEYS=( bucket folder snapshot shard cleanup )
+KEYS=( bucket folder snapshot shard cleanup restart )
 declare -A CONFIG_KV
 
 # This script is used to install harmony_db_* snapshot into the node
@@ -14,7 +14,8 @@ declare -A CONFIG_KV
 #   "folder": "mainnet.min",
 #   "snapshot": "snapshot.20200504",
 #   "shard": "all",
-#   "cleanup": true
+#   "cleanup": true,
+#   "restart": true
 # }
 #
 # [Release]
@@ -88,7 +89,7 @@ download_config() {
 parse_config() {
    for key in "${KEYS[@]}"; do
       local value
-      value=$(jq -r ".${key}" "${CONFIGFILE}")
+      value=$(jq -r ".${key}" "$HOME/$NOW/${CONFIGFILE}")
       CONFIG_KV[$key]=$value
       echo "$key => ${CONFIG_KV[$key]}"
    done
@@ -210,7 +211,9 @@ stop_harmony || exit 5
 
 replace_db || exit 6
 
-restart_harmony || exit 7
+if [ "${CONFIG_KV[restart]}" = "true" ]; then
+   restart_harmony || exit 7
+fi
 
 popd &> /dev/null
 

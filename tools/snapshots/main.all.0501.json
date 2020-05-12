@@ -3,5 +3,6 @@
    "folder": "mainnet.min",
    "snapshot": "snapshot.20200501",
    "shard": "all",
+   "restart": true,
    "cleanup": true
 }
