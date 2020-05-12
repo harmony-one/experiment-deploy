@@ -31,6 +31,8 @@ print_usage() {
       -y          say yes to cmd confirmation
 
       -w time     how long to wait before starting to fund accounts
+      -U          do upgrade during soft_reset
+                  (default: $do_upgrade)
 
       shard       the shard number, such as 0-3 ('all' means all shards)
 
@@ -56,13 +58,14 @@ ENDEND
 }
 
 ######### variables #########
-unset -v net_profile force_yes network dbprefix wait_time
+unset -v net_profile force_yes network dbprefix wait_time do_upgrade
 force_yes=false
 net_profile=
 wait_time=10m
+do_upgrade=false
 unset -v OPTIND OPTARG opt
 OPTIND=1
-while getopts :o:p:yw: opt
+while getopts ":o:p:yw:U" opt
 do
    case "${opt}" in
    '?') usage "unrecognized option -${OPTARG}";;
@@ -74,6 +77,7 @@ do
       ;;
    y) force_yes=true;;
    w) wait_time="${OPTARG}";;
+   U) do_upgrade=true;;
    *) err 70 "unhandled option -${OPTARG}";;
    esac
 done
@@ -123,8 +127,12 @@ function hard_reset_shard
 function soft_reset_shard
 {
    local shard=$1
-   msg "cat $logdir/shard${shard}.txt | xargs -i% -P50 bash -c \"./restart_node.sh -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %\""
-   cat "$logdir/shard${shard}.txt" | xargs -i% -P50 bash -c "./restart_node.sh -y -d logs/${net_profile} -p ${net_profile} -t 0 -r 0 -R 0 %"
+   local options="-t 0 -r 0 -R 0"
+   if $do_upgrade; then
+      options+=" -U"
+   fi
+   msg "cat $logdir/shard${shard}.txt | xargs -i% -P50 bash -c \"./restart_node.sh -y -d logs/${net_profile} -p ${net_profile} ${options} %\""
+   cat "$logdir/shard${shard}.txt" | xargs -i% -P50 bash -c "./restart_node.sh -y -d logs/${net_profile} -p ${net_profile} ${options} %"
 }
 
 function check_consensus
@@ -171,7 +179,7 @@ function do_jenkins_release
    if [ ! -z "${JENKINS_CREDENTIALS}" ]; then
       local params="{'parameter': [{'name':'BRANCH', 'value':'master'}, {'name':'BRANCH_RELEASE', 'value':false}, {'name':'BUILD_TYPE', 'value':'release'}, {'name':'NETWORK', 'value':'${release}'}, {'name':'STATIC_BINARY', 'value':true}]}"
       curl -X POST https://jenkins.harmony.one/job/harmony-release/build?token=harmony-release \
-         --user $JENKINS_CREDENTIALS \
+         --user "$JENKINS_CREDENTIALS" \
          --data-urlencode json="${params}"
    fi
 }
@@ -227,7 +235,7 @@ function start_regression_tests
       msg "starting regression tests"
       local params="{'parameter': [{'name':'Network', 'value':'${net_profile^^}'}, {'name':'Run', 'value':'All tests'}]}"
       curl -X POST https://jenkins.harmony.one/job/regression_test/build?token=regression_test \
-         --user $JENKINS_CREDENTIALS \
+         --user "$JENKINS_CREDENTIALS" \
          --data-urlencode json="${params}"
    fi
 }
@@ -396,7 +404,7 @@ function do_reset
 
    msg "do funding and faucet. waiting for ${wait_time} ..."
    # FIXME: when to do the funding and not breaking consensus. 10m is 2 epoch.
-   sleep $wait_time
+   sleep "$wait_time"
 
    do_funding
    # do_jenkins_release # disable for now - needs more testing
