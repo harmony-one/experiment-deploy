@@ -241,6 +241,53 @@ probe_node_type() {
 	explorer_shard="${3}"
 }
 
+probe_node_type_new() {
+	local output
+	if ! output="$(node_ssh "${ip}" '
+		if [ "X$(sudo systemctl is-enabled harmony.service)" = "Xenabled" ]
+		then
+			echo tf
+		else
+			echo legacy
+		fi
+		if [ -n "$(ls explorer_storage_* 2> /dev/null)" ]
+		then
+			echo true
+			for dbdir in harmony_db_*
+			do
+				[ -d "${dbdir}" ] || continue
+				shard="${dbdir#harmony_db_}"
+			done
+			echo "${shard:-unknown}"
+		else
+			echo false n/a
+		fi
+	')"
+	then
+		rn_warning "cannot determine node type"
+		return 1
+	fi
+	set -- ${output}
+	rn_info "node type ${1}; is explorer ${2}; explorer shard ${3}"
+	case "${2}" in
+	false|true)
+		;;
+	*)
+		rn_warning "invalid explorer node indication $(shell_quote "${2}")"
+		return 1
+		;;
+	esac
+	case "${2}:${3}" in
+	true:unknown)
+		rn_warning "cannot get explorer shard"
+		return 1
+		;;
+	esac
+	node_type="${1}"
+	is_explorer="${2}"
+	explorer_shard="${3}"
+}
+
 unset -v dns_zone
 get_dns_zone() {
 	rn_info "getting DNS zone with which to restart nodes"
@@ -611,7 +658,7 @@ wait_for_consensus() {
 
 # HERE BE DRAGONS
 
-run_with_retries probe_node_type
+run_with_retries probe_node_type_new
 get_dns_zone
 find_initfile
 get_launch_params
