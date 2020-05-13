@@ -37,6 +37,7 @@ function check_node_sh() {
 
 function launch_validator() {
   local network=$1
+  local archival=$2
   local bls_pass=$HOME/bls.pass
   local bls_keys_dir="$HOME/.hmy/blskeys"
   if [ ! -d "$bls_keys_dir" ]; then
@@ -51,7 +52,11 @@ function launch_validator() {
     echo "bls passphrase file not found at $bls_pass , exiting..."
     exit 5
   fi
-  $node_sh_path -1 -N "$network" -S -P -p "$bls_pass" -M -D -f "$bls_keys_dir"
+  if [ "$archival" == "true" ]; then
+    $node_sh_path -1 -N "$network" -S -P -p "$bls_pass" -M -D -f "$bls_keys_dir" -A
+  else
+    $node_sh_path -1 -N "$network" -S -P -p "$bls_pass" -M -D -f "$bls_keys_dir"
+  fi
 }
 
 function launch_explorer() {
@@ -65,15 +70,17 @@ function launch_explorer() {
 }
 
 # Script Main
-unset node_type node_shard network OPTIND OPTARG opt
+unset node_type node_shard network archival OPTIND OPTARG opt
 network=mainnet
 node_type=validator
 node_shard=
-while getopts N:n:s: opt; do
+archival=false
+while getopts N:n:s:a: opt; do
   case "${opt}" in
   N) network="${OPTARG}" ;;
   n) node_type="${OPTARG}" ;;
   s) node_shard="${OPTARG}" ;;
+  a) archival="${OPTARG}" ;;
   *)
     echo "
      Internal node launch script help message
@@ -83,9 +90,10 @@ while getopts N:n:s: opt; do
      launch-node.sh -N mainnet -n explorer -s 2
 
      Option:         Help:
-     -N <network>    specify node network (mainnet, testnet, staking, partner, stress, devnet, tnet; default: mainnet)
-     -n <type>       specify node type (validator, explorer; default: validator)
-     -s <shard>      specify node shard (only required for explorer node type)"
+     -N <network>    specify node network (options are from node.sh; default: mainnet)
+     -n <type>       specify node type (options are from node.sh; default: validator)
+     -s <shard>      specify node shard (only required for explorer node type)
+     -a true|false   specify node is archival (explorer is always archival)"
     exit
     ;;
   esac
@@ -100,7 +108,7 @@ fi
 check_node_type "$node_type" "$node_shard"
 check_node_sh
 if [ "$node_type" == "validator" ]; then
-  launch_validator "$network"
+  launch_validator "$network" "$archival"
 else
   launch_explorer "$network" "$node_shard"
 fi

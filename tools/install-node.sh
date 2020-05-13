@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+# This script installs a harmony node (for internally ran nodes).
+# The following assumptions are made:
+#   1) BLS keys are in the path set by local var in the `launch_validator` function of launch-node.sh
+#   2) BLS passphrase for all keys are the same & passphrases are taken as a plain text by the file
+#        at a path set by local var in the `launch_validator` function of launch-node.sh
+#   3) Files controlled by the daemon are in the home directory for the user of the harmony node daemon.
+#   4) This install script is ran as the user for the harmony node daemon.
+#
+# Usage:
+#    curl -s -S -L https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh | bash -s <parameter>
+#
+# Example:
+#    curl -s -S -L https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh | bash -s -N mainnet -n validator
+#    curl -s -S -L https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh | bash -s -N mainnet -n validator -a
+#    curl -s -S -L https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh | bash -s -N mainnet -n explorer -s 1
+
 set -e
 
 function install_daemon(){
@@ -13,14 +29,14 @@ After=network.target
 
 [Service]
 Type=simple
-Restart=always
+Restart=on-failure
 RestartSec=1
 StartLimitInterval=0
 StartLimitBurst=0
 User=$USER
 WorkingDirectory=$HOME
 EnvironmentFile=$env_file_path
-ExecStart=$launch_script_path -N \$NETWORK -n \$NODE_TYPE -s \$SHARD
+ExecStart=$launch_script_path -N \$NETWORK -n \$NODE_TYPE -s \$SHARD -a \$ARCHIVAL
 
 [Install]
 WantedBy=multi-user.target
@@ -28,6 +44,7 @@ WantedBy=multi-user.target
   local launchargs="NETWORK=$1
 NODE_TYPE=$2
 SHARD=$3
+ARCHIVAL=$4
 "
   echo "$launchargs" > "$env_file_path"
   curl -o "$launch_script_path" "$launch_script_source" -L
@@ -56,15 +73,17 @@ if (( "$EUID" == 0 )); then
   exit 1
 fi
 
-unset node_type node_shard network OPTIND OPTARG opt
+unset node_type node_shard network archival OPTIND OPTARG opt
 network=mainnet
 node_type=validator
 node_shard=-1
-while getopts N:n:s: opt; do
+archival=false
+while getopts N:n:s:a opt; do
   case "${opt}" in
   N) network="${OPTARG}" ;;
   n) node_type="${OPTARG}" ;;
   s) node_shard="${OPTARG}" ;;
+  a) archival=true ;;
   *)
     echo "
      Internal node install script help message
@@ -74,9 +93,10 @@ while getopts N:n:s: opt; do
      install-node.sh -N mainnet -n explorer -s 2
 
      Option:         Help:
-     -N <network>    specify node network (mainnet, testnet, staking, partner, stress, devnet, tnet; default: mainnet)
-     -n <type>       specify node type (validator, explorer; default: validator)
-     -s <shard>      specify node shard (only required for explorer node type)"
+     -N <network>    specify node network (options are from node.sh; default: mainnet)
+     -n <type>       specify node type (options are from node.sh; default: validator)
+     -s <shard>      specify node shard (only required for explorer node type)
+     -a              toggle node is archival (explorer is always archival)"
     exit
     ;;
   esac
@@ -89,4 +109,4 @@ if [ $# -ne 0 ]; then
 fi
 
 install_node_sh
-install_daemon "$network" "$node_type" "$node_shard"
+install_daemon "$network" "$node_type" "$node_shard" "$archival"
