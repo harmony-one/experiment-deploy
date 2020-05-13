@@ -9,12 +9,12 @@
 #   4) This install script is ran as the user for the harmony node daemon.
 #
 # Usage:
-#    curl -s -S -L https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh | bash -s <parameter>
+#    bash <(curl -s https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh) <parameter>
 #
 # Example:
-#    curl -s -S -L https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh | bash -s -N mainnet -n validator
-#    curl -s -S -L https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh | bash -s -N mainnet -n validator -a
-#    curl -s -S -L https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh | bash -s -N mainnet -n explorer -s 1
+#    bash <(curl -s https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh) -N mainnet -n validator
+#    bash <(curl -s https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh) -N mainnet -n validator -a
+#    bash <(curl -s https://raw.githubusercontent.com/harmony-one/experiment-deploy/master/tools/install-node.sh) -N mainnet -n explorer -s 1
 
 set -e
 
