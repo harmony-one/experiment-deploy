@@ -30,7 +30,7 @@ NODE_TYPE=$2
 SHARD=$3
 "
   echo "$launchargs" > "$env_file_path"
-  curl -oL "$launch_script_path" "$launch_script_source"
+  curl -o "$launch_script_path" "$launch_script_source" -L
   chmod +x "$launch_script_path"
   sudo echo "$service_file" | sudo tee "$service_file_path" > /dev/null
   sudo chmod 644 "$service_file_path"
@@ -43,7 +43,7 @@ function install_node_sh(){
   local node_sh_path="$HOME/node.sh"
   if [ ! -f "$node_sh_path" ]; then
     echo "node.sh not found at $node_sh_path , downloading it from $node_sh_source ..."
-    curl -oL "$node_sh_path" "$node_sh_source"
+    curl -o "$node_sh_path" "$node_sh_source" -L
   fi
   chmod +x "$node_sh_path"
   sudo "$node_sh_path" -s
@@ -59,7 +59,7 @@ fi
 unset node_type node_shard network OPTIND OPTARG opt
 network=mainnet
 node_type=validator
-node_shard=
+node_shard=-1
 while getopts N:n:s: opt; do
   case "${opt}" in
   N) network="${OPTARG}" ;;
