@@ -108,5 +108,10 @@ if [ $# -ne 0 ]; then
   exit 2
 fi
 
+if pgrep harmony; then
+  echo "harmony process is running, stop process before installing..."
+  exit 3
+fi
+
 install_node_sh
 install_daemon "$network" "$node_type" "$node_shard" "$archival"
