@@ -659,10 +659,12 @@ wait_for_consensus() {
 # HERE BE DRAGONS
 
 run_with_retries probe_node_type_new
-get_dns_zone
-find_initfile
-get_launch_params
-run_with_retries get_logfile
+# get_dns_zone
+# find_initfile
+# get_launch_params
+if [ "${timeout}" -gt "0" ]; then
+	run_with_retries get_logfile
+fi
 unset -v cycles_left cycle_ok
 cycles_left=${cycle_retries}
 while :
@@ -679,14 +681,18 @@ do
 			run_with_retries copy_blspass || break
 		fi
 		run_with_retries kill_harmony || break
-# no need to clean explorer db anymore
-#		run_with_retries cleanup_exp_db || break
-		run_with_retries wait_for_harmony_process_to_exit || break
+		if [ "${timeout}" -gt "0" ]
+		then
+			run_with_retries wait_for_harmony_process_to_exit || break
+		fi
 		if ${upgrade}
 		then
 			run_with_retries upgrade_binaries || break
 		fi
-		run_with_retries get_logfile_size || break
+		if [ "${timeout}" -gt "0" ]
+		then
+			run_with_retries get_logfile_size || break
+		fi
 		if ${clean_dht}
 		then
 			run_with_retries clean_dht || break
@@ -696,7 +702,10 @@ do
 			run_with_retries clean_db || break
 		fi
 		run_with_retries start_harmony || break
-		wait_for_consensus || break
+		if [ "${timeout}" -gt "0" ]
+		then
+			wait_for_consensus || break
+		fi
 		break 2
 	done
 	case $((${cycles_left} > 0)) in
