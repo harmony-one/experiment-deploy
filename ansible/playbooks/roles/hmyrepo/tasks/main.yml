@@ -1,0 +1,17 @@
+---
+- name: gather Cloud/OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - '{{ ansible_bios_version }}-{{ ansible_distribution }}.yml'
+    - "{{ cloud_platform }}-{{ ansible_distribution }}.yml"
+  tags:
+    - vars
+
+- git:
+   repo: 'https://github.com/harmony-one/harmony-dashboard.git'
+   dest: "{{ USER.home }}/harmony-dashboard"
+
+- name: install npm packages
+  npm:
+   path: "{{ USER.home }}/harmony-dashboard"
+   state: latest
