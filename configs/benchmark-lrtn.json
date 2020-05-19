@@ -7,7 +7,7 @@
   },
   "leader": {
     "num_vm": 1,
-    "type": "m5a.large",
+    "type": "c5.large",
     "regions": "iad,sfo,cmh,pdx",
     "protection": false,
     "root": 15
