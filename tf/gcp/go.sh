@@ -167,6 +167,15 @@ function rclone_sync
    done
 }
 
+# copy bls.pass to .hmy/blskeys
+function copy_mk_pass
+{
+   ips=$@
+   for ip in $ips; do
+      $SSH gce-user@$ip 'cd .hmy/blskeys; for f in *.key; do p=${f%%.key}; cp /home/gce-user/bls.pass $p.pass; done'
+   done
+}
+
 # new host with multiple bls keys
 function do_new_mk
 {
@@ -196,6 +205,7 @@ function do_new_mk
    _do_launch_one ${indexes[0]} $tag
    gcloud compute instances add-labels $NAME --zone $zone --labels="name=s${shard}-${i_name}-${tag},shard=${shard},index=${tag},type=validator"
 
+   copy_mk_pass $IP
    rclone_sync $IP
    do_wait $IP
 }
