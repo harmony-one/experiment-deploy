@@ -4,31 +4,7 @@
          "region": "iad",
          "type": "c5.large",
          "ondemand": 0,
-         "spot": 4,
-         "protection": false,
-         "root": 15
-      },
-      {
-         "region": "sfo",
-         "type": "c5.large",
-         "ondemand": 0,
-         "spot": 4,
-         "protection": false,
-         "root": 15
-      },
-      {
-         "region": "cmh",
-         "type": "c5.large",
-         "ondemand": 0,
-         "spot": 4,
-         "protection": false,
-         "root": 15
-      },
-      {
-         "region": "pdx",
-         "type": "c5.large",
-         "ondemand": 0,
-         "spot": 4,
+         "spot": 16,
          "protection": false,
          "root": 15
       }
@@ -39,3 +15,4 @@
    },
    "batch": 100
 }
+
