@@ -172,7 +172,7 @@ WantedBy=multi-user.target
 }
 
 # deploy node exporter
-setup_node_exporter
+# setup_node_exporter
 
 # start harmony service
 setup_harmony_service

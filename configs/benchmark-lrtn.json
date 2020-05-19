@@ -1,21 +1,21 @@
 {
-  "description": "aws 20 nodes on 4 shard in 4 region",
+  "description": "aws 20 nodes on 4 shard in 1 region",
   "client": {
     "num_vm": 0,
     "type": "m5a.large",
-    "regions": "iad,sfo,cmh,pdx"
+    "regions": "iad"
   },
   "leader": {
-    "num_vm": 1,
+    "num_vm": 4,
     "type": "c5.large",
-    "regions": "iad,sfo,cmh,pdx",
+    "regions": "iad",
     "protection": false,
     "root": 15
   },
   "explorer_node": {
-    "num_vm": 1,
+    "num_vm": 4,
     "type": "m5.large",
-    "regions": "iad,sfo,cmh,pdx",
+    "regions": "iad",
     "root": 40,
     "userdata": "userdata-systemd-static-lrtn-exp.sh",
     "protection": false
@@ -55,7 +55,7 @@
     "crosstx": 30,
     "attacked_mode": 0,
     "peer_per_shard": 15,
-    "minpeer": 3,
+    "minpeer": 4,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
@@ -96,7 +96,7 @@
      "wait_for_launch": 60,
      "reserved_account": "",
      "rpczone": "b",
-     "rpcnode": 3
+     "rpcnode": 4
   },
   "bls": {
      "pass": "blsnopass.txt",
@@ -112,3 +112,4 @@
   "genesis": "genesis.txt",
   "libp2p": true
 }
+
