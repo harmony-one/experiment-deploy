@@ -1,43 +1,44 @@
 {
-  "description": "aws 30 nodes on 3 shard in one region",
+  "description": "aws 20 nodes on 4 shard in 4 region",
   "client": {
     "num_vm": 0,
-    "type": "t3.medium",
-    "regions": "iad"
+    "type": "m5a.large",
+    "regions": "iad,sfo,cmh,pdx"
   },
   "leader": {
-    "num_vm": 3,
-    "type": "t3.small",
-    "regions": "iad",
+    "num_vm": 1,
+    "type": "m5a.large",
+    "regions": "iad,sfo,cmh,pdx",
     "protection": false,
-    "root": 35
+    "root": 15
   },
   "explorer_node": {
-    "num_vm": 3,
-    "type": "t3.small",
-    "regions": "iad",
-    "root": 50,
+    "num_vm": 1,
+    "type": "m5.large",
+    "regions": "iad,sfo,cmh,pdx",
+    "root": 40,
+    "userdata": "userdata-systemd-static-lrtn-exp.sh",
     "protection": false
   },
   "bootnode": {
      "enable": true,
      "server": "52.40.84.2",
      "name": "b6.harmony.one",
-     "port": 9866,
+     "port": 9850,
      "user": "ec2-user",
      "key": "oregon-key-benchmark.pem",
      "p2pkey": "b2-9870.key",
-     "log_conn": false
+     "log_conn": true
   },
   "bootnode1": {
      "enable": true,
      "server": "54.86.126.90",
      "name": "b5.harmony.one",
-     "port": 9866,
+     "port": 9850,
      "user": "ec2-user",
      "key": "virginia-key-benchmark.pem",
      "p2pkey": "b1-9870.key",
-     "log_conn": false
+     "log_conn": true
   },
   "azure": {
     "num_vm": 0,
@@ -48,17 +49,17 @@
     ]
   },
   "benchmark": {
-    "shards": 3,
+    "shards": 4,
     "duration": 120,
     "dashboard": false,
     "crosstx": 30,
     "attacked_mode": 0,
-    "peer_per_shard": 10,
-    "minpeer": 7,
+    "peer_per_shard": 15,
+    "minpeer": 3,
     "log_conn": false,
     "even_shard": true,
     "init_retry": false,
-    "commit_delay": "0s",
+    "commit_delay": "2s",
     "network_type": "testnet",
     "bls": true
   },
@@ -75,7 +76,7 @@
     "reset": "false"
   },
   "explorer": {
-    "name": "explorer.harmony.one",
+    "name": "explorer.b.hmny.io",
     "port": 4444,
     "reset": "false"
   },
@@ -102,6 +103,11 @@
      "bucket": "harmony-secret-keys",
      "folder": "bls-test",
      "keyfile": "blskey-test.txt"
+  },
+  "multikey": {
+     "enable": true,
+     "keys_per_node": 3,
+     "blskey_folder": ".hmy/blskeys"
   },
   "genesis": "genesis.txt",
   "libp2p": true

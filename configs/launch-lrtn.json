@@ -2,16 +2,40 @@
    "launch": [
       {
          "region": "iad",
-         "type": "t3.small",
+         "type": "c5.large",
          "ondemand": 0,
-         "spot": 27,
+         "spot": 4,
          "protection": false,
-         "root": 35
+         "root": 15
+      },
+      {
+         "region": "sfo",
+         "type": "c5.large",
+         "ondemand": 0,
+         "spot": 4,
+         "protection": false,
+         "root": 15
+      },
+      {
+         "region": "cmh",
+         "type": "c5.large",
+         "ondemand": 0,
+         "spot": 4,
+         "protection": false,
+         "root": 15
+      },
+      {
+         "region": "pdx",
+         "type": "c5.large",
+         "ondemand": 0,
+         "spot": 4,
+         "protection": false,
+         "root": 15
       }
    ],
    "userdata": {
       "name": "http",
-      "file": "userdata-soldier-http.sh.aws"
+      "file": "userdata-systemd-static-lrtn.sh"
    },
    "batch": 100
 }
