@@ -1,6 +1,7 @@
 ---
 PACKAGES:
    - jq
+   - git
 
 USER:
    user: ec2-user

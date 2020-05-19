@@ -9,3 +9,9 @@ watchdog.hmny.io
 
 [jenkins]
 jenkins.harmony.one
+
+[explorer]
+34.209.169.84
+
+[explorer:vars]
+cloud_platform=AWS
