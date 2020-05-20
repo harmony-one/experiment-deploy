@@ -1,7 +1,6 @@
 [Unit]
 Description=harmony service
 After=network.target
-StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -12,12 +11,13 @@ WorkingDirectory={{ USER.home }}
 {% if 'exp' in inventory %}
 ExecStart={{ USER.home }}/node.sh -N {{ network }} -p {{ USER.home }}/.hmy/blskeys/bls.pass -T explorer -i 0 -A -S -M -D -P -1
 {% else %}
-{% if network in ['staking'] %}
 ExecStart={{ USER.home }}/node.sh -z -N {{ network }} -p {{ USER.home }}/.hmy/blskeys/bls.pass -S -M -D -P -1
-{% else %}
-ExecStart={{ USER.home }}/node.sh -N {{ network }} -p {{ USER.home }}/.hmy/blskeys/bls.pass -S -M -D -P -1
 {% endif %}
-{% endif %}
+StandardError=syslog
+SyslogIdentifier=harmony
+StartLimitInterval=0
+LimitNOFILE=65536
+LimitNPROC=65536
 
 [Install]
 WantedBy=multi-user.target
