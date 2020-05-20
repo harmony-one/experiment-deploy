@@ -115,7 +115,8 @@ do_merge_ip() {
 
 _copy_key() {
    for k in "${KEYS[@]}"; do
-      cat "$KEYDIR/${k}.key" | ./node_ssh.sh -p "${profile}" "$merged" "mkdir -p .hmy/blskeys; cat >> .hmy/blskeys/${k}.key2"
+      cat "$KEYDIR/${k}.key" | ./node_ssh.sh -p "${profile}" "$merged" "cat - > .hmy/blskeys/${k}.key"
+      ./node_ssh.sh -p "${profile}" "$merged" "cp bls.pass .hmy/blskeys/${k}.pass"
       echo "copying ${k}.key to $merged"
    done
 }

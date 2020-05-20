@@ -1,7 +1,8 @@
 ---
+
 PACKAGES:
-   - jq
-   - git
+   - unzip
+   - npm
 
 USER:
    user: ec2-user

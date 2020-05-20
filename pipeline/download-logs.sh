@@ -48,7 +48,16 @@ function _download_logs_one_shard
    logdir=logs/$PROFILE/logs/shard${shard}
    mkdir -p $logdir
 
-   cat logs/$PROFILE/shard${shard}.txt | xargs -P ${PARALLEL} -I% bash -c "mkdir -p $logdir/%; ${SCP} %:latest/* $logdir/%/"
+   # mainnet profile use different user name on different nodes
+   case "$PROFILE" in
+      s3)
+         cat logs/$PROFILE/shard${shard}{tf,lg}.txt | xargs -P ${PARALLEL} -I% bash -c "mkdir -p $logdir/%; ${SCP} ec2-user@%:latest/* $logdir/%/"
+         cat logs/$PROFILE/shard${shard}gcp.txt | xargs -P ${PARALLEL} -I% bash -c "mkdir -p $logdir/%; ${SCP} gce-user@%:latest/* $logdir/%/"
+         ;;
+      *)
+         cat logs/$PROFILE/shard${shard}.txt | xargs -P ${PARALLEL} -I% bash -c "mkdir -p $logdir/%; ${SCP} ec2-user@%:latest/* $logdir/%/"
+         ;;
+   esac
 }
 
 function sync_log
@@ -113,7 +122,16 @@ function _cleanup_logs_one_shard
    local shard=$1
    logging cleanup log in shard: $shard
 
-   cat logs/$PROFILE/shard${shard}.txt | xargs -P ${PARALLEL} -I% bash -c "${SSH} % 'rm -f latest/*.gz'"
+   # mainnet profile use different user name on different nodes
+   case "$PROFILE" in
+      s3)
+         cat logs/$PROFILE/shard${shard}{tf,lg}.txt | xargs -P ${PARALLEL} -I% bash -c "${SSH} ec2-user@% 'rm -f latest/*.gz'"
+         cat logs/$PROFILE/shard${shard}gcp.txt | xargs -P ${PARALLEL} -I% bash -c "${SSH} gce-user@% 'rm -f latest/*.gz'"
+         ;;
+      *)
+         cat logs/$PROFILE/shard${shard}.txt | xargs -P ${PARALLEL} -I% bash -c "${SSH} ec2-user@% 'rm -f latest/*.gz'"
+         ;;
+   esac
 }
 
 function cleanup_logs
@@ -152,7 +170,7 @@ while getopts ":s:p:P:i:" option; do
    esac
 done
 
-shift $(($OPTIND-1))
+shift $(( OPTIND - 1 ))
 
 read_profile $BENCHMARK_FILE
 

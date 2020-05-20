@@ -241,6 +241,53 @@ probe_node_type() {
 	explorer_shard="${3}"
 }
 
+probe_node_type_new() {
+	local output
+	if ! output="$(node_ssh "${ip}" '
+		if [ "X$(sudo systemctl is-enabled harmony.service)" = "Xenabled" ]
+		then
+			echo tf
+		else
+			echo legacy
+		fi
+		if [ -n "$(ls explorer_storage_* 2> /dev/null)" ]
+		then
+			echo true
+			for dbdir in harmony_db_*
+			do
+				[ -d "${dbdir}" ] || continue
+				shard="${dbdir#harmony_db_}"
+			done
+			echo "${shard:-unknown}"
+		else
+			echo false n/a
+		fi
+	')"
+	then
+		rn_warning "cannot determine node type"
+		return 1
+	fi
+	set -- ${output}
+	rn_info "node type ${1}; is explorer ${2}; explorer shard ${3}"
+	case "${2}" in
+	false|true)
+		;;
+	*)
+		rn_warning "invalid explorer node indication $(shell_quote "${2}")"
+		return 1
+		;;
+	esac
+	case "${2}:${3}" in
+	true:unknown)
+		rn_warning "cannot get explorer shard"
+		return 1
+		;;
+	esac
+	node_type="${1}"
+	is_explorer="${2}"
+	explorer_shard="${3}"
+}
+
 unset -v dns_zone
 get_dns_zone() {
 	rn_info "getting DNS zone with which to restart nodes"
@@ -611,11 +658,13 @@ wait_for_consensus() {
 
 # HERE BE DRAGONS
 
-run_with_retries probe_node_type
-get_dns_zone
-find_initfile
-get_launch_params
-run_with_retries get_logfile
+run_with_retries probe_node_type_new
+# get_dns_zone
+# find_initfile
+# get_launch_params
+if [ "${timeout}" -gt "0" ]; then
+	run_with_retries get_logfile
+fi
 unset -v cycles_left cycle_ok
 cycles_left=${cycle_retries}
 while :
@@ -632,14 +681,18 @@ do
 			run_with_retries copy_blspass || break
 		fi
 		run_with_retries kill_harmony || break
-# no need to clean explorer db anymore
-#		run_with_retries cleanup_exp_db || break
-		run_with_retries wait_for_harmony_process_to_exit || break
+		if [ "${timeout}" -gt "0" ]
+		then
+			run_with_retries wait_for_harmony_process_to_exit || break
+		fi
 		if ${upgrade}
 		then
 			run_with_retries upgrade_binaries || break
 		fi
-		run_with_retries get_logfile_size || break
+		if [ "${timeout}" -gt "0" ]
+		then
+			run_with_retries get_logfile_size || break
+		fi
 		if ${clean_dht}
 		then
 			run_with_retries clean_dht || break
@@ -649,7 +702,10 @@ do
 			run_with_retries clean_db || break
 		fi
 		run_with_retries start_harmony || break
-		wait_for_consensus || break
+		if [ "${timeout}" -gt "0" ]
+		then
+			wait_for_consensus || break
+		fi
 		break 2
 	done
 	case $((${cycles_left} > 0)) in

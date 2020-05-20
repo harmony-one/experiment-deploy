@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 TOOL_BUCKET=haochen-harmony-pub
-KEYS=( bucket folder snapshot shard cleanup )
+KEYS=( bucket folder snapshot shard cleanup restart )
 declare -A CONFIG_KV
 
 # This script is used to install harmony_db_* snapshot into the node
@@ -14,7 +14,8 @@ declare -A CONFIG_KV
 #   "folder": "mainnet.min",
 #   "snapshot": "snapshot.20200504",
 #   "shard": "all",
-#   "cleanup": true
+#   "cleanup": true,
+#   "restart": true
 # }
 #
 # [Release]
@@ -88,7 +89,7 @@ download_config() {
 parse_config() {
    for key in "${KEYS[@]}"; do
       local value
-      value=$(jq -r ".${key}" "${CONFIGFILE}")
+      value=$(jq -r ".${key}" "$HOME/$NOW/${CONFIGFILE}")
       CONFIG_KV[$key]=$value
       echo "$key => ${CONFIG_KV[$key]}"
    done
@@ -148,20 +149,30 @@ stop_harmony() {
    return 0
 }
 
+_replace_one_db() {
+   local shard=$1
+   backupdir=$(mktemp -u "harmony_db_${shard}.backup.XXXXXX")
+   echo "backup harmony_db_${shard} to $backupdir"
+   mv -f "$HOME/harmony_db_${shard}" "$HOME/$backupdir"
+   mv -f "harmony_db_${shard}" "$HOME/"
+
+   if [ "${CONFIG_KV[cleanup]}" = "true" ]; then
+      rm -rf "${HOME:?}/$backupdir"
+      echo "cleanup: removed $backupdir"
+   fi
+}
+
 replace_db() {
-   for s in {0..3}; do
-      if [ -d "$HOME/harmony_db_${s}" ]; then
-         backupdir=$(mktemp -u harmony_db_${s}.backup.XXXXXX)
-         echo "backup harmony_db_${s} to $backupdir"
-         mv -f "$HOME/harmony_db_${s}" "$HOME/$backupdir"
-         mv harmony_db_${s} "$HOME" || return $?
-         echo "replaced harmony_db_${s}"
-         if [ "${CONFIG_KV[cleanup]}" = "true" ]; then
-            rm -rf "$backupdir"
-            echo "cleanup: removed $backupdir"
-         fi
-      fi
-   done
+   local status=0
+   case "${CONFIG_KV[shard]}" in
+      "all")
+         sid=$(find_shard_id)
+         _replace_one_db 0
+         _replace_one_db "$sid" || status=$?
+         ;;
+      0|1|2|3)
+         _replace_one_db "${CONFIG_KV[shard]}" || status=$?
+   esac
 }
 
 restart_harmony() {
@@ -200,7 +211,9 @@ stop_harmony || exit 5
 
 replace_db || exit 6
 
-restart_harmony || exit 7
+if [ "${CONFIG_KV[restart]}" = "true" ]; then
+   restart_harmony || exit 7
+fi
 
 popd &> /dev/null
 
