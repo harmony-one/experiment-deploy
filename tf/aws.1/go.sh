@@ -250,6 +250,15 @@ function do_wait
    date
 }
 
+# copy bls.pass to .hmy/blskeys
+function copy_mk_pass
+{
+   ips=$@
+   for ip in $ips; do
+      $SSH gce-user@$ip 'cd .hmy/blskeys; for f in *.key; do p=${f%%.key}; cp /home/ec2-user/bls.pass $p.pass; done'
+   done
+}
+
 # new host with multiple bls keys
 function do_new_mk
 {
@@ -279,6 +288,7 @@ function do_new_mk
    _do_launch_one ${indexes[0]}
    aws --profile mainnet --region $REG ec2 create-tags --resources $ID --tags "Key=Name,Value=s${shard}-${i_name}-${tag}" "Key=Shard,Value=${shard}" "Key=Index,Value=${tag}" "Key=Type,Value=node"
 
+   copy_mk_pass $IP
    rclone_sync $IP
    do_wait $IP
 }
