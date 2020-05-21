@@ -1,0 +1,10 @@
+- hosts: '{{ inventory }}'
+  remote_user: '{{ user }}'
+  become: true
+  become_user: root
+  gather_facts: yes
+  roles:
+  - golang 
+
+
+# vim: set expandtab:ts=2
