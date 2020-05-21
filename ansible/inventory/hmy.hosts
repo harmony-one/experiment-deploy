@@ -15,3 +15,11 @@ jenkins.harmony.one
 
 [explorer:vars]
 cloud_platform=AWS
+
+[arm]
+18.205.3.89
+
+[arm:vars]
+go_tarball=go1.14.3.linux-arm64.tar.gz
+go_tarball_checksum=sha256:a7a593e2ee079d83a1943edcd1c9ed2dae7529666fce04de8c142fb61c7cdd3e
+go_version_target="go version go1.14.3 linux/arm64"
