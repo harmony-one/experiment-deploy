@@ -56,7 +56,7 @@ ARCHIVAL=$4
 }
 
 function install_node_sh(){
-  local node_sh_source="https://harmony.one/node.sh"
+  local node_sh_source="https://raw.githubusercontent.com/harmony-one/harmony/t3/scripts/node.sh"
   local node_sh_path="$HOME/node.sh"
   if [ ! -f "$node_sh_path" ]; then
     echo "node.sh not found at $node_sh_path , downloading it from $node_sh_source ..."
