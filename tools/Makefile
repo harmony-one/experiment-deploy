@@ -14,4 +14,7 @@ snapshot_release: install-db-snapshot.sh
 	aws s3 cp test.only.json $(PUBBUCKET)/db_snapshot/test.only.json --acl public-read
 	(pushd snapshots; ./upload.sh)
 
-PHONY: systemd_release exporter_release snapshot_release
+lsof_release: check_lsof.sh
+	aws s3 cp check_lsof.sh $(PUBBUCKET)/check_lsof/install.sh --acl public-read
+
+PHONY: systemd_release exporter_release snapshot_release lsof_release
