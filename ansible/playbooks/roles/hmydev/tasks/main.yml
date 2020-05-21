@@ -1,0 +1,65 @@
+---
+- name: gather Cloud/OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - '{{ ansible_bios_version }}-{{ ansible_distribution }}.yml'
+    - "{{ cloud_platform }}-{{ ansible_distribution }}.yml"
+  tags:
+    - vars
+
+- name: install required packages
+  package:
+    name: '{{ item }}'
+    state: present
+  become: true
+  with_items: '{{ PACKAGES }}'
+
+- name: install epel-release
+  become: true
+  shell: 'amazon-linux-extras install -y epel'
+
+- name: install harmony main repo
+  git:
+   repo: 'https://github.com/harmony-one/harmony.git'
+   dest: "{{ USER.home }}/go/src/github.com/harmony-one/harmony"
+
+- name: install harmony experiment-deploy 
+  git:
+   repo: 'https://github.com/harmony-one/experiment-deploy.git'
+   dest: "{{ USER.home }}/go/src/github.com/harmony-one/experiment-deploy"
+
+- name: install harmony bls library
+  git:
+   repo: 'https://github.com/harmony-one/bls.git'
+   dest: "{{ USER.home }}/go/src/github.com/harmony-one/bls"
+
+- name: install harmony mcl library
+  git:
+   repo: 'https://github.com/harmony-one/mcl.git'
+   dest: "{{ USER.home }}/go/src/github.com/harmony-one/mcl"
+
+- name: install harmony go-sdk repo
+  git:
+   repo: 'https://github.com/harmony-one/go-sdk.git'
+   dest: "{{ USER.home }}/go/src/github.com/harmony-one/go-sdk"
+
+- name: install harmony tui repo
+  git:
+   repo: 'https://github.com/harmony-one/harmony-tui.git'
+   dest: "{{ USER.home }}/go/src/github.com/harmony-one/harmony-tui"
+
+- name: install harmony tests repo
+  git:
+   repo: 'https://github.com/harmony-one/harmony-tests.git'
+   dest: "{{ USER.home }}/go/src/github.com/harmony-one/harmony-tests"
+
+- name: install harmony test framework repo
+  git:
+   repo: 'https://github.com/harmony-one/harmony-tf.git'
+   dest: "{{ USER.home }}/go/src/github.com/harmony-one/harmony-tf"
+
+
+#- name: install harmony nodedb library (private)
+#  git:
+#   repo: 'https://github.com/harmony-one/nodedb.git'
+#   dest: "{{ USER.home }}/go/src/github.com/harmony-one/nodedb"
