@@ -1,0 +1,40 @@
+{
+  "ssh_key": {
+    "use_existing_agent": false,
+    "path": "~/.ssh/harmony-testnet.pem",
+    "passphrase": null
+  },
+  "ips": [
+    {
+      "shard": 0,
+      "ip": "54.152.26.103",
+      "user": "ec2-user"
+    },
+    {
+      "shard": 1,
+      "ip": "18.234.126.37",
+      "user": "ec2-user"
+    },
+    {
+      "shard": 2,
+      "ip": "18.206.254.63",
+      "user": "ec2-user"
+    },
+    {
+      "shard": 3,
+      "ip": "52.90.21.187",
+      "user": "ec2-user"
+    }
+  ],
+  "rsync": {
+    "config_path_on_host": "./rclone.conf",
+    "config_path_on_client": "$HOME/snapshot_rclone.conf",
+    "snapshot_bin": "testnet:pub.harmony.one/testnet"
+  },
+  "condition": {
+    "force": false,
+    "last_block_tolerance": 120,
+    "role": "Validator",
+    "network": "testnet"
+  }
+}
