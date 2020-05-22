@@ -52,6 +52,7 @@ case ${service} in
   ostn ) ;;
   pstn ) ;;
   stn ) ;;
+  p2p ) ;;
   all ) service="*" ;;
   * ) echo "[ERROR] Unknown service: ${service}"; exit ;;
 esac

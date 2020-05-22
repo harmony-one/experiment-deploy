@@ -22,6 +22,7 @@ REGIONS=( nrt sfo iad pdx fra sin cmh dub )
 testnets[os]=staking
 testnets[ps]=pstn
 testnets[stn]=stn
+testnets[p2p]=p2p
 testnets[lrtn]=testnet
 testnets[tnet]=tnet
 testnets[dryrun]=dryrun

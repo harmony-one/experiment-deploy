@@ -66,6 +66,11 @@ case $NETWORK in
       NET=stress
       EXTRA+='-z'
       ;;
+   p2p)
+      NODESH=master/node.sh
+      NET=p2p
+      EXTRA+='-z'
+      ;;
    pstn)
       NODESH=node.sh
       NET=partner
