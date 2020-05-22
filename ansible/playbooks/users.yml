@@ -65,6 +65,7 @@
     - "md"
     - "aw"
     - "jz"
+    - "ea"
   tasks:
   - name: "Create user accounts"
     user:
@@ -92,6 +93,11 @@
       create: yes
       validate: '/usr/sbin/visudo -cf %s'
     with_items: "{{ users }}"
+  - name: "Remove sudo users"
+    file:
+      path: "/etc/sudoers.d/{{ item }}"
+      state: absent
+    with_items: "{{ remove_users }}"
   - name: "Set includedir in sudoers"
     lineinfile:
       path: /etc/sudoers
