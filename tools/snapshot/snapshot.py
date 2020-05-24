@@ -147,12 +147,17 @@ def sanity_check():
                 log.error(traceback.format_exc())
                 return f"errored when fetching metadata for {machine['ip']}. Error {e}"
             shard, role, network = node_metadata['shard-id'], node_metadata['role'], node_metadata['network']
+            is_leader, is_archival = node_metadata['is-leader'], node_metadata['is-archival']
             if int(shard) != int(machine['shard']):
                 return f"configured shard {machine['shard']} != actual node shard of {shard}. (ip: {machine['ip']})"
             if condition['role'] != role:
                 return f"configured node role {condition['role']} != actual node role of {role}. (ip: {machine['ip']})"
             if condition['network'] != network:
                 return f"configured node network {condition['network']} != actual node network of {network}. (ip: {machine['ip']})"
+            if condition['is_leader'] != is_leader:
+                return f"configured node is_leader {condition['is_leader']} != actual node is_leader {is_leader}. (ip: {machine['ip']})"
+            if condition['is_archival'] != is_archival:
+                return f"configured node is_archival {condition['is_archival']} != actual node is_archival {is_archival}. (ip: {machine['ip']})"
             if not is_active_shard(f"http://{machine['ip']}:9500/", condition['max_seconds_since_last_block']):
                 return f"one or more of the configured IPs are either offline " \
                        f"or latest block is older than {condition['max_seconds_since_last_block']} seconds"
