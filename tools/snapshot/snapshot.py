@@ -315,7 +315,7 @@ def snapshot():
     threads, pool = [], ThreadPool()
     bucket_rsync_threads = [_snapshot(beacon_machine)]
     for machine in aux_machines:
-        threads.append(pool.apply_async(_snapshot, (machine, f"http://{beacon_machine['ip']}:9500/")))
+        threads.append(pool.apply_async(_snapshot, (machine,)))
     for t in threads:
         bucket_rsync_threads.append(t.get())
     for t in bucket_rsync_threads:
