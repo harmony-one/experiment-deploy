@@ -39,6 +39,21 @@ beacon_chain_shard = 0
 machines, rsync, ssh_key, condition = [], {}, {}, {}  # Will be populated from config.
 
 
+def setup_logger():
+    """
+    Setup the logger for the snapshot package and returns the logger.
+    """
+    logger = logging.getLogger("snapshot")
+    file_handler = logging.FileHandler(f"{script_directory}/snapshot.log")
+    file_handler.setFormatter(
+        logging.Formatter(f"{Typgpy.OKBLUE}(%(threadName)s){Typgpy.OKGREEN}[%(asctime)s]{Typgpy.ENDC} %(message)s"))
+    logger.addHandler(file_handler)
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+    logger.setLevel(logging.DEBUG)
+    logger.debug("===== NEW SNAPSHOT =====")
+    return logger
+
+
 def _init_ssh_agent():
     """
     Initialize machine's ssh agent when config is loaded.
@@ -81,17 +96,6 @@ def _ssh_script(user, ip, bash_script_path):
     cmd.append('bash -s')
     with open(bash_script_path, 'rb') as f:
         return subprocess.check_output(cmd, env=os.environ, stdin=f).decode()
-
-
-def setup_logger():
-    logger = logging.getLogger("snapshot")
-    file_handler = logging.FileHandler(f"{script_directory}/snapshot.log")
-    file_handler.setFormatter(
-        logging.Formatter(f"{Typgpy.OKBLUE}(%(threadName)s){Typgpy.OKGREEN}[%(asctime)s]{Typgpy.ENDC} %(message)s"))
-    logger.addHandler(file_handler)
-    logger.addHandler(logging.StreamHandler(sys.stdout))
-    logger.setLevel(logging.DEBUG)
-    logger.debug("===== NEW SNAPSHOT =====")
 
 
 def load_config(config_path):
@@ -161,7 +165,7 @@ def sanity_check():
     log.debug('passed sanity check')
 
 
-def _setup_rclone(machine, bash_script_path):
+def _setup_rclone_config(machine, bash_script_path):
     """
     Worker to setup rclone on machine.
     """
@@ -173,7 +177,7 @@ def _setup_rclone(machine, bash_script_path):
     log.debug(f"rsync snapshot credentials on machine: {machine['ip']}: {verification_cat}")
 
 
-def setup_rclone():
+def setup_rclone_config():
     """
     Setup rclone credentials on all the snapshot machines.
 
@@ -190,14 +194,14 @@ echo "{rclone_config_raw_string}" > {rsync['config_path_on_client']}
         f.write(bash_script_content)
     try:
         for machine in machines:
-            threads.append(pool.apply_async(_setup_rclone, (machine, bash_script_path)))
+            threads.append(pool.apply_async(_setup_rclone_config, (machine, bash_script_path)))
         for t in threads:
             t.get()
     finally:
         os.remove(bash_script_path)
 
 
-def _cleanup_rclone(machine):
+def _cleanup_rclone_config(machine):
     """
     Worker to cleanup rclone on machine.
     """
@@ -210,7 +214,7 @@ def _cleanup_rclone(machine):
     log.debug(f"rsync snapshot credentials cleanup check: {machine['ip']}: {verification_cat}")
 
 
-def cleanup_rclone():
+def cleanup_rclone_config():
     """
     Clean/remove rclone credentials that were added (as dictated by the config).
 
@@ -219,7 +223,7 @@ def cleanup_rclone():
     """
     threads, pool = [], ThreadPool()
     for machine in machines:
-        threads.append(pool.apply_async(_cleanup_rclone, (machine,)))
+        threads.append(pool.apply_async(_cleanup_rclone_config, (machine,)))
     for t in threads:
         t.get()
 
@@ -350,16 +354,16 @@ def _parse_args():
 
 
 if __name__ == "__main__":
+    # TODO: make version relative to major, minor etc...
     assert pyhmy.__version__.public() == pyhmy_version, f'install correct pyhmy version with `python3 -m pip install pyhmy=={pyhmy_version}`'
     setup_logger()
     try:
         load_config(_parse_args().config)
         log.debug("initialized snapshot script")
         sanity_check()
-        setup_rclone()
-
-
-        cleanup_rclone()
+        setup_rclone_config()
+        snapshot()
+        cleanup_rclone_config()
     except Exception as e:
         log.fatal(traceback.format_exc())
         log.fatal(f'script crashed with error {e}')
