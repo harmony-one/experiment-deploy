@@ -239,6 +239,7 @@ def _bucket_sync(machine):
     Function call will block until bucket sync is done on machine.
     """
     log.debug(f'starting bucket sync on {machine["ip"]}')
+    # TODO: bucket sync (but comment out and test last)
 
 
 def _local_sync(machine):
@@ -247,6 +248,7 @@ def _local_sync(machine):
     Function call will block until local sync is done on machine.
     """
     log.debug(f'starting local sync on {machine["ip"]}')
+    # TODO: local sync and manually check...
 
 
 def _stop_harmony(machine):
@@ -283,47 +285,18 @@ def _start_harmony(machine):
     log.debug(f'successfully started harmony service on {machine["ip"]}')
 
 
-def _snapshot_beacon(machine):
+def _snapshot(machine):
     """
-    Internal worker to snapshot the beacon shard.
-    """
-    assert machine['shard'] == beacon_chain_shard, f'wrong machine for beacon snapshot: {machine}'
-    log.debug(f'started beacon snapshot ({machine["ip"]})')
-    _stop_harmony(machine)
-    _local_sync(machine)
-    bucket_sync_thread = ThreadPool().apply_async(_bucket_sync, (machine, ))
-    post_delay = 10  # Sleep after bucket sync so aux shard nodes can detect that beacon node is down
-    log.debug(f'sleeping {post_delay} seconds before restarting node')
-    time.sleep(post_delay)
-    _start_harmony(machine)
-    bucket_sync_thread.get()
-    log.debug(f'finished beacon snapshot ({machine["ip"]})')
+    Internal worker to snapshot a node's DB.
 
-
-def _snapshot_aux(machine, beacon_endpoint):
+    Returns thread for bucket rsync process.
     """
-    Internal worker to snapshot aux shard
-    Assume that `beacon_endpoint` is correct (no validation can be done at this stage)
-    """
-    assert machine['shard'] != beacon_chain_shard, f'wrong machine for aux snapshot: {machine}'
-    log.debug(f'started aux snapshot ({machine["ip"]})')
-    init_delay = 3  # Sleep so beacon snapshots first
-    log.debug(f'sleeping {init_delay} seconds before snapshotting')
-    time.sleep(init_delay)
-    try:
-        count, start_time = 0, time.time()
-        while time.time() - start_time <= condition['max_seconds_wait_for_beacon']:
-            blockchain.get_node_metadata(beacon_endpoint, timeout=10)
-            count += 1
-            if count % 25 == 0:
-                log.warning(f'waiting for beacon to terminate before starting snapshot, tried {count} times')
-    except (rpc_exceptions.RequestsError, rpc_exceptions.RequestsTimeoutError):
-        log.debug(f'beacon {beacon_endpoint} offline, snapshotting now...')
+    log.debug(f'started snapshot ({machine["ip"]})')
     _stop_harmony(machine)
     _local_sync(machine)
     _start_harmony(machine)
-    _bucket_sync(machine)
-    log.debug(f'finished aux snapshot ({machine["ip"]})')
+    log.debug(f'finished local snapshot ({machine["ip"]})')
+    return ThreadPool().apply_async(_bucket_sync, (machine,))
 
 
 def snapshot():
@@ -340,10 +313,12 @@ def snapshot():
     beacon_machine = list(filter(lambda e: e['shard'] == beacon_chain_shard, machines))[0]
     aux_machines = filter(lambda e: e['shard'] != beacon_chain_shard, machines)
     threads, pool = [], ThreadPool()
-    threads.append(pool.apply_async(_snapshot_beacon, (beacon_machine,)))
+    bucket_rsync_threads = [_snapshot(beacon_machine)]
     for machine in aux_machines:
-        threads.append(pool.apply_async(_snapshot_aux, (machine, f"http://{beacon_machine['ip']}:9500/")))
+        threads.append(pool.apply_async(_snapshot, (machine, f"http://{beacon_machine['ip']}:9500/")))
     for t in threads:
+        bucket_rsync_threads.append(t.get())
+    for t in bucket_rsync_threads:
         t.get()
 
 
