@@ -4,7 +4,7 @@
     "path": "~/.ssh/harmony-testnet.pem",
     "passphrase": null
   },
-  "ips": [
+  "machines": [
     {
       "shard": 0,
       "ip": "54.152.26.103",
@@ -33,8 +33,9 @@
   },
   "condition": {
     "force": false,
-    "last_block_tolerance": 120,
+    "max_seconds_since_last_block": 120,
     "role": "Validator",
-    "network": "testnet"
+    "network": "testnet",
+    "max_seconds_wait_for_beacon": 120
   }
 }
