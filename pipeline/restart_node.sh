@@ -598,7 +598,7 @@ start_harmony() {
 		if ${multi_key}; then
          node_ssh "${ip}" 'sudo sed -i.bak "s,-k /home/ec2-user/bls.key,-M," /etc/systemd/system/harmony.service'
       fi
-		node_ssh "${ip}" 'sudo systemctl daemon-reload; sudo systemctl start harmony.service'
+		node_ssh "${ip}" 'sudo systemctl daemon-reload; sudo systemctl start harmony.service; ./node.sh -V'
 		;;
 	*)
 		node_ssh "${ip}" 'sudo sh -c '\''

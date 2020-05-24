@@ -23,7 +23,7 @@ print_usage() {
 
       options:
       -p          mandatory: profile of network to run on
-                  (support only stn/os/ps/mkeys)
+                  (support only stn/os/ps/mkeys/lrtn)
 
       -o outdir   use the given output directory
                   (default: the hard-reset/YYYY-MM-DDTHH:MM:SSZ subdir logs/profile)
@@ -85,7 +85,7 @@ shift $(( OPTIND - 1 ))
 
 #### cmdline checking ####
 case ${net_profile} in
-   os|stn|pstn|mkeys|dryrun)
+   os|stn|pstn|mkeys|dryrun|lrtn)
       msg "profile: ${net_profile}"
       export HMY_PROFILE=${net_profile}
       ;;
@@ -468,6 +468,9 @@ case $net_profile in
    ps) network=pstn
        dbprefix=partnernet
        release=partner;;
+   lrtn) network=lrtn
+       dbprefix=testnet
+       release=lrtn;;
    mkeys)
        network=mkeys;;
        # TO-DO: dbprefix is unknown for mkeys atm, will add it later if needed 
