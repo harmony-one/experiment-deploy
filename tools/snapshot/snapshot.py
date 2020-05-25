@@ -170,15 +170,18 @@ def sanity_check():
     log.debug('passed sanity check')
 
 
-def _setup_rclone_config(machine, bash_script_path):
+def _setup_rclone_config(machine, bash_script_path, rclone_config_raw):
     """
     Worker to setup rclone on machine.
     """
     log.debug(f"setting up rclone snapshot credentials for {machine['ip']}")
     setup_response = _ssh_script(machine['user'], machine['ip'], bash_script_path)
     log.debug(f"rsync snapshot credentials setup response: {setup_response}")
-    # TODO: programmatic verification
     verification_cat = _ssh_cmd(machine['user'], machine['ip'], f"cat {rsync['config_path_on_client']}")
+    log.debug(f"rsync installed snapshot credentials: {verification_cat}")
+    if rclone_config_raw.strip() not in verification_cat:
+        log.error(f"rclone snapshot credentials were not installed correctly")
+        raise RuntimeError("rclone snapshot credentials were not installed correctly")
     log.debug(f"rsync snapshot credentials on machine: {machine['ip']}: {verification_cat}")
 
 
@@ -190,16 +193,16 @@ def setup_rclone_config():
     """
     threads, pool = [], ThreadPool()
     with open(rsync['config_path_on_host'], 'r') as f:
-        rclone_config_raw_string = f.read()
+        rclone_config_raw = f.read()
     bash_script_content = f"""#!/bin/bash
-echo "{rclone_config_raw_string}" > {rsync['config_path_on_client']}
+echo "{rclone_config_raw}" > {rsync['config_path_on_client']}
 """
-    bash_script_path = f"/tmp/snapshot_script{hash(time.time())}.sh"
+    bash_script_path = f"/tmp/snapshot_script_{time.time()}.sh"
     with open(bash_script_path, 'w') as f:
         f.write(bash_script_content)
     try:
         for machine in machines:
-            threads.append(pool.apply_async(_setup_rclone_config, (machine, bash_script_path)))
+            threads.append(pool.apply_async(_setup_rclone_config, (machine, bash_script_path, rclone_config_raw)))
         for t in threads:
             t.get()
     finally:
@@ -210,13 +213,15 @@ def _cleanup_rclone_config(machine):
     """
     Worker to cleanup rclone on machine.
     """
-    log.debug(f"cleaning up rclone snapshot credentials for {machine['ip']}")
-    cleanup_response = _ssh_cmd(machine['user'], machine['ip'], f"rm {rsync['config_path_on_client']}")
+    log.debug(f"cleaning up rclone snapshot credentials on {machine['ip']}")
+    success_msg = "RCLONE_CLEANUP_SUCCESS"
+    cleanup_response = _ssh_cmd(machine['user'], machine['ip'],
+                                f"rm {rsync['config_path_on_client']} && echo {success_msg}")
     log.debug(f"rsync snapshot credentials cleanup response: {cleanup_response}")
-    # TODO: programmatic verification
-    cmd = f"if [ -f {rsync['config_path_on_client']} ]; then echo failed cleanup; else echo successful cleanup; fi"
-    verification_cat = _ssh_cmd(machine['user'], machine['ip'], cmd)
-    log.debug(f"rsync snapshot credentials cleanup check: {machine['ip']}: {verification_cat}")
+    if success_msg not in cleanup_response:
+        log.error("failed to clean-up rclone config")
+        raise RuntimeError("failed to clean-up rclone config")
+    log.debug(f"successfully cleaned up rclone snapshot credentials on {machine['ip']}")
 
 
 def cleanup_rclone_config():
@@ -233,13 +238,34 @@ def cleanup_rclone_config():
         t.get()
 
 
+def _derive_db_paths(machine):
+    """
+    Internal function to derive the true harmony DB and
+    rsync harmony DB path on the machine.
+    """
+    db_path_on_machine = f"{machine['db_directory']}/harmony_db_{machine['shard']}"
+    db_rsync_path_on_machine = f"{db_path_on_machine}_rsync"
+    return db_path_on_machine, db_rsync_path_on_machine
+
+
 def _bucket_sync(machine):
     """
     Internal function to start bucket sync.
     Function call will block until bucket sync is done on machine.
+
+    Note the convention used when syncing to bucket.
     """
     log.debug(f'starting bucket sync on {machine["ip"]}')
-    # TODO: bucket sync (but comment out and test last)
+    _, rsync_db_path = _derive_db_paths(machine)
+    bucket, shard, unix_time = rsync['snapshot_bin'], machine['shard'], int(time.time()),
+    success_msg = "BUCKET_SYNC_SUCCESS"
+    cmd = f"rclone sync {rsync_db_path} {bucket}/shard_{shard}/harmony_db_{shard}.{unix_time} -P && echo {success_msg}"
+    rclone_response = _ssh_cmd(machine['user'], machine['ip'], cmd)
+    log.debug(f'bucket sync response: {rclone_response}')
+    if success_msg not in rclone_response:
+        log.error("failed to bucket sync db")
+        raise RuntimeError("failed to bucket sync db")
+    log.debug(f'successful bucket sync on {machine["ip"]}')
 
 
 def _local_sync(machine):
@@ -248,19 +274,28 @@ def _local_sync(machine):
     Function call will block until local sync is done on machine.
     """
     log.debug(f'starting local sync on {machine["ip"]}')
-    # TODO: local sync and manually check...
+    db_path_on_machine, db_rsync_path_on_machine = _derive_db_paths(machine)
+    success_msg = "LOCAL_SYNC_SUCCESS"
+    cmd = f"rclone sync {db_path_on_machine} {db_rsync_path_on_machine} -P --transfers 64 && echo {success_msg}"
+    rclone_response = _ssh_cmd(machine['user'], machine['ip'], cmd)
+    log.debug(f'local sync response: {rclone_response}')
+    if success_msg not in rclone_response:
+        log.error("failed to local sync db")
+        raise RuntimeError("failed to local sync db")
+    log.debug(f'successful local sync on {machine["ip"]}')
 
 
 def _stop_harmony(machine):
     """
     Internal function to stop and verify harmony service.
+    Assumption is that harmony is ran as a service.
     """
     log.debug(f'stopping harmony service on {machine["ip"]}')
     machine_stop_response = _ssh_cmd(machine['user'], machine['ip'], "sudo systemctl stop harmony")
     log.debug(f'stop cmd response: {machine_stop_response}')
+    time.sleep(0.5)  # Wait for graceful shutdown
     off_msg = "SERVICE_STOPPED"
-    cmd = f"if systemctl is-active --quiet harmony; then echo SERVICE_STARTED; else echo {off_msg}; fi"
-    off_msg_response = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
+    off_msg_response = _ssh_cmd(machine['user'], machine['ip'], f"[ ! $(pgrep harmony) ] && echo {off_msg}").strip()
     if off_msg != off_msg_response:
         log.error("harmony service failed to stop")
         log.error(f"expected msg response: {off_msg}, got: {off_msg_response}")
@@ -271,13 +306,14 @@ def _stop_harmony(machine):
 def _start_harmony(machine):
     """
     Internal function to start and verify harmony service.
+    Assumption is that harmony is ran as a service.
     """
     log.debug(f'starting harmony service on {machine["ip"]}')
     machine_start_resposne = _ssh_cmd(machine['user'], machine['ip'], "sudo systemctl start harmony")
     log.debug(f'start cmd response: {machine_start_resposne}')
+    time.sleep(0.5)  # Wait for graceful shutdown
     on_msg = "SERVICE_STARTED"
-    cmd = f"if systemctl is-active --quiet harmony; then echo {on_msg}; else echo SERVICE_STOPPED; fi"
-    on_msg_response = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
+    on_msg_response = _ssh_cmd(machine['user'], machine['ip'], f"[ $(pgrep harmony) ] && echo {on_msg}").strip()
     if on_msg != on_msg_response:
         log.error("harmony service failed to start")
         log.error(f"expected msg response: {on_msg}, got: {on_msg_response}")
@@ -292,8 +328,12 @@ def _snapshot(machine):
     Returns thread for bucket rsync process.
     """
     log.debug(f'started snapshot ({machine["ip"]})')
-    _stop_harmony(machine)
-    _local_sync(machine)
+    try:
+        _stop_harmony(machine)
+        _local_sync(machine)
+    except Exception as e:
+        _start_harmony(machine)
+        raise e from e
     _start_harmony(machine)
     log.debug(f'finished local snapshot ({machine["ip"]})')
     return ThreadPool().apply_async(_bucket_sync, (machine,))
@@ -313,7 +353,7 @@ def snapshot():
     beacon_machine = list(filter(lambda e: e['shard'] == beacon_chain_shard, machines))[0]
     aux_machines = filter(lambda e: e['shard'] != beacon_chain_shard, machines)
     threads, pool = [], ThreadPool()
-    bucket_rsync_threads = [_snapshot(beacon_machine)]
+    bucket_rsync_threads = [_snapshot(beacon_machine)]  # snapshot beacon chain first...
     for machine in aux_machines:
         threads.append(pool.apply_async(_snapshot, (machine,)))
     for t in threads:

@@ -8,22 +8,26 @@
     {
       "shard": 0,
       "ip": "54.152.26.103",
-      "user": "ec2-user"
+      "user": "ec2-user",
+      "db_directory": "$HOME"
     },
     {
       "shard": 1,
       "ip": "18.234.126.37",
-      "user": "ec2-user"
+      "user": "ec2-user",
+      "db_directory": "$HOME"
     },
     {
       "shard": 2,
       "ip": "18.206.254.63",
-      "user": "ec2-user"
+      "user": "ec2-user",
+      "db_directory": "$HOME"
     },
     {
       "shard": 3,
       "ip": "52.90.21.187",
-      "user": "ec2-user"
+      "user": "ec2-user",
+      "db_directory": "$HOME"
     }
   ],
   "rsync": {
