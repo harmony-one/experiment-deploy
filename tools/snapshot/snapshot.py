@@ -257,11 +257,13 @@ def _bucket_sync(machine):
     """
     log.debug(f'starting bucket sync on {machine["ip"]}')
     _, rsync_db_path = _derive_db_paths(machine)
-    bucket, shard, unix_time = rsync['snapshot_bin'], machine['shard'], int(time.time()),
+    bucket, shard = rsync['snapshot_bin'], machine['shard']
+    unix_time, config = int(time.time()), rsync['config_path_on_client']
     success_msg = "BUCKET_SYNC_SUCCESS"
     cmd = f"echo {success_msg}"
     time.sleep(10)
-    # cmd = f"rclone sync {rsync_db_path} {bucket}/shard_{shard}/harmony_db_{shard}.{unix_time} -P && echo {success_msg}"
+    # cmd = f"rclone sync {rsync_db_path} {bucket}/shard_{shard}/harmony_db_{shard}.{unix_time} --config {config} -P " \
+    #       f"&& echo {success_msg}"
     rclone_response = _ssh_cmd(machine['user'], machine['ip'], cmd)
     log.debug(f'bucket sync response: {rclone_response}')
     if success_msg not in rclone_response:
