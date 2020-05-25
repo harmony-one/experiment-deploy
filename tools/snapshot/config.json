@@ -41,7 +41,6 @@
     "role": "Validator",
     "network": "testnet",
     "is_leader": false,
-    "is_archival": false,
-    "max_seconds_wait_for_beacon": 120
+    "is_archival": false
   }
 }
