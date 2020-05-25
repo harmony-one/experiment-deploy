@@ -1,7 +1,8 @@
 # Network Snapshot 
 `snapshot.py` is an orchestrator script to snapshot the network using a given config. 
 Ideally, the script would be called every hour (or whatever desired interval) to ensure minimal 
-rollback should the network suffer a network wide corruption of the DBs.
+rollback should the network suffer a network wide corruption of the DBs. Moreover, it provides
+a relatively updated snapshot that nodes (internal or external) can quickly sync to. 
 
 ## Install
 This script will require **python 3.6** or higher. 
