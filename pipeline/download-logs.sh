@@ -101,11 +101,20 @@ function download_log
 {
    local ip=$1
    local shard=$(grep -l $ip logs/${PROFILE}/shard?.txt | xargs basename)
+   shard=${shard%.txt}
    logging download log of IP: $ip / $shard
    logdir=logs/$PROFILE/logs/${shard}
 
    mkdir -p $logdir/$ip
-   ${SCP} ${ip}:latest/* $logdir/${ip}/
+   hostname=$(host "$ip" | awk ' { print $NF } ')
+   vendor=$(find_cloud_from_host $hostname)
+   case "$vendor" in
+   "aws")
+      user='ec2-user';;
+   "gcp")
+      user='gce-user';;
+   esac
+   ${SCP} ${user}@${ip}:latest/* $logdir/${ip}/
 
    sync_log $ip
 }
