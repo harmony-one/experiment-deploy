@@ -4,7 +4,9 @@
 This is the main orchestrator script to execute a snapshot with the given config.
 
 Example Usage:
+    ./snapshot.py --help
     ./snapshot.py --config ./mainnet.json
+    ./snapshot.py --config ./mainnet.json --bucket-sync
 
 Note that this script was built to be imported as a package from other scripts.
 """
@@ -346,9 +348,10 @@ def _start_harmony(machine):
     log.debug(f'successfully started harmony service on {machine["ip"]} (s{machine["shard"]})')
 
 
-def _snapshot(machine):
+def _snapshot(machine, do_bucket_sync=False):
     """
     Internal worker to snapshot a node's DB.
+    If `do_bucket_sync` is disabled, a dummy bucket_sync thread will be returned.
 
     Returns thread for bucket rsync process.
     """
@@ -361,14 +364,19 @@ def _snapshot(machine):
         raise e from e
     _start_harmony(machine)
     log.debug(f'finished local snapshot on machine {machine["ip"]} (s{machine["shard"]})')
+    if not do_bucket_sync:
+        log.debug("skipping bucket sync...")
+        return ThreadPool().apply_async(lambda: True)
     return ThreadPool().apply_async(_bucket_sync, (machine,))
 
 
-def snapshot():
+def snapshot(do_bucket_sync=False):
     """
     Execute the snapshot of the network using the given config.
     Assumes that rclone for configured `snapshot_bin` is setup on configured `machines`.
     Assumes that `sanity_check` was ran before this is called.
+
+    If `do_bucket_sync` is enabled, an expensive sync to EXTERNAL bucket will be done.
 
     Note that beacon chain will shutdown & snapshot FIRST in-order to guarantee
     that crosslinks are clean. Moreover, beacon chain is NECESSARY to generate a
@@ -378,9 +386,9 @@ def snapshot():
     beacon_machine = list(filter(lambda e: e['shard'] == beacon_chain_shard, machines))[0]
     aux_machines = filter(lambda e: e['shard'] != beacon_chain_shard, machines)
     threads, pool = [], ThreadPool()
-    bucket_rsync_threads = [_snapshot(beacon_machine)]  # snapshot beacon chain first...
+    bucket_rsync_threads = [_snapshot(beacon_machine, do_bucket_sync)]  # snapshot beacon chain first...
     for machine in aux_machines:
-        threads.append(pool.apply_async(_snapshot, (machine,)))
+        threads.append(pool.apply_async(_snapshot, (machine, do_bucket_sync)))
     for t in threads:
         bucket_rsync_threads.append(t.get())
     for t in bucket_rsync_threads:
@@ -431,6 +439,8 @@ def _parse_args():
     default_config_path = f"{script_directory}/config.json"
     parser.add_argument("--config", type=str, default=default_config_path,
                         help=f"path to snapshot config (default {default_config_path})")
+    parser.add_argument("--bucket-sync", action='store_true',
+                        help="Enable syncing to bucket (defined in config)")
     return parser.parse_args()
 
 
@@ -439,12 +449,13 @@ if __name__ == "__main__":
     assert pyhmy.__version__.minor >= 5
     assert pyhmy.__version__.micro >= 5
     setup_logger()
+    args = _parse_args()
     try:
-        load_config(_parse_args().config)
+        load_config(args.config)
         log.debug("initialized snapshot script")
         sanity_check()
         setup_rclone_config()
-        snapshot()
+        snapshot(do_bucket_sync=args.bucket_sync)
         cleanup_rclone_config()
         log.debug("finished snapshot, checking for node progress...")
         if not is_progressed_nodes():

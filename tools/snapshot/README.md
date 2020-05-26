@@ -18,11 +18,16 @@ python3 -m pip install -r requirements.txt --user
 chmod +x ./snapshot.py
 ./snapshot.py --config ./config.json
 ```
+2.5) If you wish to sync the snapshot to the configured bucket, do so with the following command:
+```bash
+chmod +x ./snapshot.py
+./snapshot.py --config ./config.json --bucket-sync
+```
 3) You can debug the script or check its progress by inspecting the log file called `snapshot.log` in the same directory as `snapshot.py`.
 > It is recommended to set up a cronjob to call this script evey set interval. For example, to run the script every
 > hour, execute the following command (assuming you are in this directory) to setup the cronjob:
 > ```bash
-> echo "0 * * * * $(pwd)/snapshot.py --config $(pwd)/config.json" > cronjob && crontab cronjob && crontab -l
+> echo "0 * * * * $(pwd)/snapshot.py --config $(pwd)/config.json --bucket-sync" > cronjob && crontab cronjob && crontab -l
 > ```
 
 ## Future usage
