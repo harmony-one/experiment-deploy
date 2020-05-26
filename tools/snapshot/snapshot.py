@@ -440,7 +440,7 @@ def _parse_args():
     parser.add_argument("--config", type=str, default=default_config_path,
                         help=f"path to snapshot config (default {default_config_path})")
     parser.add_argument("--bucket-sync", action='store_true',
-                        help="Enable syncing to bucket (defined in config)")
+                        help="Enable syncing to external bucket (where bucket is defined in the config)")
     return parser.parse_args()
 
 
