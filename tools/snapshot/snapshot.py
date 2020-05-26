@@ -448,7 +448,7 @@ if __name__ == "__main__":
         cleanup_rclone_config()
         log.debug("finished snapshot, checking for node progress...")
         if not is_progressed_nodes():
-            raise RuntimeError(f"")
+            raise RuntimeError(f"one or more node did not make progress after being started...")
     except Exception as e:
         log.fatal(traceback.format_exc())
         log.fatal(f'snapshot failed with error {e}')
