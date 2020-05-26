@@ -7,19 +7,19 @@
   "machines": [
     {
       "shard": 0,
-      "ip": "54.152.26.103",
+      "ip": "3.84.58.192",
       "user": "ec2-user",
       "db_directory": "$HOME"
     },
     {
       "shard": 1,
-      "ip": "18.234.126.37",
+      "ip": "54.175.84.96",
       "user": "ec2-user",
       "db_directory": "$HOME"
     },
     {
       "shard": 2,
-      "ip": "18.206.254.63",
+      "ip": "54.163.169.195",
       "user": "ec2-user",
       "db_directory": "$HOME"
     },

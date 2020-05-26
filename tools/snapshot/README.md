@@ -8,7 +8,7 @@ a relatively updated snapshot that nodes (internal or external) can quickly sync
 This script will require **python 3.6** or higher. 
 Dependencies can be installed with the following command while in this directory:
 ```bash
-python3 -m pip install -r requirements.txt
+python3 -m pip install -r requirements.txt --user
 ```
 
 ## Running Snapshot
