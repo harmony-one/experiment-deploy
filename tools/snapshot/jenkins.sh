@@ -7,7 +7,7 @@
 #   BUCKET_SYNC     A boolean (true/false) to toggle bucket sync
 #
 # Optional Params:
-#   SSH_KEY         A .pem file used for ssh-ing into configed machines
+#   SSH_KEY         A .pem file as a string used for ssh-ing into configed machines
 
 set -e
 
