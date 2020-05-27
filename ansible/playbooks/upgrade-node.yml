@@ -1,0 +1,68 @@
+---
+- hosts: '{{ inventory }}'
+  gather_facts: yes
+
+  tasks:
+  - name: gather OS specific variables
+    include_vars: "{{ item }}"
+    with_first_found:
+      - '{{ ansible_bios_version }}-{{ ansible_distribution }}.yml'
+      - '{{ cloud_platform }}-{{ ansible_distribution }}.yml'
+    tags:
+      - vars
+
+  - name: get original harmony version
+    shell: "{{ USER.home }}/node.sh -V 2>&1 | grep -oE 'v[0-9]+-v[0-9.]+-[0-9]+-g[a-z0-9]+'"
+    register: oVer
+
+  - debug:
+      var: oVer.stdout
+
+  - name: "download upgrade binary"
+    shell: "{{ USER.home }}/node.sh -U {{ upgrade }} -d"
+
+  - name: get new harmony version
+    shell:
+    args:
+      cmd: "./node.sh -V 2>&1 | grep -oE 'v[0-9]+-v[0-9.]+-[0-9]+-g[a-z0-9]+'"
+      chdir: "{{ USER.home }}/staging"
+    register: nVer
+
+  - debug:
+      var: nVer.stdout
+
+  - name: "stop, upgrade, restart harmony service"
+    block:
+      - name: "upgrade version"
+        debug:
+          msg: "upgraded version: Ver.stdout" 
+
+      - name: "stop harmony service"
+        become: true
+        become_user: root
+        systemd:
+          name: harmony
+          state: stopped
+
+      - name: "update harmony binary"
+        shell: "cp -f {{ USER.home }}/staging/{{ item }} {{ USER.home }}"
+        with_items:
+          - harmony
+          - node.sh
+
+      - name: "restart harmony service"
+        become: true
+        become_user: root
+        systemd:
+          name: harmony
+          state: started
+
+    rescue:
+      - name: "restart harmony service" 
+        become: true
+        become_user: root
+        systemd:
+          name: harmony
+          state: started
+
+    when: "oVer.stdout != nVer.stdout"
