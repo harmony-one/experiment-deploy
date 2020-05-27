@@ -304,11 +304,10 @@ def _bucket_sync(machine):
     cmd = f"rclone sync {rsync_db_path} {bucket}/{db_type}/{shard}/harmony_db_{shard}.{unix_time} --config {config}"
     cmd_msg = None
     try:
-        cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd)
+        cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
     except subprocess.CalledProcessError as e:
         log.error("failed to bucket sync db")
-        if cmd_msg is not None:
-            log.error(f"sync cmd response: {cmd_msg.strip()}")
+        log.error(f"sync cmd response: {cmd_msg}")
         raise RuntimeError("failed to bucket sync db") from e
     log.debug(f'successful bucket sync on {machine["ip"]} (s{machine["shard"]})')
 
@@ -323,11 +322,10 @@ def _local_sync(machine):
     cmd = f"rclone sync {db_path_on_machine} {db_rsync_path_on_machine} --transfers 64"
     cmd_msg = None
     try:
-        cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd)
+        cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
     except subprocess.CalledProcessError as e:
         log.error("failed to local sync db")
-        if cmd_msg is not None:
-            log.error(f"sync cmd response: {cmd_msg.strip()}")
+        log.error(f"sync cmd response: {cmd_msg}")
         raise RuntimeError("failed to local sync db") from e
     log.debug(f'successful local sync on {machine["ip"]} (s{machine["shard"]})')
 
@@ -362,7 +360,7 @@ def _stop_harmony(machine):
             return
     log.error("harmony service failed to stop")
     log.error(f'stop cmd response: {machine_stop_response.strip()}')
-    raise RuntimeError("harmony service failed to stop") from e
+    raise RuntimeError("harmony service failed to stop")
 
 
 def _start_harmony(machine):
@@ -381,7 +379,7 @@ def _start_harmony(machine):
             return
     log.error("harmony service failed to start")
     log.debug(f'start cmd response: {machine_start_response.strip()}')
-    raise RuntimeError("harmony service failed to start") from e
+    raise RuntimeError("harmony service failed to start")
 
 
 def _snapshot(machine, do_bucket_sync=False):
