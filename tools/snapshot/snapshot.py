@@ -127,6 +127,8 @@ def _is_dns_node(machine, sharding_structure):
     Internal function to check if given machine is a DNS node.
 
     Note the assumptions in the format of the HTTP endpoint given by `sharding_structure`.
+
+    Raises RuntimeError if endpoint cannot be found for given config.
     """
     for structure in sharding_structure:
         if int(structure['shardID']) == int(machine['shard']):
@@ -142,7 +144,13 @@ def _is_dns_node(machine, sharding_structure):
 
 def sanity_check():
     """
-    Checks ALL nodes for config assumptions and liveliness.
+    Enforce all given `condition` from the config as well as ensure that
+    ALL nodes are alive and making progress in the first place.
+
+    Moreover, ensure unique machines for each shard is given and that
+    a beacon chain machine was given.
+
+    All checks that require RPC calls are ran in parallel.
 
     Raises a RuntimeError if the sanity check fails.
     """
@@ -180,8 +188,8 @@ def sanity_check():
             if condition['is_archival'] != is_archival:
                 return f"configured node is_archival {condition['is_archival']} != actual node is_archival {is_archival}. (ip: {machine['ip']})"
             if not is_active_shard(f"http://{machine['ip']}:9500/", condition['max_seconds_since_last_block']):
-                return f"one or more of the configured IPs are either offline " \
-                       f"or latest block is older than {condition['max_seconds_since_last_block']} seconds"
+                return f"configured node is either offline or latest block is" \
+                       f" older than {condition['max_seconds_since_last_block']} seconds. (ip: {machine['ip']})"
             if _is_dns_node(machine, sharding_structure):
                 return f"machine is a DNS node, which cannot be offline. (ip: {machine['ip']})"
             return None  # indicate success
@@ -197,6 +205,8 @@ def sanity_check():
 def _setup_rclone_config(machine, bash_script_path, rclone_config_raw):
     """
     Worker to setup rclone on machine.
+
+    Raise RuntimeError if rclone setup failed.
     """
     log.debug(f"installing rclone if needed on machine {machine['ip']} (s{machine['shard']})")
     cmd = "[ ! $(command -v rclone) ] && curl https://rclone.org/install.sh | sudo bash || echo rclone already installed"
@@ -240,6 +250,8 @@ echo "{rclone_config_raw}" > {rsync['config_path_on_client']} && echo successful
 def _cleanup_rclone_config(machine):
     """
     Worker to cleanup rclone on machine.
+
+    Raise RuntimeError if the rclone clean up failed.
     """
     log.debug(f"cleaning up rclone snapshot credentials on {machine['ip']} (s{machine['shard']})")
     success_msg = "RCLONE_CLEANUP_SUCCESS"
@@ -290,10 +302,13 @@ def _bucket_sync(machine):
     bucket, shard = rsync['snapshot_bin'], machine['shard']
     unix_time, config = int(time.time()), rsync['config_path_on_client']
     cmd = f"rclone sync {rsync_db_path} {bucket}/{db_type}/{shard}/harmony_db_{shard}.{unix_time} --config {config}"
+    cmd_msg = None
     try:
-        _ssh_cmd(machine['user'], machine['ip'], cmd)
+        cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd)
     except subprocess.CalledProcessError as e:
         log.error("failed to bucket sync db")
+        if cmd_msg is not None:
+            log.error(f"sync cmd response: {cmd_msg.strip()}")
         raise RuntimeError("failed to bucket sync db") from e
     log.debug(f'successful bucket sync on {machine["ip"]} (s{machine["shard"]})')
 
@@ -306,46 +321,67 @@ def _local_sync(machine):
     log.debug(f'starting local sync on {machine["ip"]} (s{machine["shard"]})')
     db_path_on_machine, db_rsync_path_on_machine = _derive_db_paths(machine)
     cmd = f"rclone sync {db_path_on_machine} {db_rsync_path_on_machine} --transfers 64"
+    cmd_msg = None
     try:
-        _ssh_cmd(machine['user'], machine['ip'], cmd)
+        cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd)
     except subprocess.CalledProcessError as e:
         log.error("failed to local sync db")
+        if cmd_msg is not None:
+            log.error(f"sync cmd response: {cmd_msg.strip()}")
         raise RuntimeError("failed to local sync db") from e
     log.debug(f'successful local sync on {machine["ip"]} (s{machine["shard"]})')
+
+
+def _is_harmony_running(machine):
+    """
+    Internal function that checks if the harmony process is running on the machine.
+
+    Since this is a simple `pgrep` cmd, an error on the SSH implies process is not running
+    as the machine is either off, or config is wrong.
+    """
+    try:
+        _ssh_cmd(machine['user'], machine['ip'], 'pgrep harmony')
+        return True
+    except subprocess.CalledProcessError:
+        return False
 
 
 def _stop_harmony(machine):
     """
     Internal function to stop and verify harmony service.
     Assumption is that harmony is ran as a service.
+
+    RuntimeError is raised if harmony process didn't stop after 5 seconds.
     """
     log.debug(f'stopping harmony service on {machine["ip"]} (s{machine["shard"]})')
     machine_stop_response = _ssh_cmd(machine['user'], machine['ip'], "sudo systemctl stop harmony")
-    time.sleep(1)  # Wait for graceful shutdown
-    try:
-        _ssh_cmd(machine['user'], machine['ip'], f"pgrep harmony && exit 1 || true").strip()
-    except subprocess.CalledProcessError as e:
-        log.error("harmony service failed to stop")
-        log.error(f'stop cmd response: {machine_stop_response.strip()}')
-        raise RuntimeError("harmony service failed to stop") from e
-    log.debug(f'successfully stopped harmony service on {machine["ip"]} (s{machine["shard"]})')
+    start_time = time.time()
+    while time.time() - start_time < 5:
+        if not _is_harmony_running(machine):
+            log.debug(f'successfully stopped harmony service on {machine["ip"]} (s{machine["shard"]})')
+            return
+    log.error("harmony service failed to stop")
+    log.error(f'stop cmd response: {machine_stop_response.strip()}')
+    raise RuntimeError("harmony service failed to stop") from e
 
 
 def _start_harmony(machine):
     """
     Internal function to start and verify harmony service.
     Assumption is that harmony is ran as a service.
+
+    RuntimeError is raised if harmony process didn't start after 5 seconds.
     """
     log.debug(f'starting harmony service on {machine["ip"]} (s{machine["shard"]})')
-    machine_start_resposne = _ssh_cmd(machine['user'], machine['ip'], "sudo systemctl start harmony")
-    time.sleep(1)  # Wait for graceful shutdown
-    try:
-        _ssh_cmd(machine['user'], machine['ip'], f"pgrep harmony").strip()
-    except subprocess.CalledProcessError as e:
-        log.error("harmony service failed to start")
-        log.debug(f'start cmd response: {machine_start_resposne.strip()}')
-        raise RuntimeError("harmony service failed to start") from e
-    log.debug(f'successfully started harmony service on {machine["ip"]} (s{machine["shard"]})')
+    machine_start_response = _ssh_cmd(machine['user'], machine['ip'], "sudo systemctl start harmony")
+    start_time = time.time()
+    while time.time() - start_time < 5:
+        if _is_harmony_running(machine):
+            log.debug(f'successfully started harmony service on {machine["ip"]} (s{machine["shard"]})')
+            return
+    log.error("harmony service failed to start")
+    log.debug(f'start cmd response: {machine_start_response.strip()}')
+    raise RuntimeError("harmony service failed to start") from e
 
 
 def _snapshot(machine, do_bucket_sync=False):
@@ -395,7 +431,7 @@ def snapshot(do_bucket_sync=False):
         t.get()
 
 
-def _is_progressed_node(machine, timeout=150):
+def _is_progressed_node(machine):
     """
     Internal function to check if a machine/node is making progress.
     """
@@ -406,7 +442,7 @@ def _is_progressed_node(machine, timeout=150):
         log.error(f"error on RPC from {machine['ip']}. Error {e}")
         return False
     start_time = time.time()
-    while time.time() - start_time < timeout:
+    while time.time() - start_time < condition['max_seconds_since_last_block']:
         try:
             curr_header = blockchain.get_latest_header(f"http://{machine['ip']}:9500/")
         except (rpc_exceptions.RPCError, rpc_exceptions.RequestsTimeoutError, rpc_exceptions.RequestsError) as e:
@@ -422,12 +458,10 @@ def _is_progressed_node(machine, timeout=150):
 def is_progressed_nodes():
     """
     Checks all machines in config to make sure that they are making progress.
-
-    Note that the timeout is 150 seconds, at which point it will return false.
     """
     threads, pool = [], ThreadPool()
     for machine in machines:
-        threads.append(pool.apply_async(_is_progressed_node, (machine, 150)))
+        threads.append(pool.apply_async(_is_progressed_node, (machine,)))
     return all(t.get() for t in threads)
 
 

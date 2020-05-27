@@ -12,7 +12,7 @@ python3 -m pip install -r requirements.txt --user
 ```
 
 ## Running Snapshot
-1) Define your config JSON file. You can reference the example config file (`config.json`).
+1) Define your config JSON file. You can reference the example config file (`testnet_config.json`).
 2) Run the snapshot script using the following command: 
 ```bash
 chmod +x ./snapshot.py

@@ -37,7 +37,7 @@
   },
   "condition": {
     "force": false,
-    "max_seconds_since_last_block": 120,
+    "max_seconds_since_last_block": 150,
     "role": "Validator",
     "network": "testnet",
     "is_leader": false,
