@@ -19,10 +19,10 @@ esac
 log_define rollupg
 
 unset -v default_stride default_timeout default_step_retries default_cycle_retries
-default_stride=4
-default_timeout=450
-default_step_retries=2
-default_cycle_retries=2
+default_stride=3
+default_timeout=60
+default_step_retries=1
+default_cycle_retries=1
 
 print_usage() {
 	cat <<- ENDEND
