@@ -289,7 +289,7 @@ def _derive_db_paths(machine):
     return db_path_on_machine, db_rsync_path_on_machine
 
 
-def _bucket_sync(machine):
+def _bucket_sync(machine, height):
     """
     Internal function to start bucket sync.
     Function call will block until bucket sync is done on machine.
@@ -301,7 +301,8 @@ def _bucket_sync(machine):
     db_type = 'full' if condition['is_archival'] else 'pruned'
     bucket, shard = rsync['snapshot_bin'], machine['shard']
     unix_time, config = int(time.time()), rsync['config_path_on_client']
-    cmd = f"rclone sync {rsync_db_path} {bucket}/{db_type}/{shard}/harmony_db_{shard}.{unix_time} --config {config}"
+    cmd = f"rclone sync {rsync_db_path} " \
+          f"{bucket}/{db_type}/{shard}/harmony_db_{shard}.{height}.{unix_time} --config {config}"
     cmd_msg = None
     try:
         cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
@@ -391,6 +392,7 @@ def _snapshot(machine, do_bucket_sync=False):
     """
     log.debug(f'started snapshot on machine {machine["ip"]} (s{machine["shard"]})')
     try:
+        height = blockchain.get_latest_header(f"http://{machine['ip']}:9500/")['blockNumber'] if do_bucket_sync else -1
         _stop_harmony(machine)
         _local_sync(machine)
     except Exception as e:
@@ -401,7 +403,7 @@ def _snapshot(machine, do_bucket_sync=False):
     if not do_bucket_sync:
         log.debug("skipping bucket sync...")
         return ThreadPool().apply_async(lambda: True)
-    return ThreadPool().apply_async(_bucket_sync, (machine,))
+    return ThreadPool().apply_async(_bucket_sync, (machine, height))
 
 
 def snapshot(do_bucket_sync=False):
