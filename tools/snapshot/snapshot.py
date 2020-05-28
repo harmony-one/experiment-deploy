@@ -41,7 +41,7 @@ beacon_chain_shard = 0
 machines, rsync, ssh_key, condition = [], {}, {}, {}  # Will be populated from config.
 
 
-def setup_logger():
+def setup_logger(do_print=True):
     """
     Setup the logger for the snapshot package and returns the logger.
     """
@@ -50,7 +50,8 @@ def setup_logger():
     file_handler.setFormatter(
         logging.Formatter(f"{Typgpy.OKBLUE}(%(threadName)s){Typgpy.OKGREEN}[%(asctime)s]{Typgpy.ENDC} %(message)s"))
     logger.addHandler(file_handler)
-    logger.addHandler(logging.StreamHandler(sys.stdout))
+    if do_print:
+        logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(logging.DEBUG)
     logger.debug("===== NEW SNAPSHOT =====")
     return logger
@@ -98,6 +99,15 @@ def _ssh_script(user, ip, bash_script_path):
     cmd.append('bash -s')
     with open(bash_script_path, 'rb') as f:
         return subprocess.check_output(cmd, env=os.environ, stdin=f).decode()
+
+
+def initialize():
+    """
+    Initialize the config (first time SSH interaction).
+    """
+    for machine in machines:
+        print(f"test ssh into machine {machine['ip']}")
+        log.debug(_ssh_cmd(machine['user'], machine['ip'], "echo successfully initialized").strip())
 
 
 def load_config(config_path):
@@ -475,6 +485,9 @@ def _parse_args():
                         help=f"path to snapshot config (default {default_config_path})")
     parser.add_argument("--bucket-sync", action='store_true',
                         help="Enable syncing to external bucket (where bucket is defined in the config)")
+    parser.add_argument("--initialize", action='store_true',
+                        help="Initialize the snapshot. Needed if using new config, or reloading a config. "
+                             "Snapshot will NOT run when initializing...")
     return parser.parse_args()
 
 
@@ -482,11 +495,15 @@ if __name__ == "__main__":
     assert pyhmy.__version__.major == 20
     assert pyhmy.__version__.minor >= 5
     assert pyhmy.__version__.micro >= 5
-    setup_logger()
     args = _parse_args()
+    setup_logger(do_print=not args.initialize)
+    load_config(args.config)
+    log.debug("loaded config")
+    if args.initialize:
+        initialize()
+        print("successfully initialized...")
+        exit(0)
     try:
-        load_config(args.config)
-        log.debug("initialized snapshot script")
         sanity_check()
         setup_rclone_config()
         snapshot(do_bucket_sync=args.bucket_sync)
