@@ -23,7 +23,9 @@ from multiprocessing.pool import ThreadPool
 
 import pexpect
 import dns.resolver
+import requests
 import pyhmy
+from pagerduty_api import Alert
 from pyhmy.rpc import (
     exceptions as rpc_exceptions
 )
@@ -39,7 +41,7 @@ script_directory = os.path.dirname(os.path.realpath(__file__))
 log = logging.getLogger("snapshot")
 beacon_chain_shard = 0
 # Invariant: all data structures below are READ ONLY (except when loading config).
-machines, rsync, ssh_key, condition = [], {}, {}, {}  # Will be populated from config.
+machines, rsync, ssh_key, condition, pager_duty = [], {}, {}, {}, {}  # Will be populated from config.
 
 
 def setup_logger(do_print=True):
@@ -119,17 +121,20 @@ def load_config(config_path):
     """
     with open(config_path, 'r', encoding="utf-8") as f:
         config = json.load(f)
-    if {'machines', 'ssh_key', 'rsync', 'condition'} != set(config.keys()):
-        raise KeyError(f"config keys: {config.keys()} do not contain 'machines', 'ssh_key', 'condition' or 'rsync'.")
+    if {'machines', 'ssh_key', 'rsync', 'condition', 'pager_duty'} != set(config.keys()):
+        raise KeyError(f"config keys: {config.keys()} do not contain 'machines', "
+                       f"'ssh_key', 'condition', 'pager_duty' or 'rsync'.")
     log.debug(f"config: {json.dumps(config, indent=2)}")
     machines.clear()
     rsync.clear()
     ssh_key.clear()
     condition.clear()
+    pager_duty.clear()
     machines.extend(config['machines'])
     rsync.update(config['rsync'])
     ssh_key.update(config['ssh_key'])
     condition.update(config['condition'])
+    pager_duty.update(config['pager_duty'])
     _init_ssh_agent()
 
 
@@ -476,6 +481,30 @@ def is_progressed_nodes():
     return all(t.get() for t in threads)
 
 
+def page(error):
+    """
+    Send page to Pager Duty.
+    """
+    log.debug("sending pager")
+    if pager_duty['ignore']:
+        log.debug("ignoring pager-duty")
+        return
+    my_ip = ''
+    try:
+        my_ip = requests.get('http://ipecho.net/plain').content.decode().strip()
+    except Exception as e:  # catch all to page no matter what
+        log.error(f'page request machine IP error {e}')
+    trigger_response = Alert(pager_duty['service_key_v1']).trigger(
+        description=f'Snapshot failed: {error}',
+        details={
+            'traceback': traceback.format_exc().strip(),
+            'snapshot_machine_ip': my_ip,
+            'snapshot_script_location': os.path.realpath(__file__)
+        }
+    )
+    log.debug(f"pager trigger response: {trigger_response}")
+
+
 def _parse_args():
     """
     Argument parser that is only used for main execution of this script.
@@ -498,12 +527,18 @@ if __name__ == "__main__":
     assert pyhmy.__version__.micro >= 5
     args = _parse_args()
     setup_logger(do_print=not args.initialize)
-    load_config(args.config)
-    log.debug("loaded config")
-    if args.initialize:
-        initialize()
-        print("successfully initialized...")
-        exit(0)
+    try:
+        load_config(args.config)
+        log.debug("loaded config")
+        if args.initialize:
+            initialize()
+            print("successfully initialized...")
+            exit(0)
+    except Exception as e:
+        log.fatal(traceback.format_exc())
+        log.fatal(f'snapshot startup failed with error {e}')
+        page(e)
+        exit(1)
     try:
         sanity_check()
         setup_rclone_config()
@@ -516,5 +551,6 @@ if __name__ == "__main__":
         log.fatal(traceback.format_exc())
         log.fatal(f'snapshot failed with error {e}')
         cleanup_rclone_config()
+        page(e)
         exit(1)
     log.debug('HOORAY!! finished successfully')

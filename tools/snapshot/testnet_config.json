@@ -42,5 +42,9 @@
     "network": "testnet",
     "is_leader": false,
     "is_archival": false
+  },
+  "pager_duty": {
+    "ignore": true,
+    "service_key_v1": null
   }
 }

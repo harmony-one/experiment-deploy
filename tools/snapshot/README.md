@@ -35,7 +35,7 @@ chmod +x ./snapshot.py
 
 ## Config Documentation
 
-The config file is a JSON file with the following 4 root keys: `ssh_key`, `machines`, `rsync`, and `condition`.
+The config file is a JSON file with the following 4 root keys: `ssh_key`, `machines`, `rsync`, `condition`, and `pager_duty`.
 Below is a detailed description of what each file is.
 
 ### `ssh_key`
@@ -78,8 +78,16 @@ Below is a detailed description of what each file is.
 | `max_seconds_since_last_block` | int        | [**Required**] Check for last block minted before and after snapshot |
 | `role`                         | string     | [**Required**] Role for *ALL* configured nodes. (Validator/ExplorerNode) |
 | `network`                      | string     | [**Required**] Network for *ALL* configured nodes. |
-| `is_leader`                    | string     | [**Required**] Is leader status for *ALL* configured nodes. |
-| `is_archival`                  | string     | [**Required**] Archival status for *ALL* configured nodes. |
+| `is_leader`                    | string     | [**Required**] Is leader status for *ALL* configured nodes |
+| `is_archival`                  | string     | [**Required**] Archival status for *ALL* configured nodes |
+
+### `pager_duty`
+> Specify all things related to PagerDuty
+
+| Key                            | Value-type | Value-description|
+| :-----------------------------:|:----------:| :----------------|
+| `ignore`                       | boolean    | [**Required**] Bypass/disable pager-duty notification |
+| `service_key_v1`               | string     | [**Required**] Service key for the PagerDuty, null if ignored |
 
 
 ## Future usage
