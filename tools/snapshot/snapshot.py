@@ -179,8 +179,8 @@ def sanity_check():
         raise RuntimeError(f"config does not specify beacon chain ({beacon_chain_shard})")
 
     threads, pool = [], ThreadPool()
-    for machine in machines:
-        def fn():  # returning None marks success for this function
+    for m in machines:
+        def fn(machine):  # returning None marks success for this function
             try:
                 node_metadata = blockchain.get_node_metadata(f"http://{machine['ip']}:9500/", timeout=15)
                 sharding_structure = blockchain.get_sharding_structure(f"http://{machine['ip']}:9500/", timeout=15)
@@ -205,8 +205,7 @@ def sanity_check():
             if _is_dns_node(machine, sharding_structure):
                 return f"machine is a DNS node, which cannot be offline. (ip: {machine['ip']})"
             return None  # indicate success
-
-        threads.append(pool.apply_async(fn))
+        threads.append(pool.apply_async(fn, (m,)))
     for t in threads:
         response = t.get()
         if response is not None:
@@ -314,7 +313,7 @@ def _bucket_sync(machine, height):
     bucket, shard = rsync['snapshot_bin'], machine['shard']
     time, config = datetime.datetime.utcnow().strftime("%y-%m-%d-%H-%M-%S"), rsync['config_path_on_client']
     cmd = f"rclone sync {rsync_db_path} " \
-          f"{bucket}/{db_type}/{shard}/harmony_db_{shard}.{time}.{height} --config {config}"
+          f"{bucket}/{db_type}/{shard}/harmony_db_{shard}.{time}.{height} --config {config} -P"
     cmd_msg = None
     try:
         cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
@@ -332,7 +331,7 @@ def _local_sync(machine):
     """
     log.debug(f'starting local sync on {machine["ip"]} (s{machine["shard"]})')
     db_path_on_machine, db_rsync_path_on_machine = _derive_db_paths(machine)
-    cmd = f"rclone sync {db_path_on_machine} {db_rsync_path_on_machine} --transfers 64"
+    cmd = f"rclone sync {db_path_on_machine} {db_rsync_path_on_machine} --transfers 64 -P"
     cmd_msg = None
     try:
         cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
