@@ -481,10 +481,10 @@ def page(error):
     """
     Send page to Pager Duty.
     """
-    log.debug("sending pager")
     if pager_duty['ignore']:
         log.debug("ignoring pager...")
         return
+    log.debug("sending pager")
     my_ip = ''
     try:
         my_ip = requests.get('http://ipecho.net/plain').content.decode().strip()
