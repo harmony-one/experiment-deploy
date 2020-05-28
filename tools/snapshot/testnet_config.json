@@ -33,7 +33,7 @@
   "rsync": {
     "config_path_on_host": "./rclone.conf",
     "config_path_on_client": "$HOME/snapshot_rclone.conf",
-    "snapshot_bin": "testnet:pub.harmony.one/testnet"
+    "snapshot_bin": "snapshot:harmony-snapshot/testnet"
   },
   "condition": {
     "force": false,
