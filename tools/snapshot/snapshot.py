@@ -73,7 +73,6 @@ def _init_ssh_agent():
         subprocess.check_call(["ssh-add", ssh_key['path']], env=os.environ)
     else:
         proc = pexpect.spawn("ssh-add", [ssh_key['path']], env=os.environ)
-        proc.logfile = sys.stdout
         proc.sendline(ssh_key['passphrase'])
         proc.expect(pexpect.EOF)
         log.debug(proc.before.decode())
@@ -86,7 +85,10 @@ def _ssh_cmd(user, ip, command):
     Returns the output of the SSH command.
     Raises subprocess.CalledProcessError if ssh call errored.
     """
-    cmd = ["ssh", f"{user}@{ip}"] if ssh_key['use_existing_agent'] else ["ssh", "-i", ssh_key["path"], f"{user}@{ip}"]
+    if ssh_key['use_existing_agent']:
+        cmd = ["ssh", "-oStrictHostKeyChecking=no", f"{user}@{ip}"]
+    else:
+        cmd = ["ssh", "-oStrictHostKeyChecking=no", "-i", ssh_key["path"], f"{user}@{ip}"]
     cmd.append(command)
     return subprocess.check_output(cmd, env=os.environ).decode()
 
@@ -98,19 +100,13 @@ def _ssh_script(user, ip, bash_script_path):
     Returns the output of the SSH command.
     Raises subprocess.CalledProcessError if ssh call errored.
     """
-    cmd = ["ssh", f"{user}@{ip}"] if ssh_key['use_existing_agent'] else ["ssh", "-i", ssh_key["path"], f"{user}@{ip}"]
+    if ssh_key['use_existing_agent']:
+        cmd = ["ssh", "-oStrictHostKeyChecking=no", f"{user}@{ip}"]
+    else:
+        cmd = ["ssh", "-oStrictHostKeyChecking=no", "-i", ssh_key["path"], f"{user}@{ip}"]
     cmd.append('bash -s')
     with open(bash_script_path, 'rb') as f:
         return subprocess.check_output(cmd, env=os.environ, stdin=f).decode()
-
-
-def initialize():
-    """
-    Initialize the config (first time SSH interaction).
-    """
-    for machine in machines:
-        print(f"test ssh into machine {machine['ip']}")
-        log.debug(_ssh_cmd(machine['user'], machine['ip'], "echo successfully initialized").strip())
 
 
 def load_config(config_path):
@@ -487,7 +483,7 @@ def page(error):
     """
     log.debug("sending pager")
     if pager_duty['ignore']:
-        log.debug("ignoring pager-duty")
+        log.debug("ignoring pager...")
         return
     my_ip = ''
     try:
@@ -515,9 +511,6 @@ def _parse_args():
                         help=f"path to snapshot config (default {default_config_path})")
     parser.add_argument("--bucket-sync", action='store_true',
                         help="Enable syncing to external bucket (where bucket is defined in the config)")
-    parser.add_argument("--initialize", action='store_true',
-                        help="Initialize the snapshot. Needed if using new config, or reloading a config. "
-                             "Snapshot will NOT run when initializing...")
     return parser.parse_args()
 
 
@@ -526,19 +519,15 @@ if __name__ == "__main__":
     assert pyhmy.__version__.minor >= 5
     assert pyhmy.__version__.micro >= 5
     args = _parse_args()
-    setup_logger(do_print=not args.initialize)
+    setup_logger()
     try:
         load_config(args.config)
-        log.debug("loaded config")
-        if args.initialize:
-            initialize()
-            print("successfully initialized...")
-            exit(0)
     except Exception as e:
         log.fatal(traceback.format_exc())
         log.fatal(f'snapshot startup failed with error {e}')
         page(e)
         exit(1)
+    log.debug("loaded config")
     try:
         sanity_check()
         setup_rclone_config()
