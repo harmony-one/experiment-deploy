@@ -11,6 +11,7 @@ Example Usage:
 Note that this script was built to be imported as a package from other scripts.
 """
 import time
+import datetime
 import argparse
 import subprocess
 import os
@@ -310,9 +311,9 @@ def _bucket_sync(machine, height):
     _, rsync_db_path = _derive_db_paths(machine)
     db_type = 'full' if condition['is_archival'] else 'pruned'
     bucket, shard = rsync['snapshot_bin'], machine['shard']
-    unix_time, config = int(time.time()), rsync['config_path_on_client']
+    time, config = datetime.datetime.utcnow().strftime("%y-%m-%d-%H-%M-%S"), rsync['config_path_on_client']
     cmd = f"rclone sync {rsync_db_path} " \
-          f"{bucket}/{db_type}/{shard}/harmony_db_{shard}.{height}.{unix_time} --config {config}"
+          f"{bucket}/{db_type}/{shard}/harmony_db_{shard}.{time}.{height} --config {config}"
     cmd_msg = None
     try:
         cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
