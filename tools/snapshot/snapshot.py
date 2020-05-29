@@ -51,7 +51,7 @@ def setup_logger(do_print=True):
     logger = logging.getLogger("snapshot")
     file_handler = logging.FileHandler(f"{script_directory}/snapshot.log")
     file_handler.setFormatter(
-        logging.Formatter(f"{Typgpy.OKBLUE}(%(threadName)s){Typgpy.OKGREEN}[%(asctime)s]{Typgpy.ENDC} %(message)s"))
+        logging.Formatter(f"(%(threadName)s)[%(asctime)s] %(message)s"))
     logger.addHandler(file_handler)
     if do_print:
         logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -494,8 +494,10 @@ def page(error):
         details={
             'traceback': traceback.format_exc().strip(),
             'snapshot_machine_ip': my_ip,
-            'snapshot_script_location': os.path.realpath(__file__)
-        }
+            'snapshot_script_location': os.path.realpath(__file__),
+            'internal_runbook': "https://app.gitbook.com/@harmony-one/s/onboarding-wiki/devops-run-book/harmony-snapshot"
+        },
+        client_url="https://jenkins.harmony.one/"
     )
     log.debug(f"pager trigger response: {trigger_response}")
 
