@@ -23,7 +23,9 @@ from multiprocessing.pool import ThreadPool
 
 import pexpect
 import dns.resolver
+import requests
 import pyhmy
+from pagerduty_api import Alert
 from pyhmy.rpc import (
     exceptions as rpc_exceptions
 )
@@ -39,7 +41,7 @@ script_directory = os.path.dirname(os.path.realpath(__file__))
 log = logging.getLogger("snapshot")
 beacon_chain_shard = 0
 # Invariant: all data structures below are READ ONLY (except when loading config).
-machines, rsync, ssh_key, condition = [], {}, {}, {}  # Will be populated from config.
+machines, rsync, ssh_key, condition, pager_duty = [], {}, {}, {}, {}  # Will be populated from config.
 
 
 def setup_logger(do_print=True):
@@ -49,7 +51,7 @@ def setup_logger(do_print=True):
     logger = logging.getLogger("snapshot")
     file_handler = logging.FileHandler(f"{script_directory}/snapshot.log")
     file_handler.setFormatter(
-        logging.Formatter(f"{Typgpy.OKBLUE}(%(threadName)s){Typgpy.OKGREEN}[%(asctime)s]{Typgpy.ENDC} %(message)s"))
+        logging.Formatter(f"(%(threadName)s)[%(asctime)s] %(message)s"))
     logger.addHandler(file_handler)
     if do_print:
         logger.addHandler(logging.StreamHandler(sys.stdout))
@@ -71,7 +73,6 @@ def _init_ssh_agent():
         subprocess.check_call(["ssh-add", ssh_key['path']], env=os.environ)
     else:
         proc = pexpect.spawn("ssh-add", [ssh_key['path']], env=os.environ)
-        proc.logfile = sys.stdout
         proc.sendline(ssh_key['passphrase'])
         proc.expect(pexpect.EOF)
         log.debug(proc.before.decode())
@@ -84,7 +85,10 @@ def _ssh_cmd(user, ip, command):
     Returns the output of the SSH command.
     Raises subprocess.CalledProcessError if ssh call errored.
     """
-    cmd = ["ssh", f"{user}@{ip}"] if ssh_key['use_existing_agent'] else ["ssh", "-i", ssh_key["path"], f"{user}@{ip}"]
+    if ssh_key['use_existing_agent']:
+        cmd = ["ssh", "-oStrictHostKeyChecking=no", f"{user}@{ip}"]
+    else:
+        cmd = ["ssh", "-oStrictHostKeyChecking=no", "-i", ssh_key["path"], f"{user}@{ip}"]
     cmd.append(command)
     return subprocess.check_output(cmd, env=os.environ).decode()
 
@@ -96,19 +100,13 @@ def _ssh_script(user, ip, bash_script_path):
     Returns the output of the SSH command.
     Raises subprocess.CalledProcessError if ssh call errored.
     """
-    cmd = ["ssh", f"{user}@{ip}"] if ssh_key['use_existing_agent'] else ["ssh", "-i", ssh_key["path"], f"{user}@{ip}"]
+    if ssh_key['use_existing_agent']:
+        cmd = ["ssh", "-oStrictHostKeyChecking=no", f"{user}@{ip}"]
+    else:
+        cmd = ["ssh", "-oStrictHostKeyChecking=no", "-i", ssh_key["path"], f"{user}@{ip}"]
     cmd.append('bash -s')
     with open(bash_script_path, 'rb') as f:
         return subprocess.check_output(cmd, env=os.environ, stdin=f).decode()
-
-
-def initialize():
-    """
-    Initialize the config (first time SSH interaction).
-    """
-    for machine in machines:
-        print(f"test ssh into machine {machine['ip']}")
-        log.debug(_ssh_cmd(machine['user'], machine['ip'], "echo successfully initialized").strip())
 
 
 def load_config(config_path):
@@ -119,17 +117,20 @@ def load_config(config_path):
     """
     with open(config_path, 'r', encoding="utf-8") as f:
         config = json.load(f)
-    if {'machines', 'ssh_key', 'rsync', 'condition'} != set(config.keys()):
-        raise KeyError(f"config keys: {config.keys()} do not contain 'machines', 'ssh_key', 'condition' or 'rsync'.")
+    if {'machines', 'ssh_key', 'rsync', 'condition', 'pager_duty'} != set(config.keys()):
+        raise KeyError(f"config keys: {config.keys()} do not contain 'machines', "
+                       f"'ssh_key', 'condition', 'pager_duty' or 'rsync'.")
     log.debug(f"config: {json.dumps(config, indent=2)}")
     machines.clear()
     rsync.clear()
     ssh_key.clear()
     condition.clear()
+    pager_duty.clear()
     machines.extend(config['machines'])
     rsync.update(config['rsync'])
     ssh_key.update(config['ssh_key'])
     condition.update(config['condition'])
+    pager_duty.update(config['pager_duty'])
     _init_ssh_agent()
 
 
@@ -178,8 +179,8 @@ def sanity_check():
         raise RuntimeError(f"config does not specify beacon chain ({beacon_chain_shard})")
 
     threads, pool = [], ThreadPool()
-    for machine in machines:
-        def fn():  # returning None marks success for this function
+    for m in machines:
+        def fn(machine):  # returning None marks success for this function
             try:
                 node_metadata = blockchain.get_node_metadata(f"http://{machine['ip']}:9500/", timeout=15)
                 sharding_structure = blockchain.get_sharding_structure(f"http://{machine['ip']}:9500/", timeout=15)
@@ -204,8 +205,7 @@ def sanity_check():
             if _is_dns_node(machine, sharding_structure):
                 return f"machine is a DNS node, which cannot be offline. (ip: {machine['ip']})"
             return None  # indicate success
-
-        threads.append(pool.apply_async(fn))
+        threads.append(pool.apply_async(fn, (m,)))
     for t in threads:
         response = t.get()
         if response is not None:
@@ -313,7 +313,7 @@ def _bucket_sync(machine, height):
     bucket, shard = rsync['snapshot_bin'], machine['shard']
     time, config = datetime.datetime.utcnow().strftime("%y-%m-%d-%H-%M-%S"), rsync['config_path_on_client']
     cmd = f"rclone sync {rsync_db_path} " \
-          f"{bucket}/{db_type}/{shard}/harmony_db_{shard}.{time}.{height} --config {config}"
+          f"{bucket}/{db_type}/{shard}/harmony_db_{shard}.{time}.{height} --config {config} -P"
     cmd_msg = None
     try:
         cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
@@ -331,7 +331,7 @@ def _local_sync(machine):
     """
     log.debug(f'starting local sync on {machine["ip"]} (s{machine["shard"]})')
     db_path_on_machine, db_rsync_path_on_machine = _derive_db_paths(machine)
-    cmd = f"rclone sync {db_path_on_machine} {db_rsync_path_on_machine} --transfers 64"
+    cmd = f"rclone sync {db_path_on_machine} {db_rsync_path_on_machine} --transfers 64 -P"
     cmd_msg = None
     try:
         cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
@@ -476,6 +476,32 @@ def is_progressed_nodes():
     return all(t.get() for t in threads)
 
 
+def page(error):
+    """
+    Send page to Pager Duty.
+    """
+    if pager_duty['ignore']:
+        log.debug("ignoring pager...")
+        return
+    log.debug("sending pager")
+    my_ip = ''
+    try:
+        my_ip = requests.get('http://ipecho.net/plain').content.decode().strip()
+    except Exception as e:  # catch all to page no matter what
+        log.error(f'page request machine IP error {e}')
+    trigger_response = Alert(pager_duty['service_key_v1']).trigger(
+        description=f'Snapshot failed: {error}',
+        details={
+            'traceback': traceback.format_exc().strip(),
+            'snapshot_machine_ip': my_ip,
+            'snapshot_script_location': os.path.realpath(__file__),
+            'internal_runbook': "https://app.gitbook.com/@harmony-one/s/onboarding-wiki/devops-run-book/harmony-snapshot"
+        },
+        client_url="https://jenkins.harmony.one/"
+    )
+    log.debug(f"pager trigger response: {trigger_response}")
+
+
 def _parse_args():
     """
     Argument parser that is only used for main execution of this script.
@@ -486,9 +512,6 @@ def _parse_args():
                         help=f"path to snapshot config (default {default_config_path})")
     parser.add_argument("--bucket-sync", action='store_true',
                         help="Enable syncing to external bucket (where bucket is defined in the config)")
-    parser.add_argument("--initialize", action='store_true',
-                        help="Initialize the snapshot. Needed if using new config, or reloading a config. "
-                             "Snapshot will NOT run when initializing...")
     return parser.parse_args()
 
 
@@ -497,13 +520,15 @@ if __name__ == "__main__":
     assert pyhmy.__version__.minor >= 5
     assert pyhmy.__version__.micro >= 5
     args = _parse_args()
-    setup_logger(do_print=not args.initialize)
-    load_config(args.config)
+    setup_logger()
+    try:
+        load_config(args.config)
+    except Exception as e:
+        log.fatal(traceback.format_exc())
+        log.fatal(f'snapshot startup failed with error {e}')
+        page(e)
+        exit(1)
     log.debug("loaded config")
-    if args.initialize:
-        initialize()
-        print("successfully initialized...")
-        exit(0)
     try:
         sanity_check()
         setup_rclone_config()
@@ -516,5 +541,6 @@ if __name__ == "__main__":
         log.fatal(traceback.format_exc())
         log.fatal(f'snapshot failed with error {e}')
         cleanup_rclone_config()
+        page(e)
         exit(1)
     log.debug('HOORAY!! finished successfully')

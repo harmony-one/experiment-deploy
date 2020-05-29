@@ -13,20 +13,17 @@ python3 -m pip install -r requirements.txt --user
 
 ## Running Snapshot
 1) Define your config JSON file. You can reference the example config file (`testnet_config.json`).
-2) Initialize the snapshot script with the given config using the following command:
+2) Run the snapshot script using the following command: 
 ```bash
 chmod +x ./snapshot.py
-./snapshot.py --config ./config.json --initialize
-```
-3) Run the snapshot script using the following command: 
-```bash
 ./snapshot.py --config ./config.json
 ```
-4) If you wish to sync the snapshot to the configured bucket, do so with the following command:
+3) If you wish to sync the snapshot to the configured bucket, do so with the following command:
 ```bash
+chmod +x ./snapshot.py
 ./snapshot.py --config ./config.json --bucket-sync
 ```
-5) You can debug the script or check its progress by inspecting the log file called `snapshot.log` in the same directory as `snapshot.py`.
+4) You can debug the script or check its progress by inspecting the log file called `snapshot.log` in the same directory as `snapshot.py`.
 > It is recommended to set up a cronjob to call this script evey set interval. For example, to run the script every
 > hour, execute the following command (assuming you are in this directory) to setup the cronjob:
 > ```bash
@@ -35,7 +32,7 @@ chmod +x ./snapshot.py
 
 ## Config Documentation
 
-The config file is a JSON file with the following 4 root keys: `ssh_key`, `machines`, `rsync`, and `condition`.
+The config file is a JSON file with the following 4 root keys: `ssh_key`, `machines`, `rsync`, `condition`, and `pager_duty`.
 Below is a detailed description of what each file is.
 
 ### `ssh_key`
@@ -78,8 +75,16 @@ Below is a detailed description of what each file is.
 | `max_seconds_since_last_block` | int        | [**Required**] Check for last block minted before and after snapshot |
 | `role`                         | string     | [**Required**] Role for *ALL* configured nodes. (Validator/ExplorerNode) |
 | `network`                      | string     | [**Required**] Network for *ALL* configured nodes. |
-| `is_leader`                    | string     | [**Required**] Is leader status for *ALL* configured nodes. |
-| `is_archival`                  | string     | [**Required**] Archival status for *ALL* configured nodes. |
+| `is_leader`                    | string     | [**Required**] Is leader status for *ALL* configured nodes |
+| `is_archival`                  | string     | [**Required**] Archival status for *ALL* configured nodes |
+
+### `pager_duty`
+> Specify all things related to PagerDuty
+
+| Key                            | Value-type | Value-description|
+| :-----------------------------:|:----------:| :----------------|
+| `ignore`                       | boolean    | [**Required**] Bypass/disable pager-duty notification |
+| `service_key_v1`               | string     | [**Required**] Service key for the PagerDuty, null if ignored |
 
 
 ## Future usage
