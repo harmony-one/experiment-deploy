@@ -16,21 +16,37 @@ Example Usage:
     TODO: example
 """
 
-import argparse
-import logging
-import sys
 import time
+import datetime
+import argparse
+import subprocess
+import os
+import sys
+import json
+import logging
+import traceback
 from multiprocessing.pool import ThreadPool
 
+import pexpect
+import dns.resolver
+import requests
 import pyhmy
+from pagerduty_api import Alert
+from pyhmy.rpc import (
+    exceptions as rpc_exceptions
+)
+from pyhmy.util import (
+    is_active_shard,
+    Typgpy
+)
 from pyhmy import (
     blockchain,
-    rpc,
-    Typgpy
 )
 
 
-pyhmy_version = '20.5.3'
+script_directory = os.path.dirname(os.path.realpath(__file__))
+log = logging.getLogger("snapshot")
+beacon_chain_shard = 0
 
 
 def parse_args():
@@ -42,19 +58,20 @@ def parse_args():
     return parser.parse_args()
 
 
-def setup_logger():
+def setup_logger(do_print=True):
+    """
+    Setup the logger for the snapshot package and returns the logger.
+    """
     logger = logging.getLogger("snapshot")
-    file_handler = logging.FileHandler(f"{args.log_dir}/recover_from_snapshot.log")
-    file_handler.setFormatter(logging.Formatter(f"{Typgpy.OKGREEN}[%(asctime)s]{Typgpy.ENDC} %(message)s"))
+    file_handler = logging.FileHandler(f"{script_directory}/snapshot.log")
+    file_handler.setFormatter(
+        logging.Formatter(f"(%(threadName)s)[%(asctime)s] %(message)s"))
     logger.addHandler(file_handler)
-    logger.addHandler(logging.StreamHandler(sys.stdout))
+    if do_print:
+        logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(logging.DEBUG)
-    print(f"Log file saved to: {args.log_dir}/recover_from_snapshot.log")
+    logger.debug("===== NEW SNAPSHOT =====")
     return logger
-
-
-def process_args():
-    return {}, args.network
 
 
 def select_snapshot():
@@ -78,7 +95,7 @@ def rsync_recovered_dbs(ips, shard):
     pass
 
 
-def reset_dbs_interactively():
+def reset_dbs_interactively(ips_per_shard):
     """
     Bulk of the work is handled here.
     Actions done interactively to ensure security.
@@ -108,50 +125,74 @@ def verify_all_progressed(ips):
     pass
 
 
-def restart_and_check():
+def restart_and_check(ips_per_shard):
     """
     Main restart and verification function after DBs have been restored.
     """
+    if input(f"Restart shards {sorted(ips_per_shard.keys())}? [Y/n]\n> ").lower() not in {'yes', 'y'}:
+        return
     threads = []
     post_check_pool = ThreadPool()
-    for shard in ips_for_shard.keys():
-        log.debug(f"starting restart for shard {shard}; ips: {ips_for_shard[shard]}")
-        threads.append(post_check_pool.apply_async(restart_all, (ips_for_shard[shard],)))
+    for shard in ips_per_shard.keys():
+        log.debug(f"starting restart for shard {shard}; ips: {ips_per_shard[shard]}")
+        threads.append(post_check_pool.apply_async(restart_all, (ips_per_shard[shard],)))
     for t in threads:
         t.get()
-    log.debug(f"finished restarting shards {sorted(ips_for_shard.keys())}")
+    log.debug(f"finished restarting shards {sorted(ips_per_shard.keys())}")
 
     sleep_b4_running_check = 10
     log.debug(f"sleeping {sleep_b4_running_check} seconds before checking if all nodes started")
     time.sleep(sleep_b4_running_check)
 
     threads = []
-    for shard in ips_for_shard.keys():
-        log.debug(f"starting node restart verification for shard {shard}; ips: {ips_for_shard[shard]}")
-        threads.append(post_check_pool.apply_async(verify_all_started, (ips_for_shard[shard],)))
+    for shard in ips_per_shard.keys():
+        log.debug(f"starting node restart verification for shard {shard}; ips: {ips_per_shard[shard]}")
+        threads.append(post_check_pool.apply_async(verify_all_started, (ips_per_shard[shard],)))
     if not all(t.get() for t in threads):
         raise SystemExit(f"not all nodes restarted, check logs for details: "
                          f"{args.log_dir}/recover_from_snapshot.log")
 
-    sleep_b4_progress_check = 30
+    sleep_b4_progress_check = 60
     log.debug(f"sleeping {sleep_b4_progress_check} seconds before checking if all nodes are making progress")
     time.sleep(sleep_b4_progress_check)
 
     threads = []
-    for shard in ips_for_shard.keys():
-        log.debug(f"starting node progress verification for shard {shard}; ips: {ips_for_shard[shard]}")
-        threads.append(post_check_pool.apply_async(verify_all_progressed, (ips_for_shard[shard],)))
+    for shard in ips_per_shard.keys():
+        log.debug(f"starting node progress verification for shard {shard}; ips: {ips_per_shard[shard]}")
+        threads.append(post_check_pool.apply_async(verify_all_progressed, (ips_per_shard[shard],)))
     if not all(t.get() for t in threads):
         raise SystemExit(f"not all nodes made progress, check logs for details: "
                          f"{args.log_dir}/recover_from_snapshot.log")
     log.debug("recovery succeeded!")
 
 
+def _get_ips_per_shard(args):
+    """
+    Internal function to get the IPs per shard given a parsed args.
+    """
+    return {}
+
+
+def _parse_args():
+    """
+    Argument parser that is only used for main execution of this script.
+    """
+    parser = argparse.ArgumentParser(description='Snapshot script to be ran from command machine')
+    default_config_path = f"{script_directory}/config.json"
+    parser.add_argument("--config", type=str, default=default_config_path,
+                        help=f"path to snapshot config (default {default_config_path})")
+    parser.add_argument("--bucket-sync", action='store_true',
+                        help="Enable syncing to external bucket (where bucket is defined in the config)")
+    args = parser.parse_args()
+    return _get_ips_per_shard(args), args
+
+
 if __name__ == "__name__":
-    assert pyhmy.__version__.public() == pyhmy_version, f'install correct pyhmy version with `python3 -m pip install pyhmy=={pyhmy_version}`'
-    log, args = setup_logger(), parse_args()
-    ips_for_shard, network = process_args()
-    reset_dbs_interactively()
-    if input(f"Restart shards {sorted(ips_for_shard.keys())}? [Y/n]\n> ").lower() in {'yes', 'y'}:
-        restart_and_check()
+    assert pyhmy.__version__.major == 20
+    assert pyhmy.__version__.minor >= 5
+    assert pyhmy.__version__.micro >= 5
+    ips_per_shard, args = _parse_args()
+    setup_logger()
+    reset_dbs_interactively(ips_per_shard)
+    restart_and_check(ips_per_shard)
     log.debug("finished recovery")
