@@ -33,10 +33,6 @@
 
   - name: "stop, upgrade, restart harmony service"
     block:
-      - name: "upgrade version"
-        debug:
-          msg: "upgraded version: Ver.stdout" 
-
       - name: "stop harmony service"
         become: true
         become_user: root
@@ -56,6 +52,13 @@
         systemd:
           name: harmony
           state: started
+
+      - name: upgraded harmony version
+        shell: "{{ USER.home }}/node.sh -V 2>&1 | grep -oE 'v[0-9]+-v[0-9.]+-[0-9]+-g[a-z0-9]+'"
+        register: tVer
+
+      - debug:
+          var: tVer.stdout
 
     rescue:
       - name: "restart harmony service" 
