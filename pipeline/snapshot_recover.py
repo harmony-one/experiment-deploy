@@ -3,6 +3,12 @@
 """
 Recover a network using a given snapshot.
 
+Note that this script has assumptions regarding its path and relies
+on the rest of the repository being cloned. Here are the assumptions:
+* node_ssh.sh needs to be in the current working directory and never requires interaction.
+* $(pwd)/../tools/snapshot/rclone.conf contains the default rclone config for
+  a node to download the snapshot db.
+
 Note that explorer nodes are recovered with a non-archival db.
 Manual archival recovery will need to be afterwards.
 
