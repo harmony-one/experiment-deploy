@@ -6,6 +6,7 @@ export GO111MODULE=on
 declare -A SRC
 SRC[soldier]=experiment/soldier/main.go
 SRC[instance]=aws/instance/instance.go
+SRC[genbls]=experiment/genbls/main.go
 
 BINDIR=bin
 BUCKET=unique-bucket-bin
