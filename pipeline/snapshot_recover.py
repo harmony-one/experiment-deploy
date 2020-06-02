@@ -49,7 +49,7 @@ log = logging.getLogger("snapshot_recovery")
 supported_networks = {"mainnet", "testnet", "staking", "partner", "stress"}
 beacon_chain_shard = 0
 
-_ip_regex = r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+_ipv4_regex = r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
 
 
 def setup_logger(do_print=True):
@@ -98,12 +98,24 @@ def _ssh_script(ip, bash_script_path):
         return subprocess.check_output(cmd, env=os.environ, stdin=f).decode()
 
 
-def interact(prompt, selection_list):
+def _aws_s3_ls(path):
+    """
+    Internal AWS command to list contents of an s3 bucket anonymously.
+    Assumes AWS CLI is setup on machine.
+
+    Raises subprocess.CalledProcessError if aws command fails.
+    """
+    cmd = ['aws', 's3', 'ls', path]
+    return [n.replace('PRE', '').replace("/", "").strip() for n in
+            subprocess.check_output(cmd, env=os.environ, timeout=60).decode().split("\n") if "PRE" in n]
+
+
+def interact(prompt, selection_list, sort=True):
     """
     The single source of interaction with the console.
     All interaction must confine to this function's requirement.
 
-    Prompt the user with `prompt` and an enumerated selection from a sorted `selection_list`.
+    Prompt the user with `prompt` and an enumerated selection from a possibly sorted `selection_list`.
     Take in an integer, n, such that 0 <= n < len(`selection_list`).
     If a `log` is provided, log the interaction and all errors at the info and error level respectively.
 
@@ -114,8 +126,13 @@ def interact(prompt, selection_list):
 
     Returns n and corresponding selection string from `selection_list`.
     """
+    if not selection_list:
+        return
     input_prompt = f"{Typgpy.BOLD}Select option (number):{Typgpy.ENDC}\n> "
-    prompt, selection_list = prompt.replace("\n", ""), sorted(map(lambda e: e.replace("\n", ""), selection_list))
+
+    prompt, selection_list = prompt.replace("\n", ""), [e.replace("\n", "") for e in selection_list]
+    if sort:
+        selection_list = sorted(selection_list, reverse=True)
     prompt_new_line_count = sum(1 for el in selection_list if el) + 3  # 1 for given prompt, 2 for input prompt
     if prompt:
         prompt_new_line_count += 1
@@ -223,11 +240,47 @@ def current_stats(ips_per_shard):
     # TODO: implement
 
 
-def select_snapshot():
+def select_snapshot(snapshot_bin, network, shard):
     """
-    Interactively select the snapshot to ensure security
+    Interactively select the snapshot to ensure security.
+
+    Assumes the `snapshot_bin` follow format: <rclone-config>:<bin>.
+    Assumes that AWS CLI is setup on machine that is running this script.
+    Assumes AWS s3 structure is:
+        <bin>/<network>/<db-type>/<shard-id>/harmony_db_<shard-id>.<date>.<block_height>/
     """
-    pass
+
+    def filter_db(entry):
+        try:
+            return int(entry.split('.')[-1])
+        except (ValueError, KeyError):
+            return -1
+
+    # Get to desired bucket of snapshot DBs
+    snapshot_bin = f"{snapshot_bin.split(':')[1]}/{network}/"
+    db_types = _aws_s3_ls(snapshot_bin)
+    selected_db_type = interact("Select recovery DB type", db_types)
+    log.debug(f"selected {selected_db_type} db type")
+    snapshot_bin += f"{selected_db_type}/"
+    shards = [int(s) for s in _aws_s3_ls(snapshot_bin)]
+    if shard not in shards:
+        raise RuntimeError(f"snapshot db not found for shard {shard}")
+    snapshot_bin += f"{shard}/"
+    dbs = sorted(filter(lambda e: filter_db(e) >= 0, _aws_s3_ls(snapshot_bin)), key=filter_db, reverse=True)
+
+    # Request db
+    presented_dbs_count = 10
+    while True:
+        prompt_db = dbs.copy()[:presented_dbs_count] + ["Look for more DBs"]
+        prompt = f"Select DB for shard {shard}. Format: harmony_db_SHARD.Y-M-D-H-M-S.BLOCK)"
+        response = interact(prompt, prompt_db, sort=False)
+        if response == prompt_db[-1]:
+            presented_dbs_count *= 2
+            continue
+        else:
+            db = f"{snapshot_bin}/{response}"
+            log.debug(f"chose DB: {db} for shard {shard}")
+            return db
 
 
 def backup_existing_dbs(ips, shard):
@@ -248,7 +301,8 @@ def setup_rclone(ips, rclone_config_path):
 def rsync_recovered_dbs(ips, shard, snapshot_bin):
     """
     Assumption is that nodes have rclone setup with appropriate credentials.
-    Assumes the `snapshot_bin` matches rclone config setup on machine.
+    Assumes the `snapshot_bin` matches rclone config setup on machine
+    and follow format: <rclone-config>:<bin>.
     """
     pass
 
@@ -260,7 +314,8 @@ def reset_dbs_interactively(ips_per_shard, rclone_config_path, snapshot_bin):
 
     Assumes `ips_per_shard` has been verified.
     Assumes `rclone_config_path` is a rclone config file.
-    Assumes the `snapshot_bin` matches rclone config setup on machine.
+    Assumes the `snapshot_bin` matches rclone config setup on machine
+    and follow format: <rclone-config>:<bin>.
     """
     pass
 
@@ -345,7 +400,7 @@ def _get_ips_per_shard(args):
         if shard in ips_per_shard.keys():
             raise RuntimeError(f"Multiple IP files for shard {shard}")
         with open(f"{args.logs_dir}/{file}", 'r', encoding='utf-8') as f:
-            ips = [line.strip() for line in f.readlines() if re.search(_ip_regex, line)]
+            ips = [line.strip() for line in f.readlines() if re.search(_ipv4_regex, line)]
         if not ips:
             raise RuntimeError(f"no VALID IP was loaded from file: '{args.logs_dir}/{file}'")
         log.debug(f"Candidate IPs for shard {shard}: {ips}")
