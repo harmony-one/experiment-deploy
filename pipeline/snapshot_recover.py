@@ -166,7 +166,7 @@ def verify_network(network, ips_per_shard):
 
     def check_node(ip):  # returning None marks success for this function
         try:
-            node_metadata = blockchain.get_node_metadata(f"http://{ip}:9500/", timeout=15)
+            node_metadata = blockchain.get_node_metadata(f"http://{ip}:9500/", timeout=10)
         except (rpc_exceptions.RPCError, rpc_exceptions.RequestsTimeoutError, rpc_exceptions.RequestsError) as e:
             log.error(traceback.format_exc())
             return f"error on RPC from {ip}. Error {e}"
@@ -179,22 +179,32 @@ def verify_network(network, ips_per_shard):
         all_ips.extend(lst)
 
     while True:
+        # Verify nodes
         results = verify(all_ips)
         failed_checks = [el for el in results if el[0] is not None]
         if not failed_checks:
             return
 
-        print(f"{Typgpy.WARNING}Some nodes failed node verification check:{Typgpy.ENDC}")
+        # Prompt user on next course of action
+        print(f"{Typgpy.FAIL}Some nodes failed node verification checks!{Typgpy.ENDC}")
         failed_ips = []
         for reason, ip in failed_checks:
             print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
             failed_ips.append(ip)
-        response = interact("", ["Ignore", "Reboot nodes and try again"])
-        if response == "Ignore":
+        choices = [
+            "Reboot nodes and try again",
+            "Ignore"
+        ]
+        response = interact("", choices)
+
+        # Execute next course of action
+        if response == choices[-1]:  # Ignore
             return
-        restart_all(failed_ips)
-        log.debug("sleeping 10 seconds before checking all nodes again...")
-        time.sleep(10)
+        if response == [0]:  # Reboot nodes and try again
+            restart_all(failed_ips)
+            log.debug("sleeping 10 seconds before checking all nodes again...")
+            time.sleep(10)
+            continue
 
 
 def current_stats(ips_per_shard):
@@ -210,8 +220,7 @@ def current_stats(ips_per_shard):
 
     Assumes `ips_per_shard` has been verified.
     """
-    for shard in sorted(ips_per_shard.keys()):
-        pass
+    # TODO: implement
 
 
 def select_snapshot():
@@ -223,24 +232,35 @@ def select_snapshot():
 
 def backup_existing_dbs(ips, shard):
     """
-    Simply tar the existing db if needed in the future
+    Simply tar the existing db (locally) if needed in the future
     """
     pass
 
 
-def rsync_recovered_dbs(ips, shard):
+def setup_rclone(ips, rclone_config_path):
+    """
+    Setup rclone with the config at the given `rclone_config_path`.
+    Assumes `rclone_config_path` is a rclone config file.
+    """
+    pass
+
+
+def rsync_recovered_dbs(ips, shard, snapshot_bin):
     """
     Assumption is that nodes have rclone setup with appropriate credentials.
+    Assumes the `snapshot_bin` matches rclone config setup on machine.
     """
     pass
 
 
-def reset_dbs_interactively(ips_per_shard):
+def reset_dbs_interactively(ips_per_shard, rclone_config_path, snapshot_bin):
     """
     Bulk of the work is handled here.
     Actions done interactively to ensure security.
 
     Assumes `ips_per_shard` has been verified.
+    Assumes `rclone_config_path` is a rclone config file.
+    Assumes the `snapshot_bin` matches rclone config setup on machine.
     """
     pass
 
