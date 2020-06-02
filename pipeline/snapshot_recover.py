@@ -8,6 +8,7 @@ on the rest of the repository being cloned. Here are the assumptions:
 * node_ssh.sh needs to be in the current working directory and never requires interaction.
 * $(pwd)/../tools/snapshot/rclone.conf contains the default rclone config for
   a node to download the snapshot db.
+* $(pwd)/utils/scripting.py is a python3 library
 
 Note that explorer nodes are recovered with a non-archival db.
 Manual archival recovery will need to be afterwards.
@@ -44,31 +45,17 @@ from pyhmy import (
     blockchain,
 )
 
+from .utils.scripting import (
+    interact,
+    aws_s3_ls,
+    setup_logger,
+    ipv4_regex
+)
+
 script_directory = os.path.dirname(os.path.realpath(__file__))
 log = logging.getLogger("snapshot_recovery")
 supported_networks = {"mainnet", "testnet", "staking", "partner", "stress"}
 beacon_chain_shard = 0
-
-_ipv4_regex = r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
-
-
-def setup_logger(do_print=True):
-    """
-    Setup the logger for the snapshot package and returns the logger.
-    """
-    log_file = f"{script_directory}/logs/{os.environ['HMY_PROFILE']}/snapshot_recovery.log"
-    os.makedirs(os.path.dirname(log_file), exist_ok=True)
-    logger = logging.getLogger("snapshot_recovery")
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setFormatter(
-        logging.Formatter(f"(%(threadName)s)[%(asctime)s] %(message)s"))
-    logger.addHandler(file_handler)
-    if do_print:
-        logger.addHandler(logging.StreamHandler(sys.stdout))
-    logger.setLevel(logging.DEBUG)
-    logger.debug("===== NEW RECOVERY =====")
-    print(f"Logs saved to: {log_file}")
-    return logger
 
 
 def _ssh_cmd(ip, command):
@@ -96,69 +83,6 @@ def _ssh_script(ip, bash_script_path):
     cmd = [node_ssh_dir, ip, 'bash -s']
     with open(bash_script_path, 'rb') as f:
         return subprocess.check_output(cmd, env=os.environ, stdin=f).decode()
-
-
-def _aws_s3_ls(path):
-    """
-    Internal AWS command to list contents of an s3 bucket anonymously.
-    Assumes AWS CLI is setup on machine.
-
-    Raises subprocess.CalledProcessError if aws command fails.
-    """
-    cmd = ['aws', 's3', 'ls', path]
-    return [n.replace('PRE', '').replace("/", "").strip() for n in
-            subprocess.check_output(cmd, env=os.environ, timeout=60).decode().split("\n") if "PRE" in n]
-
-
-def interact(prompt, selection_list, sort=True):
-    """
-    The single source of interaction with the console.
-    All interaction must confine to this function's requirement.
-
-    Prompt the user with `prompt` and an enumerated selection from a possibly sorted `selection_list`.
-    Take in an integer, n, such that 0 <= n < len(`selection_list`).
-    If a `log` is provided, log the interaction and all errors at the info and error level respectively.
-
-    Keeps prompting user for input if input is invalid.
-    Prints user interaction before returning.
-
-    Note that all new lines from `prompt` and `selection_list` will be removed.
-
-    Returns n and corresponding selection string from `selection_list`.
-    """
-    if not selection_list:
-        return
-    input_prompt = f"{Typgpy.BOLD}Select option (number):{Typgpy.ENDC}\n> "
-
-    prompt, selection_list = prompt.replace("\n", ""), [e.replace("\n", "") for e in selection_list]
-    if sort:
-        selection_list = sorted(selection_list, reverse=True)
-    prompt_new_line_count = sum(1 for el in selection_list if el) + 3  # 1 for given prompt, 2 for input prompt
-    if prompt:
-        prompt_new_line_count += 1
-    printed_new_line_count = 0
-    print()
-
-    while True:
-        if prompt:
-            print(prompt)
-        for i, selection in enumerate(selection_list):
-            print(f"{Typgpy.BOLD}[{i}]{Typgpy.ENDC}\t{selection}")
-        user_input = input(input_prompt)
-        printed_new_line_count += prompt_new_line_count
-        try:
-            n = int(user_input)
-            if n >= len(selection_list):
-                continue
-            selection_report = f"{prompt} {Typgpy.BOLD}[{n}]{Typgpy.ENDC} {selection_list[n]}".strip()
-            for i in range(printed_new_line_count):
-                sys.stdout.write("\033[K")
-                if i + 1 < printed_new_line_count:
-                    sys.stdout.write("\033[F")
-            print(selection_report)
-            return selection_list[n]
-        except ValueError:
-            pass
 
 
 def verify_network(network, ips_per_shard):
@@ -244,6 +168,8 @@ def select_snapshot(snapshot_bin, network, shard):
     """
     Interactively select the snapshot to ensure security.
 
+    # TODO: consumer of this must have an option to enter path directly if known...
+
     Assumes the `snapshot_bin` follow format: <rclone-config>:<bin>.
     Assumes that AWS CLI is setup on machine that is running this script.
     Assumes AWS s3 structure is:
@@ -258,15 +184,15 @@ def select_snapshot(snapshot_bin, network, shard):
 
     # Get to desired bucket of snapshot DBs
     snapshot_bin = f"{snapshot_bin.split(':')[1]}/{network}/"
-    db_types = _aws_s3_ls(snapshot_bin)
+    db_types = aws_s3_ls(snapshot_bin)
     selected_db_type = interact("Select recovery DB type", db_types)
     log.debug(f"selected {selected_db_type} db type")
     snapshot_bin += f"{selected_db_type}/"
-    shards = [int(s) for s in _aws_s3_ls(snapshot_bin)]
+    shards = [int(s) for s in aws_s3_ls(snapshot_bin)]
     if shard not in shards:
         raise RuntimeError(f"snapshot db not found for shard {shard}")
     snapshot_bin += f"{shard}/"
-    dbs = sorted(filter(lambda e: filter_db(e) >= 0, _aws_s3_ls(snapshot_bin)), key=filter_db, reverse=True)
+    dbs = sorted(filter(lambda e: filter_db(e) >= 0, aws_s3_ls(snapshot_bin)), key=filter_db, reverse=True)
 
     # Request db
     presented_dbs_count = 10
@@ -345,6 +271,8 @@ def restart_and_check(ips_per_shard):
     """
     Main restart and verification function after DBs have been restored.
 
+    # TODO: review error msgs...
+
     Assumes `ips_per_shard` has been verified.
     """
     if interact(f"Restart shards: {sorted(ips_per_shard.keys())}?", ["yes", "no"]) == "no":
@@ -388,6 +316,8 @@ def restart_and_check(ips_per_shard):
 def _get_ips_per_shard(args):
     """
     Internal function to get the IPs per shard given a parsed args, only used for main execution.
+
+    # TODO: implement function to take in CSV IPs as a string when specified in the option...
     """
     log.debug("Loading IPs from given directory...")
 
@@ -400,7 +330,7 @@ def _get_ips_per_shard(args):
         if shard in ips_per_shard.keys():
             raise RuntimeError(f"Multiple IP files for shard {shard}")
         with open(f"{args.logs_dir}/{file}", 'r', encoding='utf-8') as f:
-            ips = [line.strip() for line in f.readlines() if re.search(_ipv4_regex, line)]
+            ips = [line.strip() for line in f.readlines() if re.search(ipv4_regex, line)]
         if not ips:
             raise RuntimeError(f"no VALID IP was loaded from file: '{args.logs_dir}/{file}'")
         log.debug(f"Candidate IPs for shard {shard}: {ips}")
@@ -503,9 +433,10 @@ if __name__ == "__main__":
     args = _parse_args()
     _assumption_check(args)
     if args.verbose:
-        setup_logger(do_print=True)
+        setup_logger(f"{script_directory}/logs/{os.environ['HMY_PROFILE']}/snapshot_recovery.log",
+                     "snapshot_recovery", do_print=True, verbose=True)
     ips_per_shard = _get_ips_per_shard(args)
     verify_network(args.network, ips_per_shard)
-    reset_dbs_interactively(ips_per_shard)
-    restart_and_check(ips_per_shard)
+    # reset_dbs_interactively(ips_per_shard)
+    # restart_and_check(ips_per_shard)
     log.debug("finished recovery")
