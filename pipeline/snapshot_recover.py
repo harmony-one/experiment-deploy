@@ -149,8 +149,69 @@ def verify_network(network, ips_per_shard):
     Verify that nodes are for the given network. Requires interaction if failure.
 
     If nodes are offline, prompt to ignore or reboot nodes and try again.
+
+    Assumes `ips_per_shard` has valid IPs.
     """
-    pass
+
+    def verify(ips):
+        thread_and_ip_list, pool = [], ThreadPool(processes=200)  # single simple RPC request, pool can be large
+        for ip in ips:
+            el = (pool.apply_async(check_node, (ip,)), ip)
+            thread_and_ip_list.append(el)
+
+        results = []
+        for thread, ip in thread_and_ip_list:
+            results.append((thread.get(), ip))
+        return results  # List of tuples where first element of tuple indicates error cause if not None
+
+    def check_node(ip):  # returning None marks success for this function
+        try:
+            node_metadata = blockchain.get_node_metadata(f"http://{ip}:9500/", timeout=15)
+        except (rpc_exceptions.RPCError, rpc_exceptions.RequestsTimeoutError, rpc_exceptions.RequestsError) as e:
+            log.error(traceback.format_exc())
+            return f"error on RPC from {ip}. Error {e}"
+        if node_metadata['network'] != network:
+            return f"node {ip} has network {node_metadata['network']} != {network}"
+        return None  # indicate success
+
+    all_ips = []
+    for lst in ips_per_shard.values():
+        all_ips.extend(lst)
+
+    while True:
+        results = verify(all_ips)
+        failed_checks = [el for el in results if el[0] is not None]
+        if not failed_checks:
+            return
+
+        print(f"{Typgpy.WARNING}Some nodes failed node verification check:{Typgpy.ENDC}")
+        failed_ips = []
+        for reason, ip in failed_checks:
+            print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+            failed_ips.append(ip)
+        response = interact("", ["Ignore", "Reboot nodes and try again"])
+        if response == "Ignore":
+            return
+        restart_all(failed_ips)
+        log.debug("sleeping 10 seconds before checking all nodes again...")
+        time.sleep(10)
+
+
+def current_stats(ips_per_shard):
+    """
+    Report the current stats of the network.
+
+    Per shard, report:
+        * All unique block heights
+        * Min block height
+        * Max block height
+        * Offline nodes
+        * Nodes that have not made progress in the last 150 seconds
+
+    Assumes `ips_per_shard` has been verified.
+    """
+    for shard in sorted(ips_per_shard.keys()):
+        pass
 
 
 def select_snapshot():
@@ -178,7 +239,8 @@ def reset_dbs_interactively(ips_per_shard):
     """
     Bulk of the work is handled here.
     Actions done interactively to ensure security.
-    Done it batches with confirmation for security.
+
+    Assumes `ips_per_shard` has been verified.
     """
     pass
 
@@ -207,6 +269,8 @@ def verify_all_progressed(ips):
 def restart_and_check(ips_per_shard):
     """
     Main restart and verification function after DBs have been restored.
+
+    Assumes `ips_per_shard` has been verified.
     """
     if interact(f"Restart shards: {sorted(ips_per_shard.keys())}?", ["yes", "no"]) == "no":
         return
