@@ -35,7 +35,17 @@
 
 - name: print node.sh version
   debug:
-    msg: ver={{ ver }}
+    var: ver.stderr
+
+- name: clean up legacy
+  ignore_errors: yes
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - latest
+    - staging
+    - .hmy
 
 - name: download harmony binaries
   shell: "{{ USER.home }}/node.sh -N {{ network }} -d && mv -f staging/harmony {{ USER.home }} > node.log 2> node.err"
@@ -46,12 +56,7 @@
 
 - name: print harmony version
   debug:
-    msg: Ver={{ Ver }}
-
-- name: copy harmony service files
-  template:
-    src: harmony.service.j2
-    dest: "{{ USER.home }}/harmony.service"
+    var: Ver.stderr
 
 - name: create .hmy/blskeys directory
   file:
@@ -73,9 +78,22 @@
     - "bls.pass"
   when: "'exp' in inventory"
 
-- name: enable harmony service
-  systemd: 
-    name: harmony
-    daemon_reload: yes
-    enabled: yes
-    state: started
+- name: tasks needs sudo
+  block:
+   - name: copy harmony service file
+     template:
+       src: harmony.service.j2
+       dest: "/lib/systemd/system/harmony.service"
+
+   - name: disable selinux
+     selinux:
+       state: disabled
+
+   - name: enable harmony service
+     systemd: 
+       name: harmony
+       daemon_reload: yes
+       enabled: yes
+       state: started
+  become: true
+  become_user: root
