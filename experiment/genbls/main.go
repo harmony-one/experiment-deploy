@@ -25,13 +25,18 @@ func printVersion(me string) {
 	os.Exit(0)
 }
 
-func gen_bls_key(shard int, slot int, key int) (shard_keys [][][]int) {
+// gen_bls_key generates an 3-d array
+// 1d is the shard
+// 2d is the node in each shard
+// 3d is the keys per node
+func gen_bls_key(shard int, slot int, key int) (shard_keys [][][]int, nodes int) {
 	// generate key list
 	shard_keys = make([][][]int, shard)
 
 	max_key := shard * slot
+	var num_node int
 	for s := 0; s < shard; s++ {
-		num_node := int(math.Ceil(float64(slot) / float64(key)))
+		num_node = int(math.Ceil(float64(slot) / float64(key)))
 		shard_keys[s] = make([][]int, num_node)
 		for i := 0; i < num_node; i++ {
 			shard_keys[s][i] = make([]int, key)
@@ -45,7 +50,7 @@ func gen_bls_key(shard int, slot int, key int) (shard_keys [][][]int) {
 		}
 	}
 
-	return shard_keys
+	return shard_keys, shard * num_node
 }
 
 // generate ansible configuration file in yaml format
@@ -103,8 +108,13 @@ func main() {
 		printVersion(os.Args[0])
 	}
 
-	_ = parse_host_json(*hostfile)
+	hosts := parse_host_json(*hostfile)
+	shard_keys, total_nodes := gen_bls_key(*shard, *slot, *key)
 
-	shard_keys := gen_bls_key(*shard, *slot, *key)
+	if len(hosts) < total_nodes {
+		fmt.Printf("Not enough hosts: %d provided, %d required\n", len(hosts), total_nodes)
+		os.Exit(1)
+	}
+
 	gen_ansible_config(shard_keys, *network)
 }
