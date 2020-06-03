@@ -68,12 +68,14 @@ def _ssh_cmd(ip, command):
     Internal SSH command.
     Assumes node_ssh.sh is executable and is in the current directory.
 
+    Timeout in 15 min.
+
     Returns the output of the SSH command.
     Raises subprocess.CalledProcessError if ssh call errored.
     """
     node_ssh_dir = f"{script_directory}/node_ssh.sh"
     cmd = [node_ssh_dir, ip, command]
-    return subprocess.check_output(cmd, env=os.environ).decode()
+    return subprocess.check_output(cmd, env=os.environ, timeout=900).decode()
 
 
 def _ssh_script(ip, bash_script_path):
@@ -81,13 +83,15 @@ def _ssh_script(ip, bash_script_path):
     Internal SSH command.
     Assumes node_ssh.sh is executable and is in the current directory.
 
+    Timeout in 15 min.
+
     Returns the output of the SSH command.
     Raises subprocess.CalledProcessError if ssh call errored.
     """
     node_ssh_dir = f"{script_directory}/node_ssh.sh"
     cmd = [node_ssh_dir, ip, 'bash -s']
     with open(bash_script_path, 'rb') as f:
-        return subprocess.check_output(cmd, env=os.environ, stdin=f).decode()
+        return subprocess.check_output(cmd, env=os.environ, stdin=f, timeout=900).decode()
 
 
 def verify_network(network, ips_per_shard):
@@ -204,8 +208,8 @@ def backup_existing_dbs(ips, shard):
     """
     assert isinstance(ips, list)
     assert isinstance(shard, int)
-
     ips = ips.copy()  # make a copy to not mutate given ips
+
     thread_and_ip_list, pool = [], ThreadPool(processes=100)  # high process count is OK since threads just wait
     while True:
         thread_and_ip_list.clear()
@@ -228,8 +232,8 @@ def backup_existing_dbs(ips, shard):
             print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
             ips.append(ip)
         if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
-            print(f"{Typgpy.WARNING}Could not backup existing DBs but proceeding anyways...{Typgpy.ENDC}")
-            log.warning(f"Could not backup existing DBs but proceeding anyways.")
+            print(f"{Typgpy.WARNING}Could not backup existing DBs, but proceeding anyways...{Typgpy.ENDC}")
+            log.warning(f"Could not backup existing DBs, but proceeding anyways.")
             return
 
 
@@ -239,6 +243,22 @@ def _setup_rclone(ip, bash_script_path, rclone_config_raw):
 
     Returns None if done successfully, otherwise returns string with error msg.
     """
+    log.debug(f"setting up rclone config on {ip}")
+    try:
+        cmd = "[ ! $(command -v rclone) ] && curl https://rclone.org/install.sh | sudo bash || echo rclone already installed"
+        rclone_install_response = _ssh_cmd(ip, cmd)
+        log.debug(f"rclone install response ({ip}): {rclone_install_response}")
+        setup_response = _ssh_script(ip, bash_script_path)
+        verification_cat = _ssh_cmd(ip, f"cat {rclone_config_path_on_machine}")
+        if rclone_config_raw.strip() not in verification_cat:
+            log.error(f"rclone snapshot credentials were not installed correctly ({ip})")
+            log.error(f"rclone install response ({ip}): {rclone_install_response.strip()}")
+            log.error(f"rsync credentials setup response ({ip}): {setup_response.strip()}")
+            log.error(f"rsync credentials on machine ({ip}): {verification_cat}")
+            return "could not find matching rclone config when inspecting rclone config file on machine"
+        return None  # indicate success
+    except subprocess.CalledProcessError as e:
+        return f"SSH error: {e}"
 
 
 def setup_rclone(ips, rclone_config_path):
@@ -248,6 +268,43 @@ def setup_rclone(ips, rclone_config_path):
     """
     assert isinstance(ips, list)
     assert os.path.isfile(rclone_config_path)
+    ips = ips.copy()  # make a copy to not mutate given ips
+
+    # setup/save rclone setup script for ssh cmd
+    with open(rclone_config_path, 'r') as f:
+        rclone_config_raw = f.read()
+    bash_script_content = f"""#!/bin/bash
+    echo "{rclone_config_raw}" > {rclone_config_path_on_machine} && echo successfully installed config
+    """
+    bash_script_path = f"/tmp/snapshot_recovery_rclone_setup_script_{time.time()}.sh"
+    with open(bash_script_path, 'w') as f:
+        f.write(bash_script_content)
+
+    thread_and_ip_list, pool = [], ThreadPool(processes=100)  # high process count is OK since threads just wait
+    while True:
+        thread_and_ip_list.clear()
+        log.debug(f"setting up rclone on the following ips: {ips}")
+        for ip in ips:
+            el = (pool.apply_async(_setup_rclone, (ip, bash_script_path, rclone_config_raw)), ip)
+            thread_and_ip_list.append(el)
+
+        results = []
+        for thread, ip in thread_and_ip_list:
+            results.append((thread.get(), ip))
+        failed_results = [el for el in results if el[0] is not None]
+        if not failed_results:
+            log.debug(f"successfully setup rclone!")
+            return
+
+        print(f"{Typgpy.FAIL}Some nodes failed to setup rclone!{Typgpy.ENDC}")
+        ips.clear()
+        for reason, ip in failed_results:
+            print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+            ips.append(ip)
+        if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
+            print(f"{Typgpy.WARNING}Could not setup rclone, but proceeding anyways...{Typgpy.ENDC}")
+            log.warning(f"Could not setup rclone, but proceeding anyways.")
+            return
 
 
 def _cleanup_rclone(ip):
@@ -256,6 +313,19 @@ def _cleanup_rclone(ip):
 
     Returns None if done successfully, otherwise returns string with error msg.
     """
+    log.debug(f"cleaning up rclone config on {ip}")
+    success_msg = "RCLONE_CLEANUP_SUCCESS"
+    cmd = f"[ -f {rclone_config_path_on_machine} ] && rm {rclone_config_path_on_machine} && echo {success_msg} " \
+          f"|| [ ! -f {rclone_config_path_on_machine} ] && echo {success_msg} "
+    try:
+        cleanup_response = _ssh_cmd(ip, cmd)
+    except subprocess.CalledProcessError as e:
+        return f"SSH error: {e}"
+    if success_msg not in cleanup_response:
+        log.error(f"failed to clean-up rclone config ({ip})")
+        log.error(f"check response ({ip}): {cleanup_response.strip()}\n Expected: {success_msg}")
+        return f"rclone credentials failed to cleanup: {cleanup_response}"
+    return None  # indicate success
 
 
 def cleanup_rclone(ips):
@@ -265,6 +335,33 @@ def cleanup_rclone(ips):
     WARNING: this will delete the file at `rclone_config_path_on_machine`.
     """
     assert isinstance(ips, list)
+    ips = ips.copy()  # make a copy to not mutate given ips
+
+    thread_and_ip_list, pool = [], ThreadPool(processes=100)  # high process count is OK since threads just wait
+    while True:
+        thread_and_ip_list.clear()
+        log.debug(f"cleaning up rclone on the following ips: {ips}")
+        for ip in ips:
+            el = (pool.apply_async(_cleanup_rclone, (ip,)), ip)
+            thread_and_ip_list.append(el)
+
+        results = []
+        for thread, ip in thread_and_ip_list:
+            results.append((thread.get(), ip))
+        failed_results = [el for el in results if el[0] is not None]
+        if not failed_results:
+            log.debug(f"successfully cleaned up rclone config!")
+            return
+
+        print(f"{Typgpy.FAIL}Some nodes failed to cleanup rclone config!{Typgpy.ENDC}")
+        ips.clear()
+        for reason, ip in failed_results:
+            print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+            ips.append(ip)
+        if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
+            print(f"{Typgpy.WARNING}Could not cleanup rclone config, but proceeding anyways...{Typgpy.ENDC}")
+            log.warning(f"Could not cleanup rclone config, but proceeding anyways.")
+            return
 
 
 def rsync_recovered_dbs(ips, shard, snapshot_bin):
