@@ -2,6 +2,7 @@ import subprocess
 import os
 import sys
 import logging
+import readline
 
 from pyhmy.util import (
     Typgpy
@@ -75,6 +76,19 @@ def interact(prompt, selection_list, sort=True):
             return selection_list[n]
         except ValueError:
             pass
+
+
+def input_prefill(prompt, prefill=''):
+    """
+    Read an input with some prefilled data.
+
+    Note that this only works on Unix based systems.
+    """
+    readline.set_startup_hook(lambda: readline.insert_text(prefill))
+    try:
+        return input(prompt)
+    finally:
+        readline.set_startup_hook()
 
 
 def aws_s3_ls(path):
