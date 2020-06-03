@@ -375,19 +375,21 @@ def rsync_recovered_dbs(ips, shard, snapshot_bin):
     assert isinstance(snapshot_bin, str)
 
 
-def reset_dbs_interactively(ips_per_shard, snapshot_per_shard, rclone_config_path):
+def recover(ips_per_shard, snapshot_per_shard, rclone_config_path):
     """
     Bulk of the work is handled here.
     Actions done interactively to ensure security.
 
     Assumes `ips_per_shard` has been verified.
-    Assumes `snapshot_per_shard` has beacon-chain snapshot path.
+    Assumes `snapshot_per_shard` has beacon-chain snapshot path
+             and that each shard's snapshot follow format: <rclone-config>:<bin>.
     Assumes `rclone_config_path` is a rclone config file.
-    and follow format: <rclone-config>:<bin>.
     """
     assert isinstance(ips_per_shard, dict)
     assert isinstance(snapshot_per_shard, dict)
     assert os.path.isfile(rclone_config_path)
+
+    # restart_and_check(ips_per_shard)
 
 
 def restart_all(ips):
@@ -595,7 +597,8 @@ def select_snapshot_for_shard(network, snapshot_bin, shard):
     Assumes AWS s3 structure is:
         <bin>/<network>/<db-type>/<shard-id>/harmony_db_<shard-id>.<date>.<block_height>/
 
-    Returns string of db snapshot, return None if no db could be selected.
+    Returns string of db bin for snapshot rclone following format: <rclone-config>:<bin>.
+    Return None if no db bin could be selected.
     """
     assert isinstance(network, str)
     assert isinstance(snapshot_bin, str)
@@ -608,7 +611,8 @@ def select_snapshot_for_shard(network, snapshot_bin, shard):
             return -1
 
     # Get to desired bucket of snapshot DBs
-    snapshot_bin = f"{snapshot_bin.split(':')[1]}/{network}/"
+    rclone_config, snapshot_bin = snapshot_bin.split(':')
+    snapshot_bin = f"{snapshot_bin}/{network}/"
     db_types = aws_s3_ls(snapshot_bin)
     if not db_types:
         return None
@@ -633,9 +637,9 @@ def select_snapshot_for_shard(network, snapshot_bin, shard):
             presented_dbs_count *= 2
             continue
         else:
-            db = f"{snapshot_bin}/{response}"
-            log.debug(f"chose DB: {db} for shard {shard}")
-            return db
+            rclone_snapshot_db_path = f"{rclone_config}:{snapshot_bin}/{response}"
+            log.debug(f"chosen snapshot rclone path: '{rclone_snapshot_db_path}' for shard {shard}")
+            return rclone_snapshot_db_path
 
 
 def get_snapshot_per_shard(network, ips_per_shard, snapshot_bin):
@@ -736,6 +740,5 @@ if __name__ == "__main__":
     ips_per_shard = get_ips_per_shard(args)
     verify_network(args.network, ips_per_shard)
     snapshot_per_shard = get_snapshot_per_shard(args.network, ips_per_shard, args.snapshot_bin)
-    reset_dbs_interactively(ips_per_shard, snapshot_per_shard, args.rclone_config_path)
-    # restart_and_check(ips_per_shard)
+    recover(ips_per_shard, snapshot_per_shard, args.rclone_config_path)
     log.debug("finished recovery")
