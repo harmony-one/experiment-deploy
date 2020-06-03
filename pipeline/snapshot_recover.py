@@ -9,6 +9,7 @@ on the rest of the repository being cloned. Here are the assumptions:
 * $(pwd)/../tools/snapshot/rclone.conf contains the default rclone config for
   a node to download the snapshot db.
 * $(pwd)/utils/scripting.py is a python3 library
+* Assumes that the harmony process is ran as a service called `harmony`.
 
 Note that this script assumes that the given bin is accessible from the machine it is running on.
 
@@ -94,7 +95,40 @@ def _ssh_script(ip, bash_script_path):
         return subprocess.check_output(cmd, env=os.environ, stdin=f, timeout=900).decode()
 
 
-def verify_network(network, ips_per_shard):
+def _is_harmony_running(ip):
+    """
+    Internal function that checks if the harmony process is running on node `ip`.
+
+    Since this is a simple `pgrep` cmd, an error on the SSH implies process is not running.
+    """
+    try:
+        _ssh_cmd(ip, 'pgrep harmony')
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
+def _verify(ip, network):
+    """
+    Internal function to verify a single node/ip.
+
+    Returns None if done successfully, otherwise returns string with error msg.
+    """
+    log.debug(f"verifying node {ip}")
+    try:
+        node_metadata = blockchain.get_node_metadata(f"http://{ip}:9500/", timeout=10)
+        sharding_structure = blockchain.get_sharding_structure(f"http://{ip}:9500/", timeout=15)
+    except (rpc_exceptions.RPCError, rpc_exceptions.RequestsTimeoutError, rpc_exceptions.RequestsError) as e:
+        log.error(traceback.format_exc())
+        return f"error on RPC from {ip}. Error {e}"
+    if node_metadata['network'] != network:
+        return f"node {ip} has network {node_metadata['network']} != {network}"
+    if len(sharding_structure) >= max(ips_per_shard.keys()):
+        return f"node {ip} has sharding structure that is smaller than max shard-id of {max(ips_per_shard.keys())}"
+    return None  # indicate success
+
+
+def verify_network(ips_per_shard, network):
     """
     Verify that nodes are for the given network. Requires interaction if failure.
 
@@ -102,33 +136,8 @@ def verify_network(network, ips_per_shard):
 
     Assumes `ips_per_shard` has valid IPs.
     """
+    assert isinstance(ips_per_shard, dict) and len(ips_per_shard.keys()) > 0
     assert isinstance(network, str)
-    assert isinstance(ips_per_shard, dict)
-
-    def verify(ips):
-        thread_and_ip_list, pool = [], ThreadPool(processes=300)  # single simple RPC request, pool can be large
-        for ip in ips:
-            el = (pool.apply_async(check_node, (ip,)), ip)
-            thread_and_ip_list.append(el)
-
-        results = []
-        for thread, ip in thread_and_ip_list:
-            results.append((thread.get(), ip))
-        return results  # List of tuples where first element of tuple indicates error cause if not None
-
-    def check_node(ip):  # returning None marks success for this function
-        log.debug(f"checking node {ip}")
-        try:
-            node_metadata = blockchain.get_node_metadata(f"http://{ip}:9500/", timeout=10)
-            sharding_structure = blockchain.get_sharding_structure(f"http://{ip}:9500/", timeout=15)
-        except (rpc_exceptions.RPCError, rpc_exceptions.RequestsTimeoutError, rpc_exceptions.RequestsError) as e:
-            log.error(traceback.format_exc())
-            return f"error on RPC from {ip}. Error {e}"
-        if node_metadata['network'] != network:
-            return f"node {ip} has network {node_metadata['network']} != {network}"
-        if len(sharding_structure) >= max(ips_per_shard.keys()):
-            return f"node {ip} has sharding structure that is smaller than max shard-id of {max(ips_per_shard.keys())}"
-        return None  # indicate success
 
     all_ips = []
     for lst in ips_per_shard.values():
@@ -136,19 +145,26 @@ def verify_network(network, ips_per_shard):
 
     log.debug(f"verifying network on the following IPs: {all_ips}")
 
+    thread_and_ip_list, pool = [], ThreadPool(processes=300)  # single simple RPC request, pool can be large
     while True:
         # Verify nodes
-        results = verify(all_ips)
-        log.debug(f"results after checking node: {results}")
-        failed_checks = [el for el in results if el[0] is not None]
-        if not failed_checks:
+        log.debug(f"verifying the following ips: {all_ips}")
+        for ip in all_ips:
+            el = (pool.apply_async(_verify, (ip, network)), ip)
+            thread_and_ip_list.append(el)
+
+        results = []
+        for thread, ip in thread_and_ip_list:
+            results.append((thread.get(), ip))
+        failed_results = [el for el in results if el[0] is not None]
+        if not failed_results:
             log.debug("passed network verification")
             return
 
         # Prompt user on next course of action
         print(f"{Typgpy.FAIL}Some nodes failed node verification checks!{Typgpy.ENDC}")
         failed_ips = []
-        for reason, ip in failed_checks:
+        for reason, ip in failed_results:
             print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
             failed_ips.append(ip)
         choices = [
@@ -182,7 +198,7 @@ def current_stats(ips_per_shard):
 
     Assumes `ips_per_shard` has been verified.
     """
-    assert isinstance(ips_per_shard, dict)
+    assert isinstance(ips_per_shard, dict) and len(ips_per_shard.keys()) > 0
     # TODO: implement
 
 
@@ -206,7 +222,7 @@ def backup_existing_dbs(ips, shard):
     """
     Simply tar the existing db (locally) if needed in the future
     """
-    assert isinstance(ips, list)
+    assert isinstance(ips, list) and len(ips) > 0
     assert isinstance(shard, int)
     ips = ips.copy()  # make a copy to not mutate given ips
 
@@ -232,8 +248,8 @@ def backup_existing_dbs(ips, shard):
             print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
             ips.append(ip)
         if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
-            print(f"{Typgpy.WARNING}Could not backup existing DBs, but proceeding anyways...{Typgpy.ENDC}")
-            log.warning(f"Could not backup existing DBs, but proceeding anyways.")
+            print(f"{Typgpy.WARNING}Could not backup some existing DBs, but proceeding anyways...{Typgpy.ENDC}")
+            log.warning(f"Could not backup some existing DBs, but proceeding anyways.")
             return
 
 
@@ -266,7 +282,7 @@ def setup_rclone(ips, rclone_config_path):
     Setup rclone on all `ips` with the config at the given `rclone_config_path`.
     Assumes `rclone_config_path` is a rclone config file.
     """
-    assert isinstance(ips, list)
+    assert isinstance(ips, list) and len(ips) > 0
     assert os.path.isfile(rclone_config_path)
     ips = ips.copy()  # make a copy to not mutate given ips
 
@@ -302,8 +318,8 @@ def setup_rclone(ips, rclone_config_path):
             print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
             ips.append(ip)
         if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
-            print(f"{Typgpy.WARNING}Could not setup rclone, but proceeding anyways...{Typgpy.ENDC}")
-            log.warning(f"Could not setup rclone, but proceeding anyways.")
+            print(f"{Typgpy.WARNING}Could not setup rclone on some machines, but proceeding anyways...{Typgpy.ENDC}")
+            log.warning(f"Could not setup rclone on some machines, but proceeding anyways.")
             return
 
 
@@ -334,7 +350,7 @@ def cleanup_rclone(ips):
 
     WARNING: this will delete the file at `rclone_config_path_on_machine`.
     """
-    assert isinstance(ips, list)
+    assert isinstance(ips, list) and len(ips) > 0
     ips = ips.copy()  # make a copy to not mutate given ips
 
     thread_and_ip_list, pool = [], ThreadPool(processes=100)  # high process count is OK since threads just wait
@@ -359,20 +375,79 @@ def cleanup_rclone(ips):
             print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
             ips.append(ip)
         if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
-            print(f"{Typgpy.WARNING}Could not cleanup rclone config, but proceeding anyways...{Typgpy.ENDC}")
-            log.warning(f"Could not cleanup rclone config, but proceeding anyways.")
+            print(f"{Typgpy.WARNING}Could not cleanup some rclone config, but proceeding anyways...{Typgpy.ENDC}")
+            log.warning(f"Could not cleanup some rclone config, but proceeding anyways.")
             return
 
 
-def rsync_recovered_dbs(ips, shard, snapshot_bin):
+def _rsync_snapshotted_dbs(ip, shard, snapshot_bin):
     """
+    Internal function to replace 1 db: harmony_db_`shard` rsynced from `snapshot_bin`, on 1 machine.
+    """
+    log.debug(f"rsyncing DB for shard {shard} on machine {ip} using bin {snapshot_bin}")
+    db_path = f"{db_directory_on_machine}/harmony_db_{shard}"
+    cmd = f"[ -d {db_path} ] && sudo rm -rf {db_path} || [ ! -d {db_path} ] && echo file-deleted"
+    try:
+        _ssh_cmd(ip, cmd)
+    except subprocess.CalledProcessError as e:
+        return f"unable to delete directory {db_path} on {ip}. Error {e}"
+    cmd = f"rclone sync {snapshot_bin} {db_path} --config {rclone_config_path_on_machine} -P"
+    rclone_response = None
+    try:
+        rclone_response = _ssh_cmd(ip, cmd)
+    except subprocess.CalledProcessError as e:
+        log.error(f"rsync error on machine {ip}. rclone response: {rclone_response}")
+        return f"failure during rsync. Error {e}."
+    return None
+
+
+def rsync_snapshotted_dbs(ips, shard, beacon_snapshot_bin, shard_snapshot_bin):
+    """
+    Removes the old DB(s) and rsyncs the snapshotted DB(s).
     Assumption is that nodes have rclone setup with appropriate credentials.
-    Assumes the `snapshot_bin` matches rclone config setup on machine
-    and follow format: <rclone-config>:<bin>.
+
+    Note that rsyncs are idempotent if syncing to same bin, therefore on failure,
+    one can safely re-execute a rsync that was previously successful. Moreover,
+    rsyncs should be efficient, in that it only transfers missing files, therefore rsyncs
+    of previously successful rsync will have little cost (computationally & network-wise).
+
+    Assumes the `beacon_snapshot_bin` & `shard_snapshot_bin` matches rclone
+    config setup on machine and follow format: <rclone-config>:<bin>.
+
+    Raises RuntimeError if unable to rsync snapshotted DBs.
     """
-    assert isinstance(ips, list)
+    assert isinstance(ips, list) and len(ips) > 0
     assert isinstance(shard, int)
-    assert isinstance(snapshot_bin, str)
+    assert isinstance(beacon_snapshot_bin, str)
+    assert isinstance(shard_snapshot_bin, str)
+    ips = ips.copy()  # make a copy to not mutate given ips
+
+    thread_and_ip_list, pool = [], ThreadPool(processes=200)  # high process count is OK since threads just wait
+    while True:
+        thread_and_ip_list.clear()
+        log.debug(f"rsyncing snapshotted dbs for shard {shard} on the following ips: {ips}")
+        for ip in ips:
+            el = (pool.apply_async(_rsync_snapshotted_dbs, (ip, shard, beacon_snapshot_bin)), ip)
+            thread_and_ip_list.append(el)
+            if shard != beacon_chain_shard:
+                el = (pool.apply_async(_rsync_snapshotted_dbs, (ip, shard, shard_snapshot_bin)), ip)
+                thread_and_ip_list.append(el)
+
+        results = []
+        for thread, ip in thread_and_ip_list:
+            results.append((thread.get(), ip))
+        failed_results = [el for el in results if el[0] is not None]
+        if not failed_results:
+            log.debug(f"successfully rsynced snapshotted DB(s)!")
+            return
+
+        print(f"{Typgpy.FAIL}Some nodes failed to rsync snapshotted DB(s)!{Typgpy.ENDC}")
+        ips.clear()
+        for reason, ip in failed_results:
+            print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+            ips.append(ip)
+        if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
+            raise RuntimeError("Could not rsync some snapshotted DB(s)")
 
 
 def recover(ips_per_shard, snapshot_per_shard, rclone_config_path):
@@ -387,30 +462,105 @@ def recover(ips_per_shard, snapshot_per_shard, rclone_config_path):
     """
     assert isinstance(ips_per_shard, dict)
     assert isinstance(snapshot_per_shard, dict)
+    assert beacon_chain_shard in snapshot_per_shard.keys()
     assert os.path.isfile(rclone_config_path)
 
+    # TODO: print current config (ips, snapshot bin and rclone config) and ask for confirmation...
+
+    def process(shard):
+        ips = ips_per_shard[shard]
+        stop_all(ips)
+        backup_existing_dbs(ips, shard)
+        setup_rclone(ips, rclone_config_path)
+        rsync_snapshotted_dbs(ips, shard, snapshot_per_shard[beacon_chain_shard], snapshot_per_shard[shard])
+
+    threads, pool = [], ThreadPool(len(ips_per_shard.keys()))
+    for shard in ips_per_shard.keys():
+        threads.append(pool.apply_async(process, (shard,)))
+    for t in threads:
+        t.get()
+
     # restart_and_check(ips_per_shard)
+
+
+def _stop(ip, tries=5):
+    """
+    Internal function to stop the harmony process on the given `ip`.
+
+    Tries upto a max of `tries` attempts to shutdown the node.
+
+    Returns None if done successfully, otherwise returns string with error msg.
+    """
+    for _ in range(tries):
+        log.debug(f'stopping harmony service on {ip}')
+        try:
+            machine_stop_response = _ssh_cmd(ip, "sudo systemctl stop harmony")
+        except subprocess.CalledProcessError as e:
+            return f"SSH error: {e}"
+        start_time = time.time()
+        while time.time() - start_time < 5:
+            if not _is_harmony_running(ip):
+                log.debug(f'successfully stopped harmony service on {ip}')
+                return None  # indicate success
+            time.sleep(0.5)
+        log.error("harmony service failed to stop")
+        log.error(f'stop cmd response: {machine_stop_response.strip()}')
+    return f"unable to stop harmony process after {tries} attempts on {ip}"
+
+
+def stop_all(ips):
+    """
+    Send stop command to all nodes asynchronously.
+    """
+    assert isinstance(ips, list) and len(ips) > 0
+    ips = ips.copy()  # make a copy to not mutate given ips
+
+    thread_and_ip_list, pool = [], ThreadPool(processes=100)  # high process count is OK since threads just wait
+    while True:
+        thread_and_ip_list.clear()
+        log.debug(f"shutting down the following ips: {ips}")
+        for ip in ips:
+            el = (pool.apply_async(_stop, (ip,)), ip)
+            thread_and_ip_list.append(el)
+
+        results = []
+        for thread, ip in thread_and_ip_list:
+            results.append((thread.get(), ip))
+        failed_results = [el for el in results if el[0] is not None]
+        if not failed_results:
+            log.debug(f"successfully stopped all given harmony processes!")
+            return
+
+        print(f"{Typgpy.FAIL}Some nodes failed to stop the harmony processes!{Typgpy.ENDC}")
+        ips.clear()
+        for reason, ip in failed_results:
+            print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+            ips.append(ip)
+        if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
+            print(f"{Typgpy.WARNING}Could not stop harmony process on some nodes, but proceeding anyways...{Typgpy.ENDC}")
+            log.warning(f"Could not stop harmony process on some nodes, but proceeding anyways.")
+            return
 
 
 def restart_all(ips):
     """
     Send restart command to all nodes asynchronously.
     """
-    assert isinstance(ips, list)
+    assert isinstance(ips, list) and len(ips) > 0
 
 
 def verify_all_started(ips):
     """
     Verify all nodes started asynchronously.
     """
-    assert isinstance(ips, list)
+    assert isinstance(ips, list) and len(ips) > 0
 
 
 def verify_all_progressed(ips):
     """
     Verify all nodes progressed asynchronously.
     """
-    assert isinstance(ips, list)
+    assert isinstance(ips, list) and len(ips) > 0
 
 
 def restart_and_check(ips_per_shard):
@@ -419,7 +569,7 @@ def restart_and_check(ips_per_shard):
 
     Assumes `ips_per_shard` has been verified.
     """
-    assert isinstance(ips_per_shard, dict)
+    assert isinstance(ips_per_shard, dict) and len(ips_per_shard.keys()) > 0
 
     if interact(f"Restart shards: {sorted(ips_per_shard.keys())}?", ["yes", "no"]) == "no":
         return
@@ -650,11 +800,12 @@ def get_snapshot_per_shard(network, ips_per_shard, snapshot_bin):
     Assumes that AWS CLI is setup on machine that is running this script.
     """
     assert isinstance(network, str)
-    assert isinstance(ips_per_shard, dict)
+    assert isinstance(ips_per_shard, dict) and len(ips_per_shard.keys()) > 0
     assert isinstance(snapshot_bin, str)
 
     snapshot_per_shard = {}
-    shards, actual_snapshot_bin = list(ips_per_shard.keys()), f"{snapshot_bin.split(':')[1]}/{network}/"
+    actual_snapshot_bin = f"{snapshot_bin.split(':')[1]}/{network}/"
+    shards = list(ips_per_shard.keys())
     if beacon_chain_shard not in shards:
         shards.append(beacon_chain_shard)
 
@@ -687,8 +838,6 @@ def get_snapshot_per_shard(network, ips_per_shard, snapshot_bin):
                     raise RuntimeError(error_msg) from e
             snapshot_per_shard[shard] = snapshot
             continue
-
-    assert len(snapshot_per_shard.keys()) == len(ips_per_shard.keys()), "sanity check for ips/snapshot per shard failed"
     return snapshot_per_shard
 
 
@@ -738,7 +887,7 @@ if __name__ == "__main__":
         setup_logger(f"{script_directory}/logs/{os.environ['HMY_PROFILE']}/snapshot_recovery.log",
                      "snapshot_recovery", do_print=True, verbose=True)
     ips_per_shard = get_ips_per_shard(args)
-    verify_network(args.network, ips_per_shard)
+    verify_network(ips_per_shard, args.network)
     snapshot_per_shard = get_snapshot_per_shard(args.network, ips_per_shard, args.snapshot_bin)
     recover(ips_per_shard, snapshot_per_shard, args.rclone_config_path)
     log.debug("finished recovery")
