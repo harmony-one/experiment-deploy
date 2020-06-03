@@ -24,3 +24,7 @@
       - staging
       - hmy
       - node.sh
+      - harmony.service
+      - node.err
+      - node.log
+      - harmony-update.out

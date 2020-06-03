@@ -4,6 +4,7 @@ PACKAGES:
    - unzip
    - bind-utils
    - psmisc
+   - jq
 
 USER:
   user: hmy
