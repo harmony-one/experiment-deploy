@@ -10,6 +10,8 @@ on the rest of the repository being cloned. Here are the assumptions:
   a node to download the snapshot db.
 * $(pwd)/utils/scripting.py is a python3 library
 
+Note that this script assumes that the given bin is accessible from the machine it is running on.
+
 Note that explorer nodes are recovered with a non-archival db.
 Manual archival recovery will need to be afterwards.
 
@@ -49,6 +51,7 @@ from .utils.scripting import (
     interact,
     aws_s3_ls,
     setup_logger,
+    input_prefill,
     ipv4_regex
 )
 
@@ -167,51 +170,6 @@ def current_stats(ips_per_shard):
     # TODO: implement
 
 
-def select_snapshot(snapshot_bin, network, shard):
-    """
-    Interactively select the snapshot to ensure security.
-
-    # TODO: consumer of this must have an option to enter path directly if known...
-
-    Assumes the `snapshot_bin` follow format: <rclone-config>:<bin>.
-    Assumes that AWS CLI is setup on machine that is running this script.
-    Assumes AWS s3 structure is:
-        <bin>/<network>/<db-type>/<shard-id>/harmony_db_<shard-id>.<date>.<block_height>/
-    """
-
-    def filter_db(entry):
-        try:
-            return int(entry.split('.')[-1])
-        except (ValueError, KeyError):
-            return -1
-
-    # Get to desired bucket of snapshot DBs
-    snapshot_bin = f"{snapshot_bin.split(':')[1]}/{network}/"
-    db_types = aws_s3_ls(snapshot_bin)
-    selected_db_type = interact("Select recovery DB type", db_types)
-    log.debug(f"selected {selected_db_type} db type")
-    snapshot_bin += f"{selected_db_type}/"
-    shards = [int(s) for s in aws_s3_ls(snapshot_bin)]
-    if shard not in shards:
-        raise RuntimeError(f"snapshot db not found for shard {shard}")
-    snapshot_bin += f"{shard}/"
-    dbs = sorted(filter(lambda e: filter_db(e) >= 0, aws_s3_ls(snapshot_bin)), key=filter_db, reverse=True)
-
-    # Request db
-    presented_dbs_count = 10
-    while True:
-        prompt_db = dbs.copy()[:presented_dbs_count] + ["Look for more DBs"]
-        prompt = f"Select DB for shard {shard}. Format: harmony_db_SHARD.Y-M-D-H-M-S.BLOCK)"
-        response = interact(prompt, prompt_db, sort=False)
-        if response == prompt_db[-1]:
-            presented_dbs_count *= 2
-            continue
-        else:
-            db = f"{snapshot_bin}/{response}"
-            log.debug(f"chose DB: {db} for shard {shard}")
-            return db
-
-
 def backup_existing_dbs(ips, shard):
     """
     Simply tar the existing db (locally) if needed in the future
@@ -236,14 +194,14 @@ def rsync_recovered_dbs(ips, shard, snapshot_bin):
     pass
 
 
-def reset_dbs_interactively(ips_per_shard, rclone_config_path, snapshot_bin):
+def reset_dbs_interactively(ips_per_shard, snapshots_per_shard, rclone_config_path):
     """
     Bulk of the work is handled here.
     Actions done interactively to ensure security.
 
     Assumes `ips_per_shard` has been verified.
+    Assumes `snapshots_per_shard` has beacon-chain snapshot path.
     Assumes `rclone_config_path` is a rclone config file.
-    Assumes the `snapshot_bin` matches rclone config setup on machine
     and follow format: <rclone-config>:<bin>.
     """
     pass
@@ -370,9 +328,9 @@ def _get_ips_per_shard_from_file(file_path, shard):
         return None
 
 
-def _get_ips_per_shard(args):
+def get_ips_per_shard(logs_dir):
     """
-    Internal function to get the IPs per shard given a parsed args, only used for main execution.
+    Setup function to get the IPs per shard given the `logs_dir`.
     """
     log.debug("Loading IPs from given directory...")
     ips_per_shard = {}
@@ -383,13 +341,13 @@ def _get_ips_per_shard(args):
     response = interact("How would you like to input network IPs?", input_choices)
     if response == input_choices[0]:  # Read IPs from log directory and choose interactively
         log.debug("Reading IPs from file")
-        for file in os.listdir(args.logs_dir):
+        for file in os.listdir(logs_dir):
             if not re.match(r"shard[0-9]+.txt", file):
                 continue
             shard = int(file.replace("shard", "").replace(".txt", ""))
             if shard in ips_per_shard.keys():
                 raise RuntimeError(f"Multiple IP files for shard {shard}")
-            shard_ips = _get_ips_per_shard_from_file(f"{args.logs_dir}/{file}", shard)
+            shard_ips = _get_ips_per_shard_from_file(f"{logs_dir}/{file}", shard)
             if shard_ips is not None:
                 ips_per_shard[shard] = shard_ips
     elif response == input_choices[1]:  # Provide IPs interactively as a CSV string for each shard
@@ -440,6 +398,101 @@ def _get_ips_per_shard(args):
     return ips_per_shard
 
 
+def select_snapshot_for_shard(network, snapshot_bin, shard):
+    """
+    Interactively select the snapshot to ensure security.
+
+    Assumes the `snapshot_bin` follow format: <rclone-config>:<bin>.
+    Assumes that AWS CLI is setup on machine that is running this script.
+    Assumes AWS s3 structure is:
+        <bin>/<network>/<db-type>/<shard-id>/harmony_db_<shard-id>.<date>.<block_height>/
+
+    Returns string of db snapshot, return None if no db could be selected.
+    """
+
+    def filter_db(entry):
+        try:
+            return int(entry.split('.')[-1])
+        except (ValueError, KeyError):
+            return -1
+
+    # Get to desired bucket of snapshot DBs
+    snapshot_bin = f"{snapshot_bin.split(':')[1]}/{network}/"
+    db_types = aws_s3_ls(snapshot_bin)
+    if not db_types:
+        return None
+    selected_db_type = interact("Select recovery DB type", db_types)
+    log.debug(f"selected {selected_db_type} db type")
+    snapshot_bin += f"{selected_db_type}/"
+    shards = [int(s) for s in aws_s3_ls(snapshot_bin)]
+    if shard not in shards:
+        raise RuntimeError(f"snapshot db not found for shard {shard}")
+    snapshot_bin += f"{shard}/"
+    dbs = sorted(filter(lambda e: filter_db(e) >= 0, aws_s3_ls(snapshot_bin)), key=filter_db, reverse=True)
+    if not dbs:
+        return None
+
+    # Request db
+    presented_dbs_count = 10
+    while True:
+        prompt_db = dbs.copy()[:presented_dbs_count] + ["Look for more DBs"]
+        prompt = f"Select DB for shard {shard}. Format: harmony_db_SHARD.Y-M-D-H-M-S.BLOCK)"
+        response = interact(prompt, prompt_db, sort=False)
+        if response == prompt_db[-1]:
+            presented_dbs_count *= 2
+            continue
+        else:
+            db = f"{snapshot_bin}/{response}"
+            log.debug(f"chose DB: {db} for shard {shard}")
+            return db
+
+
+def get_snapshot_per_shard(network, ips_per_shard, snapshot_bin):
+    """
+    Setup function to get the snapshot DB path (used by rclone) for each shard.
+
+    Assumes the `snapshot_bin` follow format: <rclone-config>:<bin>.
+    Assumes that AWS CLI is setup on machine that is running this script.
+    """
+    snapshot_per_shard = {}
+    shards, actual_snapshot_bin = ips_per_shard.keys(), f"{snapshot_bin.split(':')[1]}/{network}/"
+    if beacon_chain_shard not in shards:
+        shards.append(beacon_chain_shard)
+
+    for shard in sorted(shards, reverse=True):
+        choices = [
+            "Interactively select snapshot db, starting from latest",
+            "Manually specify path (and optionally bin) for snapshot db"
+        ]
+        response = interact(f"How to get snapshot db for shard {shard}?", choices)
+
+        if response == choices[0]:  # Interactively select snapshot db, starting from latest
+            snapshot = select_snapshot_for_shard(network, snapshot_bin, shard)
+            if snapshot is None:
+                raise RuntimeError(f"Could not find snapshot for shard {shard}! "
+                                   f"Check specified snapshot bin or ignore shard when loading IPs.")
+            snapshot_per_shard[shard] = snapshot
+            continue
+        if response == choices[1]:  # Manually specify path (and optionally bin) for snapshot db
+            snapshot = input_prefill(f"Enter snapshot path (for rclone) on shard {shard}\n> ",
+                                     prefill=f"{actual_snapshot_bin}/")
+            log.debug(f"chose DB: {snapshot} for shard {shard}")
+            try:
+                assert len(aws_s3_ls(snapshot)) > 0, f"given snapshot bin '{snapshot}' is empty"
+            except subprocess.CalledProcessError as e:
+                error_msg = f"Machine is unable to list s3 files at '{snapshot}'. Error: {e}"
+                print(error_msg)
+                log.error(traceback.format_exc())
+                log.error(error_msg)
+                if interact(f"Ignore error?", ["yes", "no"]) == "no":
+                    raise RuntimeError(error_msg) from e
+            snapshot_per_shard[shard] = snapshot
+            continue
+
+    assert len(snapshot_per_shard.keys()) == len(ips_per_shard.keys()), "sanity check for ips/snapshot per shard failed"
+    return snapshot_per_shard
+
+
 def _assumption_check(args):
     """
     Internal function that checks the assumptions of the script, only used for main execution.
@@ -459,7 +512,7 @@ def _parse_args():
     """
     if 'HMY_PROFILE' not in os.environ:
         raise SystemExit("HMY_PROFILE not set, exiting...")
-    parser = argparse.ArgumentParser(description='Snapshot recovery script')
+    parser = argparse.ArgumentParser(description='Snapshot recovery script.')
     parser.add_argument("network", type=str, help=f"{supported_networks}")
     default_log_dir = f"{script_directory}/logs/{os.environ['HMY_PROFILE']}"
     parser.add_argument("--logs-dir", type=str,
@@ -485,8 +538,9 @@ if __name__ == "__main__":
     if args.verbose:
         setup_logger(f"{script_directory}/logs/{os.environ['HMY_PROFILE']}/snapshot_recovery.log",
                      "snapshot_recovery", do_print=True, verbose=True)
-    ips_per_shard = _get_ips_per_shard(args)
+    ips_per_shard = get_ips_per_shard(args)
     verify_network(args.network, ips_per_shard)
-    # reset_dbs_interactively(ips_per_shard)
+    snapshots_per_shard = get_snapshot_per_shard(args.network, ips_per_shard, args.snapshot_bin)
+    reset_dbs_interactively(ips_per_shard, snapshots_per_shard, args.rclone_config_path)
     # restart_and_check(ips_per_shard)
     log.debug("finished recovery")
