@@ -108,11 +108,14 @@ def verify_network(network, ips_per_shard):
     def check_node(ip):  # returning None marks success for this function
         try:
             node_metadata = blockchain.get_node_metadata(f"http://{ip}:9500/", timeout=10)
+            sharding_structure = blockchain.get_sharding_structure(f"http://{ip}:9500/", timeout=15)
         except (rpc_exceptions.RPCError, rpc_exceptions.RequestsTimeoutError, rpc_exceptions.RequestsError) as e:
             log.error(traceback.format_exc())
             return f"error on RPC from {ip}. Error {e}"
         if node_metadata['network'] != network:
             return f"node {ip} has network {node_metadata['network']} != {network}"
+        if len(sharding_structure) >= max(ips_per_shard.keys()):
+            return f"node {ip} has sharding structure that is smaller than max shard-id of {max(ips_per_shard.keys())}"
         return None  # indicate success
 
     all_ips = []
@@ -271,8 +274,6 @@ def restart_and_check(ips_per_shard):
     """
     Main restart and verification function after DBs have been restored.
 
-    # TODO: review error msgs...
-
     Assumes `ips_per_shard` has been verified.
     """
     if interact(f"Restart shards: {sorted(ips_per_shard.keys())}?", ["yes", "no"]) == "no":
@@ -296,8 +297,7 @@ def restart_and_check(ips_per_shard):
         log.debug(f"starting node restart verification for shard {shard}; ips: {ips_per_shard[shard]}")
         threads.append(post_check_pool.apply_async(verify_all_started, (ips_per_shard[shard],)))
     if not all(t.get() for t in threads):
-        raise SystemExit(f"not all nodes restarted, check logs for details: "
-                         f"{args.log_dir}/recover_from_snapshot.log")
+        raise RuntimeError(f"not all nodes restarted, check logs for details")
 
     sleep_b4_progress_check = 60
     log.debug(f"sleeping {sleep_b4_progress_check} seconds before checking if all nodes are making progress")
@@ -308,72 +308,122 @@ def restart_and_check(ips_per_shard):
         log.debug(f"starting node progress verification for shard {shard}; ips: {ips_per_shard[shard]}")
         threads.append(post_check_pool.apply_async(verify_all_progressed, (ips_per_shard[shard],)))
     if not all(t.get() for t in threads):
-        raise SystemExit(f"not all nodes made progress, check logs for details: "
-                         f"{args.log_dir}/recover_from_snapshot.log")
+        raise RuntimeError(f"not all nodes restarted, check logs for details")
     log.debug("recovery succeeded!")
+
+
+def _get_ips_per_shard_from_file(file_path, shard):
+    """
+    Internal function to get IPs per shard from a given file interactively.
+
+    Assumes that `file_path` exists, that its basename follows ^shard[0-9]+.txt,
+    and that the file contains IPs in new line separated format.
+
+    Returns a list of chosen IPs or None if shard is to be ignored.
+    """
+    # Load file & verify shard has not loaded IPs
+    file = os.path.basename(file_path)
+    file_shard = int(file.replace("shard", "").replace(".txt", ""))
+    assert file_shard == shard, f"file shard ({file_shard}) for {file_path} != {shard}"
+    with open(file_path, 'r', encoding='utf-8') as f:
+        ips = [line.strip() for line in f.readlines() if re.search(ipv4_regex, line)]
+    if not ips:
+        raise RuntimeError(f"no VALID IP was loaded from file: '{file_path}'")
+    log.debug(f"Candidate IPs for shard {shard}: {ips}")
+
+    # Prompt user with actions to do on read IPs
+    print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} ips ({len(ips)}):")
+    for i, ip in enumerate(ips):
+        print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
+    choices = [
+        "Add all above IPs",
+        "Choose IPs from above to add (interactively)",
+        "Ignore"
+    ]
+    response = interact("", choices)
+
+    # Execute action on read IPs
+    if response == choices[-1]:  # Ignore
+        log.debug(f"ignoring IPs from shard {shard}")
+        return None
+    if response == choices[0]:  # Add all above IPs
+        log.debug(f"shard {shard} IPs: {ips}")
+        return ips
+    if response == choices[1]:  # Choose IPs from above to add (interactively)
+        chosen_ips = []
+        for ip in ips:
+            prompt = f"Add {Typgpy.OKGREEN}{ip}{Typgpy.ENDC} for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?"
+            if interact(prompt, ["yes", "no"]) == "yes":
+                chosen_ips.append(ip)
+        if not chosen_ips:
+            msg = f"chose 0 IPs for shard {shard}, ignoring shard"
+            log.debug(msg)
+            return None
+        print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} "
+              f"{Typgpy.UNDERLINE}chosen{Typgpy.ENDC} ips ({len(chosen_ips)})")
+        for i, ip in enumerate(chosen_ips):
+            print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
+        if interact(f"Add above ips for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?", ["yes", "no"]) == "yes":
+            log.debug(f"shard {shard} IPs: {chosen_ips}")
+            return chosen_ips
+        log.debug(f"ignoring IPs from shard {shard}")
+        return None
 
 
 def _get_ips_per_shard(args):
     """
     Internal function to get the IPs per shard given a parsed args, only used for main execution.
-
-    # TODO: implement function to take in CSV IPs as a string when specified in the option...
     """
     log.debug("Loading IPs from given directory...")
-
     ips_per_shard = {}
-    for file in os.listdir(args.logs_dir):
-        if not re.match(r"shard[0-9]+.txt", file):
-            continue
-        # Load file & verify shard has not loaded IPs
-        shard = int(file.replace("shard", "").replace(".txt", ""))
-        if shard in ips_per_shard.keys():
-            raise RuntimeError(f"Multiple IP files for shard {shard}")
-        with open(f"{args.logs_dir}/{file}", 'r', encoding='utf-8') as f:
-            ips = [line.strip() for line in f.readlines() if re.search(ipv4_regex, line)]
-        if not ips:
-            raise RuntimeError(f"no VALID IP was loaded from file: '{args.logs_dir}/{file}'")
-        log.debug(f"Candidate IPs for shard {shard}: {ips}")
-
-        # Prompt user with actions to do on read IPs
-        print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} ips ({len(ips)}):")
-        for i, ip in enumerate(ips):
-            print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
-        choices = [
-            "Add all IPs",
-            "Select IPs to add (interactively)",
-            "Ignore"
-        ]
-        response = interact("", choices)
-
-        # Execute action on read IPs
-        if response == choices[-1]:  # Ignore
-            log.debug(f"ignoring IPs from shard {shard}")
-            continue
-        if response == choices[0]:  # Add all IPs
-            log.debug(f"shard {shard} IPs: {ips}")
-            ips_per_shard[shard] = ips
-            continue
-        if response == choices[1]:  # Select IPs to add (interactively)
-            selected_ips = []
-            for ip in ips:
-                prompt = f"Add {Typgpy.OKGREEN}{ip}{Typgpy.ENDC} for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?"
-                if interact(prompt, ["yes", "no"]) == "yes":
-                    selected_ips.append(ip)
-            if not selected_ips:
-                msg = f"selected 0 IPs for shard {shard}, ignoring shard"
-                log.debug(msg)
+    input_choices = [
+        "Read IPs from log directory and choose interactively",
+        "Provide IPs interactively as a CSV string for each shard"
+    ]
+    response = interact("How would you like to input network IPs?", input_choices)
+    if response == input_choices[0]:  # Read IPs from log directory and choose interactively
+        log.debug("Reading IPs from file")
+        for file in os.listdir(args.logs_dir):
+            if not re.match(r"shard[0-9]+.txt", file):
                 continue
-            print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} "
-                  f"{Typgpy.UNDERLINE}selected{Typgpy.ENDC} ips ({len(selected_ips)})")
-            for i, ip in enumerate(selected_ips):
-                print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
-            if interact(f"Add ips for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?", ["yes", "no"]) == "yes":
-                log.debug(f"shard {shard} IPs: {selected_ips}")
-                ips_per_shard[shard] = selected_ips
-            else:
-                log.debug(f"ignoring IPs from shard {shard}")
-            continue
+            shard = int(file.replace("shard", "").replace(".txt", ""))
+            if shard in ips_per_shard.keys():
+                raise RuntimeError(f"Multiple IP files for shard {shard}")
+            shard_ips = _get_ips_per_shard_from_file(f"{args.logs_dir}/{file}", shard)
+            if shard_ips is not None:
+                ips_per_shard[shard] = shard_ips
+    elif response == input_choices[1]:  # Provide IPs interactively as a CSV string for each shard
+        log.debug("Reading IPs from console interactively")
+        shard = 0
+        while True:
+            choices = ["yes", "skip", "finish"]
+            action = interact(f"Enter IPs for shard {shard}?", choices)
+            if action == choices[-1]:  # finished
+                break
+            if action == choices[1]:  # skip
+                shard += 1
+                continue
+            if action == choices[0]:  # yes
+                ips_as_csv = input(f"Enter IPs as a CSV string for shard {shard}\n> ")
+                log.debug(f"raw csv input for shard {shard}: {ips_as_csv}")
+                shard_ips = []
+                for ip in map(lambda e: e.strip(), ips_as_csv.split(",")):
+                    if not re.search(ipv4_regex, ip):
+                        log.debug(f"throwing away '{ip}' as it is not a valid ipv4 address")
+                    else:
+                        shard_ips.append(ip)
+                if shard_ips:
+                    print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} "
+                          f"{Typgpy.UNDERLINE}given & filtered{Typgpy.ENDC} ips ({len(shard_ips)})")
+                    for i, ip in enumerate(shard_ips):
+                        print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
+                    if interact(f"Add above ips for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?", ["yes", "no"]) == "yes":
+                        log.debug(f"shard {shard} IPs: {shard_ips}")
+                        ips_per_shard[shard] = shard_ips
+                else:
+                    log.debug(f"no valid ips to add to shard {shard}")
+                shard += 1
+                continue
 
     # Final print loaded IPs
     for shard in sorted(ips_per_shard.keys()):
