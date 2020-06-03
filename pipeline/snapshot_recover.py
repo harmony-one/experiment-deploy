@@ -208,9 +208,10 @@ def _backup_existing_dbs(ip, shard):
 
     Returns None if done successfully, otherwise returns string with error msg.
     """
-    log.debug(f"backing up node {ip}")
-    cmd = f"[ ! pgrep harmony ] && tar -czf harmony_db_0.tar.gz {db_directory_on_machine}/harmony_db_0 "
-    cmd += f"& [ ! pgrep harmony ] && tar -czf harmony_db_{shard}.tar.gz {db_directory_on_machine}/harmony_db_{shard}"
+    unix_time = int(time.time())
+    log.debug(f"backing up node {ip} at unix time: {unix_time}")
+    cmd = f"[ ! pgrep harmony ] && tar -czf harmony_db_0.{unix_time}.tar.gz {db_directory_on_machine}/harmony_db_0 "
+    cmd += f"& [ ! pgrep harmony ] && tar -czf harmony_db_{shard}.{unix_time}.tar.gz {db_directory_on_machine}/harmony_db_{shard}"
     try:
         _ssh_cmd(ip, cmd)
         return None  # indicate success
