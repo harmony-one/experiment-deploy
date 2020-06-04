@@ -86,6 +86,7 @@
        dest: "/lib/systemd/system/harmony.service"
 
    - name: disable selinux
+     ignore_errors: yes
      selinux:
        state: disabled
 
