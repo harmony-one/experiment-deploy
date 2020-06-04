@@ -1,0 +1,12 @@
+---
+- hosts: '{{ inventory }}'
+  gather_facts: no
+  tasks:
+  - name: check bingo/hooray
+    shell: 'tac latest/zerolog*.log | grep -m 1 -E "BINGO|HOORAY"'
+    register: bingo
+    ignore_errors: yes
+
+  - name: find bingo/hooray output
+    debug:
+      var: bingo.stdout
