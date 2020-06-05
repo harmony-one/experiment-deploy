@@ -31,8 +31,9 @@ EOU
 }
 
 get_key() {
+   # set -x
    for idx in $@; do
-      key=$(grep -E "Index:.\".$idx \"" $HARMONYDB | grep -oE 'BlsPublicKey: "[a-z0-9]+"' | awk ' { print $2 } ' | tr -d \")
+      key=$(grep -E "Index:.\" $idx \"" $HARMONYDB | grep -oE 'BLSPublicKey: "[a-z0-9]+"' | awk ' { print $2 } ' | tr -d \")
       KEYS+=($key)
    done
 }
@@ -114,6 +115,7 @@ do_merge_ip() {
 }
 
 _copy_key() {
+   set -x
    for k in "${KEYS[@]}"; do
       cat "$KEYDIR/${k}.key" | ./node_ssh.sh -p "${profile}" "$merged" "cat - > .hmy/blskeys/${k}.key"
       ./node_ssh.sh -p "${profile}" "$merged" "cp bls.pass .hmy/blskeys/${k}.pass"
@@ -149,7 +151,7 @@ do_merge_key() {
 
    _copy_key
 
-   ./restart_node.sh -p ${profile} -y -t 60 $merged
+   ./restart_node.sh -p ${profile} -y -t 0 $merged
 }
 
 while getopts ":p:hIK" opt; do
