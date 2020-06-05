@@ -58,6 +58,7 @@ supported_networks = {"mainnet", "testnet", "staking", "partner", "stress", "dry
 beacon_chain_shard = 0
 db_directory_on_machine = "$HOME"  # The directory on the node that contains all of the harmony_db_* directories.
 rclone_config_path_on_machine = "$HOME/rclone.conf"
+progress_seconds_since_last_block_check = 150
 
 _interaction_lock = Lock()
 
@@ -104,6 +105,30 @@ def _is_harmony_running(ip):
         return True
     except subprocess.CalledProcessError:
         return False
+
+
+def _is_progressed_node(ip):
+    """
+    Internal function to check if a machine/node is making progress.
+    """
+    try:
+        start_header = blockchain.get_latest_header(f"http://{ip}:9500/")
+    except (rpc_exceptions.RPCError, rpc_exceptions.RequestsTimeoutError, rpc_exceptions.RequestsError) as e:
+        log.error(traceback.format_exc())
+        log.error(f"error on RPC from {ip}. Error {e}")
+        return False
+    start_time = time.time()
+    while time.time() - start_time < progress_seconds_since_last_block_check:
+        try:
+            curr_header = blockchain.get_latest_header(f"http://{ip}:9500/")
+        except (rpc_exceptions.RPCError, rpc_exceptions.RequestsTimeoutError, rpc_exceptions.RequestsError) as e:
+            log.error(traceback.format_exc())
+            log.error(f"error on RPC from {ip}. Error {e}")
+            return False
+        if curr_header['blockNumber'] > start_header['blockNumber']:
+            return True
+        time.sleep(1)
+    return False
 
 
 def _verify(ip, network):
@@ -186,23 +211,6 @@ def verify_network(ips_per_shard, network):
             log.debug("sleeping 10 seconds before checking all nodes again...")
             time.sleep(10)
             continue
-
-
-def current_stats(ips_per_shard):
-    """
-    Report the current stats of the network.
-
-    Per shard, report:
-        * All unique block heights
-        * Min block height
-        * Max block height
-        * Offline nodes
-        * Nodes that have not made progress in the last 150 seconds
-
-    Assumes `ips_per_shard` has been verified.
-    """
-    assert isinstance(ips_per_shard, dict) and len(ips_per_shard.keys()) > 0
-    # TODO: implement
 
 
 def _backup_existing_dbs(ip, shard):
@@ -583,7 +591,11 @@ def _restart(ip):
     """
     try:
         _ssh_cmd(ip, "sudo systemctl restart harmony")
-        return None  # indicate success
+        start_time = time.time()
+        while time.time() - start_time < 5:
+            if _is_harmony_running(ip):
+                return None  # indicate success
+        return f"harmony process is not running 5 seconds after restart on {ip}"
     except subprocess.CalledProcessError as e:
         return f"unable to restart harmony process on {ip}, error: {e}"
 
@@ -628,18 +640,17 @@ def restart_all(ips):
             _interaction_lock.release()
 
 
-def verify_all_started(ips):
-    """
-    Verify all nodes started asynchronously.
-    """
-    assert isinstance(ips, list) and len(ips) > 0
-
-
 def verify_all_progressed(ips):
     """
     Verify all nodes progressed asynchronously.
     """
     assert isinstance(ips, list) and len(ips) > 0
+    ips = ips.copy()  # make a copy to not mutate given ips
+
+    threads, pool = [], ThreadPool()
+    for ip in ips:
+        threads.append(pool.apply_async(_is_progressed_node, (ip,)))
+    return all(t.get() for t in threads)
 
 
 def restart_and_check(ips_per_shard):
@@ -669,17 +680,6 @@ def restart_and_check(ips_per_shard):
     for t in threads:
         t.get()
     log.debug(f"finished restarting shards {sorted(ips_per_shard.keys())}")
-
-    sleep_b4_running_check = 10
-    log.debug(f"sleeping {sleep_b4_running_check} seconds before checking if all nodes started")
-    time.sleep(sleep_b4_running_check)
-
-    threads = []
-    for shard in ips_per_shard.keys():
-        log.debug(f"starting node restart verification for shard {shard}; ips: {ips_per_shard[shard]}")
-        threads.append(post_check_pool.apply_async(verify_all_started, (ips_per_shard[shard],)))
-    if not all(t.get() for t in threads):
-        raise RuntimeError(f"not all nodes restarted, check logs for details")
 
     sleep_b4_progress_check = 60
     log.debug(f"sleeping {sleep_b4_progress_check} seconds before checking if all nodes are making progress")
