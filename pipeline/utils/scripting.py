@@ -3,12 +3,14 @@ import os
 import sys
 import logging
 import readline
+from threading import Lock
 
 from pyhmy.util import (
     Typgpy
 )
 
 ipv4_regex = r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+_interaction_lock = Lock()
 
 
 def setup_logger(log_file, logger_name, do_print=True, verbose=True):
@@ -43,6 +45,7 @@ def interact(prompt, selection_list, sort=True):
 
     Returns n and corresponding selection string from `selection_list`.
     """
+    _interaction_lock.acquire()
     if not selection_list:
         return
     input_prompt = f"{Typgpy.BOLD}Select option (number):{Typgpy.ENDC}\n> "
@@ -55,27 +58,29 @@ def interact(prompt, selection_list, sort=True):
         prompt_new_line_count += 1
     printed_new_line_count = 0
     print()
-
-    while True:
-        if prompt:
-            print(prompt)
-        for i, selection in enumerate(selection_list):
-            print(f"{Typgpy.BOLD}[{i}]{Typgpy.ENDC}\t{selection}")
-        user_input = input(input_prompt)
-        printed_new_line_count += prompt_new_line_count
-        try:
-            n = int(user_input)
-            if n >= len(selection_list):
-                continue
-            selection_report = f"{prompt} {Typgpy.BOLD}[{n}]{Typgpy.ENDC} {selection_list[n]}".strip()
-            for i in range(printed_new_line_count):
-                sys.stdout.write("\033[K")
-                if i + 1 < printed_new_line_count:
-                    sys.stdout.write("\033[F")
-            print(selection_report)
-            return selection_list[n]
-        except ValueError:
-            pass
+    try:
+        while True:
+            if prompt:
+                print(prompt)
+            for i, selection in enumerate(selection_list):
+                print(f"{Typgpy.BOLD}[{i}]{Typgpy.ENDC}\t{selection}")
+            user_input = input(input_prompt)
+            printed_new_line_count += prompt_new_line_count
+            try:
+                n = int(user_input)
+                if n >= len(selection_list):
+                    continue
+                selection_report = f"{prompt} {Typgpy.BOLD}[{n}]{Typgpy.ENDC} {selection_list[n]}".strip()
+                for i in range(printed_new_line_count):
+                    sys.stdout.write("\033[K")
+                    if i + 1 < printed_new_line_count:
+                        sys.stdout.write("\033[F")
+                print(selection_report)
+                return selection_list[n]
+            except ValueError:
+                pass
+    finally:
+        _interaction_lock.release()
 
 
 def input_prefill(prompt, prefill=''):
