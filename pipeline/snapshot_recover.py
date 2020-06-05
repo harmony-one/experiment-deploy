@@ -17,7 +17,14 @@ Note that explorer nodes are recovered with a non-archival db.
 Manual archival recovery will need to be afterwards.
 
 Example Usage:
-    TODO: example
+    python3 snapshot_recovery.py testnet
+    python3 snapshot_recovery.py mainnet --verbose
+    python3 snapshot_recovery.py testnet --log-dir /some/path/here/
+    python3 snapshot_recovery.py testnet --rcone-config-path /some/path/rclone.conf
+    python3 snapshot_recovery.py testnet --snapshot-bin "snapshot:harmony-snapshot"
+
+Help + Descriptions and default values:
+    python3 snapshot_recovery.py --help
 """
 
 import time
