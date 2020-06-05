@@ -30,6 +30,7 @@ import json
 import logging
 import traceback
 import re
+from threading import Lock
 from multiprocessing.pool import ThreadPool
 
 import pyhmy
@@ -57,6 +58,8 @@ supported_networks = {"mainnet", "testnet", "staking", "partner", "stress", "dry
 beacon_chain_shard = 0
 db_directory_on_machine = "$HOME"  # The directory on the node that contains all of the harmony_db_* directories.
 rclone_config_path_on_machine = "$HOME/rclone.conf"
+
+_interaction_lock = Lock()
 
 
 def _ssh_cmd(ip, command):
@@ -158,16 +161,20 @@ def verify_network(ips_per_shard, network):
             return
 
         # Prompt user on next course of action
-        print(f"{Typgpy.FAIL}Some nodes failed node verification checks!{Typgpy.ENDC}")
-        failed_ips = []
-        for reason, ip in failed_results:
-            print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
-            failed_ips.append(ip)
-        choices = [
-            "Reboot nodes and try again",
-            "Ignore"
-        ]
-        response = interact("", choices)
+        _interaction_lock.acquire()
+        try:
+            print(f"{Typgpy.FAIL}Some nodes failed node verification checks!{Typgpy.ENDC}")
+            failed_ips = []
+            for reason, ip in failed_results:
+                print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+                failed_ips.append(ip)
+            choices = [
+                "Reboot nodes and try again",
+                "Ignore"
+            ]
+            response = interact("", choices)
+        finally:
+            _interaction_lock.release()
 
         # Execute next course of action
         if response == choices[-1]:  # Ignore
@@ -239,15 +246,19 @@ def backup_existing_dbs(ips, shard):
             log.debug(f"successfully backed up existing DBs!")
             return
 
-        print(f"{Typgpy.FAIL}Some nodes failed to backup existing DBs!{Typgpy.ENDC}")
-        ips.clear()
-        for reason, ip in failed_results:
-            print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
-            ips.append(ip)
-        if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
-            print(f"{Typgpy.WARNING}Could not backup some existing DBs, but proceeding anyways...{Typgpy.ENDC}")
-            log.warning(f"Could not backup some existing DBs, but proceeding anyways.")
-            return
+        _interaction_lock.acquire()
+        try:
+            print(f"{Typgpy.FAIL}Some nodes failed to backup existing DBs!{Typgpy.ENDC}")
+            ips.clear()
+            for reason, ip in failed_results:
+                print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+                ips.append(ip)
+            if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
+                print(f"{Typgpy.WARNING}Could not backup some existing DBs, but proceeding anyways...{Typgpy.ENDC}")
+                log.warning(f"Could not backup some existing DBs, but proceeding anyways.")
+                return
+        finally:
+            _interaction_lock.release()
 
 
 def _setup_rclone(ip, bash_script_path, rclone_config_raw):
@@ -309,15 +320,19 @@ def setup_rclone(ips, rclone_config_path):
             log.debug(f"successfully setup rclone!")
             return
 
-        print(f"{Typgpy.FAIL}Some nodes failed to setup rclone!{Typgpy.ENDC}")
-        ips.clear()
-        for reason, ip in failed_results:
-            print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
-            ips.append(ip)
-        if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
-            print(f"{Typgpy.WARNING}Could not setup rclone on some machines, but proceeding anyways...{Typgpy.ENDC}")
-            log.warning(f"Could not setup rclone on some machines, but proceeding anyways.")
-            return
+        _interaction_lock.acquire()
+        try:
+            print(f"{Typgpy.FAIL}Some nodes failed to setup rclone!{Typgpy.ENDC}")
+            ips.clear()
+            for reason, ip in failed_results:
+                print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+                ips.append(ip)
+            if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
+                print(f"{Typgpy.WARNING}Could not setup rclone on some machines, but proceeding anyways...{Typgpy.ENDC}")
+                log.warning(f"Could not setup rclone on some machines, but proceeding anyways.")
+                return
+        finally:
+            _interaction_lock.release()
 
 
 def _cleanup_rclone(ip):
@@ -366,15 +381,19 @@ def cleanup_rclone(ips):
             log.debug(f"successfully cleaned up rclone config!")
             return
 
-        print(f"{Typgpy.FAIL}Some nodes failed to cleanup rclone config!{Typgpy.ENDC}")
-        ips.clear()
-        for reason, ip in failed_results:
-            print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
-            ips.append(ip)
-        if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
-            print(f"{Typgpy.WARNING}Could not cleanup some rclone config, but proceeding anyways...{Typgpy.ENDC}")
-            log.warning(f"Could not cleanup some rclone config, but proceeding anyways.")
-            return
+        _interaction_lock.acquire()
+        try:
+            print(f"{Typgpy.FAIL}Some nodes failed to cleanup rclone config!{Typgpy.ENDC}")
+            ips.clear()
+            for reason, ip in failed_results:
+                print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+                ips.append(ip)
+            if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
+                print(f"{Typgpy.WARNING}Could not cleanup some rclone config, but proceeding anyways...{Typgpy.ENDC}")
+                log.warning(f"Could not cleanup some rclone config, but proceeding anyways.")
+                return
+        finally:
+            _interaction_lock.release()
 
 
 def _rsync_snapshotted_dbs(ip, shard, snapshot_bin):
@@ -438,13 +457,17 @@ def rsync_snapshotted_dbs(ips, shard, beacon_snapshot_bin, shard_snapshot_bin):
             log.debug(f"successfully rsynced snapshotted DB(s)!")
             return
 
-        print(f"{Typgpy.FAIL}Some nodes failed to rsync snapshotted DB(s)!{Typgpy.ENDC}")
-        ips.clear()
-        for reason, ip in failed_results:
-            print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
-            ips.append(ip)
-        if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
-            raise RuntimeError("Could not rsync some snapshotted DB(s)")
+        _interaction_lock.acquire()
+        try:
+            print(f"{Typgpy.FAIL}Some nodes failed to rsync snapshotted DB(s)!{Typgpy.ENDC}")
+            ips.clear()
+            for reason, ip in failed_results:
+                print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+                ips.append(ip)
+            if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
+                raise RuntimeError("Could not rsync some snapshotted DB(s)")
+        finally:
+            _interaction_lock.release()
 
 
 def recover(ips_per_shard, snapshot_per_shard, rclone_config_path):
@@ -478,16 +501,14 @@ def recover(ips_per_shard, snapshot_per_shard, rclone_config_path):
         print(f"{Typgpy.OKBLUE}Rsyncing chosen snapshot DBs for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}")
         rsync_snapshotted_dbs(ips, shard, snapshot_per_shard[beacon_chain_shard], snapshot_per_shard[shard])
         print(f"{Typgpy.OKGREEN}Successfully rsynced chosen snapshot DBs for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}")
-    try:
-        threads, pool = [], ThreadPool(len(ips_per_shard.keys()))
-        for shard in ips_per_shard.keys():
-            threads.append(pool.apply_async(process, (shard,)))
-        for t in threads:
-            t.get()
-    finally:
-        pass
-        restart_and_check(ips_per_shard)
-        print(f"{Typgpy.OKGREEN}Successfully restarted all target machines{Typgpy.ENDC}")
+
+    threads, pool = [], ThreadPool(len(ips_per_shard.keys()))
+    for shard in ips_per_shard.keys():
+        threads.append(pool.apply_async(process, (shard,)))
+    for t in threads:
+        t.get()
+    restart_and_check(ips_per_shard)
+    print(f"{Typgpy.OKGREEN}Successfully restarted all target machines{Typgpy.ENDC}")
     log.debug("finished recovery successfully")
 
 
@@ -539,22 +560,72 @@ def stop_all(ips):
             log.debug(f"successfully stopped all given harmony processes!")
             return
 
-        print(f"{Typgpy.FAIL}Some nodes failed to stop the harmony processes!{Typgpy.ENDC}")
-        ips.clear()
-        for reason, ip in failed_results:
-            print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
-            ips.append(ip)
-        if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
-            print(f"{Typgpy.WARNING}Could not stop harmony process on some nodes, but proceeding anyways...{Typgpy.ENDC}")
-            log.warning(f"Could not stop harmony process on some nodes, but proceeding anyways.")
-            return
+        _interaction_lock.acquire()
+        try:
+            print(f"{Typgpy.FAIL}Some nodes failed to stop the harmony processes!{Typgpy.ENDC}")
+            ips.clear()
+            for reason, ip in failed_results:
+                print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+                ips.append(ip)
+            if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
+                print(f"{Typgpy.WARNING}Could not stop harmony process on some nodes, but proceeding anyways...{Typgpy.ENDC}")
+                log.warning(f"Could not stop harmony process on some nodes, but proceeding anyways.")
+                return
+        finally:
+            _interaction_lock.release()
+
+
+def _restart(ip):
+    """
+    Internal function to restart the harmony process on the given IP.
+
+    Returns None if done successfully, otherwise returns string with error msg.
+    """
+    try:
+        _ssh_cmd(ip, "sudo systemctl restart harmony")
+        return None  # indicate success
+    except subprocess.CalledProcessError as e:
+        return f"unable to restart harmony process on {ip}, error: {e}"
 
 
 def restart_all(ips):
     """
     Send restart command to all nodes asynchronously.
+
+     Returns None if done successfully, otherwise returns string with error msg.
     """
-    assert isinstance(ips, list) and len(ips) > 0
+    assert isinstance(ips, list)
+    ips = ips.copy()  # make a copy to not mutate given ips
+
+    thread_and_ip_list, pool = [], ThreadPool(processes=100)  # high process count is OK since threads just wait
+    while True:
+        thread_and_ip_list.clear()
+        log.debug(f"Restarting the following ips: {ips}")
+        for ip in ips:
+            el = (pool.apply_async(_restart, (ip,)), ip)
+            thread_and_ip_list.append(el)
+
+        results = []
+        for thread, ip in thread_and_ip_list:
+            results.append((thread.get(), ip))
+        failed_results = [el for el in results if el[0] is not None]
+        if not failed_results:
+            log.debug(f"successfully restarted all ips!")
+            return
+
+        _interaction_lock.acquire()
+        try:
+            print(f"{Typgpy.FAIL}Some nodes failed to restart!{Typgpy.ENDC}")
+            ips.clear()
+            for reason, ip in failed_results:
+                print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+                ips.append(ip)
+            if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
+                print(f"{Typgpy.WARNING}Could not restart some nodes, but proceeding anyways...{Typgpy.ENDC}")
+                log.warning(f"Could not restart some nodes, but proceeding anyways.")
+                return
+        finally:
+            _interaction_lock.release()
 
 
 def verify_all_started(ips):
@@ -581,8 +652,12 @@ def restart_and_check(ips_per_shard):
     """
     assert isinstance(ips_per_shard, dict) and len(ips_per_shard.keys()) > 0
 
-    if interact(f"Restart shards: {sorted(ips_per_shard.keys())}?", ["yes", "no"]) == "no":
-        return
+    _interaction_lock.acquire()
+    try:
+        if interact(f"Restart shards: {sorted(ips_per_shard.keys())}?", ["yes", "no"]) == "no":
+            return
+    finally:
+        _interaction_lock.release()
 
     print(f"{Typgpy.HEADER}Restarting all target machines on shards {sorted(ips_per_shard.keys())} and "
           f"checking for progress... (ETA: ~90 seconds to complete){Typgpy.ENDC}")
@@ -640,15 +715,19 @@ def _get_ips_per_shard_from_file(file_path, shard):
     log.debug(f"Candidate IPs for shard {shard}: {ips}")
 
     # Prompt user with actions to do on read IPs
-    print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} ips ({len(ips)}):")
-    for i, ip in enumerate(ips):
-        print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
-    choices = [
-        "Add all above IPs",
-        "Choose IPs from above to add (interactively)",
-        "Ignore"
-    ]
-    response = interact("", choices)
+    _interaction_lock.acquire()
+    try:
+        print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} ips ({len(ips)}):")
+        for i, ip in enumerate(ips):
+            print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
+        choices = [
+            "Add all above IPs",
+            "Choose IPs from above to add (interactively)",
+            "Ignore"
+        ]
+        response = interact("", choices)
+    finally:
+        _interaction_lock.release()
 
     # Execute action on read IPs
     if response == choices[-1]:  # Ignore
@@ -661,21 +740,29 @@ def _get_ips_per_shard_from_file(file_path, shard):
         chosen_ips = []
         for ip in ips:
             prompt = f"Add {Typgpy.OKGREEN}{ip}{Typgpy.ENDC} for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?"
-            if interact(prompt, ["yes", "no"]) == "yes":
-                chosen_ips.append(ip)
+            _interaction_lock.acquire()
+            try:
+                if interact(prompt, ["yes", "no"]) == "yes":
+                    chosen_ips.append(ip)
+            finally:
+                _interaction_lock.release()
         if not chosen_ips:
             msg = f"chose 0 IPs for shard {shard}, ignoring shard"
             log.debug(msg)
             return None
-        print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} "
-              f"{Typgpy.UNDERLINE}chosen{Typgpy.ENDC} ips ({len(chosen_ips)})")
-        for i, ip in enumerate(chosen_ips):
-            print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
-        if interact(f"Add above ips for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?", ["yes", "no"]) == "yes":
-            log.debug(f"shard {shard} IPs: {chosen_ips}")
-            return chosen_ips
-        log.debug(f"ignoring IPs from shard {shard}")
-        return None
+        _interaction_lock.acquire()
+        try:
+            print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} "
+                  f"{Typgpy.UNDERLINE}chosen{Typgpy.ENDC} ips ({len(chosen_ips)})")
+            for i, ip in enumerate(chosen_ips):
+                print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
+            if interact(f"Add above ips for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?", ["yes", "no"]) == "yes":
+                log.debug(f"shard {shard} IPs: {chosen_ips}")
+                return chosen_ips
+            log.debug(f"ignoring IPs from shard {shard}")
+            return None
+        finally:
+            _interaction_lock.release()
 
 
 def get_ips_per_shard(logs_dir):
@@ -690,7 +777,11 @@ def get_ips_per_shard(logs_dir):
         f"Read IPs from log directory & choose interactively. (Log directory {logs_dir})",
         "Provide IPs interactively as a CSV string for each shard"
     ]
-    response = interact("How would you like to input network IPs?", input_choices)
+    _interaction_lock.acquire()
+    try:
+        response = interact("How would you like to input network IPs?", input_choices)
+    finally:
+        _interaction_lock.release()
     if response == input_choices[0]:  # Read IPs from log directory and choose interactively
         for file in os.listdir(logs_dir):
             if not re.match(r"shard[0-9]+.txt", file):
@@ -706,7 +797,11 @@ def get_ips_per_shard(logs_dir):
         shard = 0
         while True:
             choices = ["yes", "skip", "finish"]
-            action = interact(f"Enter IPs for shard {shard}?", choices)
+            _interaction_lock.acquire()
+            try:
+                action = interact(f"Enter IPs for shard {shard}?", choices)
+            finally:
+                _interaction_lock.release()
             if action == choices[-1]:  # finished
                 break
             if action == choices[1]:  # skip
@@ -722,14 +817,18 @@ def get_ips_per_shard(logs_dir):
                     else:
                         shard_ips.append(ip)
                 if shard_ips:
-                    print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} "
-                          f"{Typgpy.UNDERLINE}given & filtered{Typgpy.ENDC} ips ({len(shard_ips)})")
-                    for i, ip in enumerate(shard_ips):
-                        print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
-                    if interact(f"Add above ips for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?",
-                                ["yes", "no"]) == "yes":
-                        log.debug(f"shard {shard} IPs: {shard_ips}")
-                        ips_per_shard[shard] = shard_ips
+                    _interaction_lock.acquire()
+                    try:
+                        print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} "
+                              f"{Typgpy.UNDERLINE}given & filtered{Typgpy.ENDC} ips ({len(shard_ips)})")
+                        for i, ip in enumerate(shard_ips):
+                            print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
+                        if interact(f"Add above ips for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?",
+                                    ["yes", "no"]) == "yes":
+                            log.debug(f"shard {shard} IPs: {shard_ips}")
+                            ips_per_shard[shard] = shard_ips
+                    finally:
+                        _interaction_lock.release()
                 else:
                     log.debug(f"no valid ips to add to shard {shard}")
                 shard += 1
@@ -781,7 +880,11 @@ def select_snapshot_for_shard(network, snapshot_bin, shard):
     db_types = aws_s3_ls(snapshot_bin)
     if not db_types:
         return None
-    selected_db_type = interact("Select recovery DB type", db_types)
+    _interaction_lock.acquire()
+    try:
+        selected_db_type = interact("Select recovery DB type", db_types)
+    finally:
+        _interaction_lock.release()
     log.debug(f"selected {selected_db_type} db type")
     snapshot_bin += f"{selected_db_type}/"
     shards = [int(s) for s in aws_s3_ls(snapshot_bin)]
@@ -797,7 +900,11 @@ def select_snapshot_for_shard(network, snapshot_bin, shard):
     while True:
         prompt_db = dbs.copy()[:presented_dbs_count] + ["Look for more DBs"]
         prompt = f"Select DB for shard {shard}. Format: harmony_db_SHARD.Y-M-D-H-M-S.BLOCK)"
-        response = interact(prompt, prompt_db, sort=False)
+        _interaction_lock.acquire()
+        try:
+            response = interact(prompt, prompt_db, sort=False)
+        finally:
+            _interaction_lock.release()
         if response == prompt_db[-1]:
             presented_dbs_count *= 2
             continue
@@ -829,7 +936,11 @@ def get_snapshot_per_shard(network, ips_per_shard, snapshot_bin):
             "Interactively select snapshot db, starting from latest",
             "Manually specify path (and optionally bin) for snapshot db"
         ]
-        response = interact(f"How to get snapshot db for shard {shard}?", choices)
+        _interaction_lock.acquire()
+        try:
+            response = interact(f"How to get snapshot db for shard {shard}?", choices)
+        finally:
+            _interaction_lock.release()
 
         if response == choices[0]:  # Interactively select snapshot db, starting from latest
             snapshot = select_snapshot_for_shard(network, snapshot_bin, shard)
@@ -849,8 +960,12 @@ def get_snapshot_per_shard(network, ips_per_shard, snapshot_bin):
                 print(error_msg)
                 log.error(traceback.format_exc())
                 log.error(error_msg)
-                if interact(f"Ignore error?", ["yes", "no"]) == "no":
-                    raise RuntimeError(error_msg) from e
+                _interaction_lock.acquire()
+                try:
+                    if interact(f"Ignore error?", ["yes", "no"]) == "no":
+                        raise RuntimeError(error_msg) from e
+                finally:
+                    _interaction_lock.release()
             snapshot_per_shard[shard] = snapshot
             continue
     return snapshot_per_shard
