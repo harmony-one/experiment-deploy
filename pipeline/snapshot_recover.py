@@ -32,23 +32,18 @@ import traceback
 import re
 from multiprocessing.pool import ThreadPool
 
-import pexpect
-import dns.resolver
-import requests
 import pyhmy
-from pagerduty_api import Alert
 from pyhmy.rpc import (
     exceptions as rpc_exceptions
 )
 from pyhmy.util import (
-    is_active_shard,
     Typgpy
 )
 from pyhmy import (
     blockchain,
 )
 
-from .utils.scripting import (
+from utils.scripting import (
     interact,
     aws_s3_ls,
     setup_logger,
@@ -58,7 +53,7 @@ from .utils.scripting import (
 
 script_directory = os.path.dirname(os.path.realpath(__file__))
 log = logging.getLogger("snapshot_recovery")
-supported_networks = {"mainnet", "testnet", "staking", "partner", "stress"}
+supported_networks = {"mainnet", "testnet", "staking", "partner", "stress", "dryrun"}
 beacon_chain_shard = 0
 db_directory_on_machine = "$HOME"  # The directory on the node that contains all of the harmony_db_* directories.
 rclone_config_path_on_machine = "$HOME/rclone.conf"
@@ -120,10 +115,10 @@ def _verify(ip, network):
         sharding_structure = blockchain.get_sharding_structure(f"http://{ip}:9500/", timeout=15)
     except (rpc_exceptions.RPCError, rpc_exceptions.RequestsTimeoutError, rpc_exceptions.RequestsError) as e:
         log.error(traceback.format_exc())
-        return f"error on RPC from {ip}. Error {e}"
+        return f"error on RPC from {ip}. Error: {e}"
     if node_metadata['network'] != network:
         return f"node {ip} has network {node_metadata['network']} != {network}"
-    if len(sharding_structure) >= max(ips_per_shard.keys()):
+    if max(ips_per_shard.keys()) >= len(sharding_structure):
         return f"node {ip} has sharding structure that is smaller than max shard-id of {max(ips_per_shard.keys())}"
     return None  # indicate success
 
@@ -148,6 +143,7 @@ def verify_network(ips_per_shard, network):
     thread_and_ip_list, pool = [], ThreadPool(processes=300)  # single simple RPC request, pool can be large
     while True:
         # Verify nodes
+        thread_and_ip_list.clear()
         log.debug(f"verifying the following ips: {all_ips}")
         for ip in all_ips:
             el = (pool.apply_async(_verify, (ip, network)), ip)
@@ -210,8 +206,8 @@ def _backup_existing_dbs(ip, shard):
     """
     unix_time = int(time.time())
     log.debug(f"backing up node {ip} at unix time: {unix_time}")
-    cmd = f"[ ! pgrep harmony ] && tar -czf harmony_db_0.{unix_time}.tar.gz {db_directory_on_machine}/harmony_db_0 "
-    cmd += f"& [ ! pgrep harmony ] && tar -czf harmony_db_{shard}.{unix_time}.tar.gz {db_directory_on_machine}/harmony_db_{shard}"
+    cmd = f"[ ! $(pgrep harmony) ] && tar -czf harmony_db_0.{unix_time}.tar.gz {db_directory_on_machine}/harmony_db_0 "
+    cmd += f"& [ ! $(pgrep harmony) ] && tar -czf harmony_db_{shard}.{unix_time}.tar.gz {db_directory_on_machine}/harmony_db_{shard}"
     try:
         _ssh_cmd(ip, cmd)
         return None  # indicate success
@@ -428,7 +424,7 @@ def rsync_snapshotted_dbs(ips, shard, beacon_snapshot_bin, shard_snapshot_bin):
         thread_and_ip_list.clear()
         log.debug(f"rsyncing snapshotted dbs for shard {shard} on the following ips: {ips}")
         for ip in ips:
-            el = (pool.apply_async(_rsync_snapshotted_dbs, (ip, shard, beacon_snapshot_bin)), ip)
+            el = (pool.apply_async(_rsync_snapshotted_dbs, (ip, beacon_chain_shard, beacon_snapshot_bin)), ip)
             thread_and_ip_list.append(el)
             if shard != beacon_chain_shard:
                 el = (pool.apply_async(_rsync_snapshotted_dbs, (ip, shard, shard_snapshot_bin)), ip)
@@ -470,18 +466,29 @@ def recover(ips_per_shard, snapshot_per_shard, rclone_config_path):
 
     def process(shard):
         ips = ips_per_shard[shard]
+        print(f"{Typgpy.OKBLUE}Stopping all machines for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}")
         stop_all(ips)
+        print(f"{Typgpy.OKGREEN}Successfully stopped all machines for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}")
+        print(f"{Typgpy.OKBLUE}Backing up (locally) existing DB for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}")
         backup_existing_dbs(ips, shard)
+        print(f"{Typgpy.OKGREEN}Successfully backed up existing DB for {Typgpy.HEADER}{shard}{Typgpy.ENDC}")
+        print(f"{Typgpy.OKBLUE}Setting up rclone on all machines for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}")
         setup_rclone(ips, rclone_config_path)
+        print(f"{Typgpy.OKGREEN}Successfully setup rclone on all machines for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}")
+        print(f"{Typgpy.OKBLUE}Rsyncing chosen snapshot DBs for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}")
         rsync_snapshotted_dbs(ips, shard, snapshot_per_shard[beacon_chain_shard], snapshot_per_shard[shard])
-
-    threads, pool = [], ThreadPool(len(ips_per_shard.keys()))
-    for shard in ips_per_shard.keys():
-        threads.append(pool.apply_async(process, (shard,)))
-    for t in threads:
-        t.get()
-
-    # restart_and_check(ips_per_shard)
+        print(f"{Typgpy.OKGREEN}Successfully rsynced chosen snapshot DBs for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}")
+    try:
+        threads, pool = [], ThreadPool(len(ips_per_shard.keys()))
+        for shard in ips_per_shard.keys():
+            threads.append(pool.apply_async(process, (shard,)))
+        for t in threads:
+            t.get()
+    finally:
+        pass
+        restart_and_check(ips_per_shard)
+        print(f"{Typgpy.OKGREEN}Successfully restarted all target machines{Typgpy.ENDC}")
+    log.debug("finished recovery successfully")
 
 
 def _stop(ip, tries=5):
@@ -569,12 +576,16 @@ def restart_and_check(ips_per_shard):
     Main restart and verification function after DBs have been restored.
 
     Assumes `ips_per_shard` has been verified.
+
+    Raises a RuntimeError if check fails.
     """
     assert isinstance(ips_per_shard, dict) and len(ips_per_shard.keys()) > 0
 
     if interact(f"Restart shards: {sorted(ips_per_shard.keys())}?", ["yes", "no"]) == "no":
         return
 
+    print(f"{Typgpy.HEADER}Restarting all target machines on shards {sorted(ips_per_shard.keys())} and "
+          f"checking for progress... (ETA: ~90 seconds to complete){Typgpy.ENDC}")
     threads = []
     post_check_pool = ThreadPool(processes=len(ips_per_shard.keys()))
     for shard in ips_per_shard.keys():
@@ -622,6 +633,7 @@ def _get_ips_per_shard_from_file(file_path, shard):
     file_shard = int(file.replace("shard", "").replace(".txt", ""))
     assert file_shard == shard, f"file shard ({file_shard}) for {file_path} != {shard}"
     with open(file_path, 'r', encoding='utf-8') as f:
+        log.debug(f"Reading IPs from file {file_path}")
         ips = [line.strip() for line in f.readlines() if re.search(ipv4_regex, line)]
     if not ips:
         raise RuntimeError(f"no VALID IP was loaded from file: '{file_path}'")
@@ -675,12 +687,11 @@ def get_ips_per_shard(logs_dir):
     log.debug("Loading IPs from given directory...")
     ips_per_shard = {}
     input_choices = [
-        "Read IPs from log directory and choose interactively",
+        f"Read IPs from log directory & choose interactively. (Log directory {logs_dir})",
         "Provide IPs interactively as a CSV string for each shard"
     ]
     response = interact("How would you like to input network IPs?", input_choices)
     if response == input_choices[0]:  # Read IPs from log directory and choose interactively
-        log.debug("Reading IPs from file")
         for file in os.listdir(logs_dir):
             if not re.match(r"shard[0-9]+.txt", file):
                 continue
@@ -724,9 +735,10 @@ def get_ips_per_shard(logs_dir):
                 shard += 1
                 continue
 
-    # Final print loaded IPs
+    # Final print target IPs
+    print()
     for shard in sorted(ips_per_shard.keys()):
-        print(f"Shard {Typgpy.HEADER}{shard}{Typgpy.ENDC} {Typgpy.UNDERLINE}loaded{Typgpy.ENDC} IPs:")
+        print(f"Shard {Typgpy.HEADER}{shard}{Typgpy.ENDC} {Typgpy.UNDERLINE}target{Typgpy.ENDC} IPs:")
         print('-' * 16)
         for ip in sorted(ips_per_shard[shard]):
             print(ip)
@@ -757,12 +769,14 @@ def select_snapshot_for_shard(network, snapshot_bin, shard):
 
     def filter_db(entry):
         try:
+            # Return block height
             return int(entry.split('.')[-1])
         except (ValueError, KeyError):
             return -1
 
     # Get to desired bucket of snapshot DBs
     rclone_config, snapshot_bin = snapshot_bin.split(':')
+    log.debug(f"fetching snapshot DB path from bin '{snapshot_bin}'")
     snapshot_bin = f"{snapshot_bin}/{network}/"
     db_types = aws_s3_ls(snapshot_bin)
     if not db_types:
@@ -788,7 +802,7 @@ def select_snapshot_for_shard(network, snapshot_bin, shard):
             presented_dbs_count *= 2
             continue
         else:
-            rclone_snapshot_db_path = f"{rclone_config}:{snapshot_bin}/{response}"
+            rclone_snapshot_db_path = f"{rclone_config}:{snapshot_bin}{response}"
             log.debug(f"chosen snapshot rclone path: '{rclone_snapshot_db_path}' for shard {shard}")
             return rclone_snapshot_db_path
 
@@ -810,7 +824,7 @@ def get_snapshot_per_shard(network, ips_per_shard, snapshot_bin):
     if beacon_chain_shard not in shards:
         shards.append(beacon_chain_shard)
 
-    for shard in sorted(shards, reverse=True):
+    for shard in sorted(shards):
         choices = [
             "Interactively select snapshot db, starting from latest",
             "Manually specify path (and optionally bin) for snapshot db"
@@ -826,7 +840,7 @@ def get_snapshot_per_shard(network, ips_per_shard, snapshot_bin):
             continue
         if response == choices[1]:  # Manually specify path (and optionally bin) for snapshot db
             snapshot = input_prefill(f"Enter snapshot path (for rclone) on shard {shard}\n> ",
-                                     prefill=f"{actual_snapshot_bin}/")
+                                     prefill=f"{actual_snapshot_bin}")
             log.debug(f"chose DB: {snapshot} for shard {shard}")
             try:
                 assert len(aws_s3_ls(snapshot)) > 0, f"given snapshot bin '{snapshot}' is empty"
@@ -864,7 +878,7 @@ def _parse_args():
     parser = argparse.ArgumentParser(description='Snapshot recovery script.')
     parser.add_argument("network", type=str, help=f"{supported_networks}")
     default_log_dir = f"{script_directory}/logs/{os.environ['HMY_PROFILE']}"
-    parser.add_argument("--logs-dir", type=str,
+    parser.add_argument("--logs-dir", type=str, default=default_log_dir,
                         help="the logs directory containing the shard?.txt files needed to ssh into the machines, "
                              f"default is '{default_log_dir}'")
     default_rclone_config_path = f"{script_directory}/../tools/snapshot/rclone.conf"
@@ -887,8 +901,11 @@ if __name__ == "__main__":
     if args.verbose:
         setup_logger(f"{script_directory}/logs/{os.environ['HMY_PROFILE']}/snapshot_recovery.log",
                      "snapshot_recovery", do_print=True, verbose=True)
-    ips_per_shard = get_ips_per_shard(args)
+    ips_per_shard = get_ips_per_shard(args.logs_dir)
     verify_network(ips_per_shard, args.network)
+    print("Successfully verified target IPs.")
     snapshot_per_shard = get_snapshot_per_shard(args.network, ips_per_shard, args.snapshot_bin)
+    print(json.dumps(ips_per_shard, indent=2))
+    print(json.dumps(snapshot_per_shard, indent=2))
     recover(ips_per_shard, snapshot_per_shard, args.rclone_config_path)
-    log.debug("finished recovery")
+    print("HOORAY!! Recovery succeeded.")
