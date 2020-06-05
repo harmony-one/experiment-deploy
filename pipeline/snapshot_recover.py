@@ -21,11 +21,9 @@ Example Usage:
 """
 
 import time
-import datetime
 import argparse
 import subprocess
 import os
-import sys
 import json
 import logging
 import traceback
@@ -493,7 +491,19 @@ def recover(ips_per_shard, snapshot_per_shard, rclone_config_path):
     assert beacon_chain_shard in snapshot_per_shard.keys()
     assert os.path.isfile(rclone_config_path)
 
-    # TODO: print current config (ips, snapshot bin and rclone config) and ask for confirmation...
+    _interaction_lock.acquire()
+    try:
+        for shard in sorted(ips_per_shard.keys()):
+            print(f"{Typgpy.BOLD}Shard {Typgpy.HEADER}{shard}{Typgpy.BOLD} IPs:")
+            for i, ip in enumerate(ips_per_shard[shard]):
+                print(f"{i}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
+            print(f"{Typgpy.BOLD}Shard {Typgpy.HEADER}{shard}{Typgpy.BOLD} snapshot path: "
+                  f"{Typgpy.OKGREEN}{snapshot_per_shard[shard]}{Typgpy.ENDC}")
+        if interact("Start recovery?", ["yes", "no"]) == "no":
+            log.warning("Abandoned recovery...")
+            return
+    finally:
+        _interaction_lock.release()
 
     def process(shard):
         ips = ips_per_shard[shard]
