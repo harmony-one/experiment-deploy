@@ -409,18 +409,18 @@ def cleanup_rclone(ips):
             _interaction_lock.release()
 
 
-def _rsync_snapshotted_dbs(ip, shard, snapshot_bin):
+def _rsync_snapshotted_dbs(ip, shard, snapshot_config_bin):
     """
-    Internal function to replace 1 db: harmony_db_`shard` rsynced from `snapshot_bin`, on 1 machine.
+    Internal function to replace 1 db: harmony_db_`shard` rsynced from `snapshot_config_bin`, on 1 machine.
     """
-    log.debug(f"rsyncing DB for shard {shard} on machine {ip} using bin {snapshot_bin}")
+    log.debug(f"rsyncing DB for shard {shard} on machine {ip} using bin {snapshot_config_bin}")
     db_path = f"{db_directory_on_machine}/harmony_db_{shard}"
     cmd = f"[ -d {db_path} ] && sudo rm -rf {db_path} || [ ! -d {db_path} ] && echo file-deleted"
     try:
         _ssh_cmd(ip, cmd)
     except subprocess.CalledProcessError as e:
         return f"unable to delete directory {db_path} on {ip}. Error {e}"
-    cmd = f"rclone sync {snapshot_bin} {db_path} --config {rclone_config_path_on_machine} -P"
+    cmd = f"rclone sync {snapshot_config_bin} {db_path} --config {rclone_config_path_on_machine} -P"
     rclone_response = None
     try:
         rclone_response = _ssh_cmd(ip, cmd)
@@ -430,7 +430,7 @@ def _rsync_snapshotted_dbs(ip, shard, snapshot_bin):
     return None
 
 
-def rsync_snapshotted_dbs(ips, shard, beacon_snapshot_bin, shard_snapshot_bin):
+def rsync_snapshotted_dbs(ips, shard, beacon_snapshot_config_bin, shard_snapshot_config_bin):
     """
     Removes the old DB(s) and rsyncs the snapshotted DB(s).
     Assumption is that nodes have rclone setup with appropriate credentials.
@@ -440,15 +440,15 @@ def rsync_snapshotted_dbs(ips, shard, beacon_snapshot_bin, shard_snapshot_bin):
     rsyncs should be efficient, in that it only transfers missing files, therefore rsyncs
     of previously successful rsync will have little cost (computationally & network-wise).
 
-    Assumes the `beacon_snapshot_bin` & `shard_snapshot_bin` matches rclone
+    Assumes the `beacon_snapshot_config_bin` & `shard_snapshot_config_bin` matches rclone
     config setup on machine and follow format: <rclone-config>:<bin>.
 
     Raises RuntimeError if unable to rsync snapshotted DBs.
     """
     assert isinstance(ips, list) and len(ips) > 0
     assert isinstance(shard, int)
-    assert isinstance(beacon_snapshot_bin, str)
-    assert isinstance(shard_snapshot_bin, str)
+    assert isinstance(beacon_snapshot_config_bin, str)
+    assert isinstance(shard_snapshot_config_bin, str)
     ips = ips.copy()  # make a copy to not mutate given ips
 
     thread_and_ip_list, pool = [], ThreadPool(processes=200)  # high process count is OK since threads just wait
@@ -456,10 +456,10 @@ def rsync_snapshotted_dbs(ips, shard, beacon_snapshot_bin, shard_snapshot_bin):
         thread_and_ip_list.clear()
         log.debug(f"rsyncing snapshotted dbs for shard {shard} on the following ips: {ips}")
         for ip in ips:
-            el = (pool.apply_async(_rsync_snapshotted_dbs, (ip, beacon_chain_shard, beacon_snapshot_bin)), ip)
+            el = (pool.apply_async(_rsync_snapshotted_dbs, (ip, beacon_chain_shard, beacon_snapshot_config_bin)), ip)
             thread_and_ip_list.append(el)
             if shard != beacon_chain_shard:
-                el = (pool.apply_async(_rsync_snapshotted_dbs, (ip, shard, shard_snapshot_bin)), ip)
+                el = (pool.apply_async(_rsync_snapshotted_dbs, (ip, shard, shard_snapshot_config_bin)), ip)
                 thread_and_ip_list.append(el)
 
         results = []
@@ -501,11 +501,14 @@ def recover(ips_per_shard, snapshot_per_shard, rclone_config_path):
     _interaction_lock.acquire()
     try:
         for shard in sorted(ips_per_shard.keys()):
-            print(f"{Typgpy.BOLD}Shard {Typgpy.HEADER}{shard}{Typgpy.BOLD} IPs:")
+            print(f"{Typgpy.BOLD}Shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}{Typgpy.BOLD} IPs:")
             for i, ip in enumerate(ips_per_shard[shard]):
                 print(f"{i}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
-            print(f"{Typgpy.BOLD}Shard {Typgpy.HEADER}{shard}{Typgpy.BOLD} snapshot path: "
+            print(f"{Typgpy.BOLD}Shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}{Typgpy.BOLD} snapshot path: "
                   f"{Typgpy.OKGREEN}{snapshot_per_shard[shard]}{Typgpy.ENDC}")
+        print()
+        print(f"{Typgpy.BOLD}Rclone config path (on this machine): "
+              f"{Typgpy.OKGREEN}{rclone_config_path}{Typgpy.ENDC}")
         if interact("Start recovery?", ["yes", "no"]) == "no":
             log.warning("Abandoned recovery...")
             return
@@ -698,7 +701,7 @@ def restart_and_check(ips_per_shard):
         t.get()
     log.debug(f"finished restarting shards {sorted(ips_per_shard.keys())}")
 
-    sleep_b4_progress_check = 60
+    sleep_b4_progress_check = 15
     log.debug(f"sleeping {sleep_b4_progress_check} seconds before checking if all nodes are making progress")
     time.sleep(sleep_b4_progress_check)
 
@@ -825,29 +828,36 @@ def get_ips_per_shard(logs_dir):
                 shard += 1
                 continue
             if action == choices[0]:  # yes
-                ips_as_csv = input(f"Enter IPs as a CSV string for shard {shard}\n> ")
-                log.debug(f"raw csv input for shard {shard}: {ips_as_csv}")
-                shard_ips = []
-                for ip in map(lambda e: e.strip(), ips_as_csv.split(",")):
-                    if not re.search(ipv4_regex, ip):
-                        log.debug(f"throwing away '{ip}' as it is not a valid ipv4 address")
+                while True:
+                    ips_as_csv = input(f"Enter IPs as a CSV string for shard {shard}\n> ")
+                    log.debug(f"raw csv input for shard {shard}: {ips_as_csv}")
+                    shard_ips = []
+                    for ip in map(lambda e: e.strip(), ips_as_csv.split(",")):
+                        if not re.search(ipv4_regex, ip):
+                            log.debug(f"throwing away '{ip}' as it is not a valid ipv4 address")
+                        else:
+                            shard_ips.append(ip)
+                    if shard_ips:
+                        _interaction_lock.acquire()
+                        try:
+                            print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} "
+                                  f"{Typgpy.UNDERLINE}given & filtered{Typgpy.ENDC} ips ({len(shard_ips)})")
+                            for i, ip in enumerate(shard_ips):
+                                print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
+                            choices = ["yes", "retry", "no"]
+                            response = interact(f"Add above ips for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?", choices)
+                            if response == choices[0]:
+                                log.debug(f"shard {shard} IPs: {shard_ips}")
+                                ips_per_shard[shard] = shard_ips
+                                break
+                            if response == choices[1]:
+                                continue
+                            if response == choices[-1]:
+                                break
+                        finally:
+                            _interaction_lock.release()
                     else:
-                        shard_ips.append(ip)
-                if shard_ips:
-                    _interaction_lock.acquire()
-                    try:
-                        print(f"\nShard {Typgpy.HEADER}{shard}{Typgpy.ENDC} "
-                              f"{Typgpy.UNDERLINE}given & filtered{Typgpy.ENDC} ips ({len(shard_ips)})")
-                        for i, ip in enumerate(shard_ips):
-                            print(f"{i + 1}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
-                        if interact(f"Add above ips for shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}?",
-                                    ["yes", "no"]) == "yes":
-                            log.debug(f"shard {shard} IPs: {shard_ips}")
-                            ips_per_shard[shard] = shard_ips
-                    finally:
-                        _interaction_lock.release()
-                else:
-                    log.debug(f"no valid ips to add to shard {shard}")
+                        log.debug(f"no valid ips to add to shard {shard}")
                 shard += 1
                 continue
 
@@ -867,11 +877,11 @@ def get_ips_per_shard(logs_dir):
     return ips_per_shard
 
 
-def select_snapshot_for_shard(network, snapshot_bin, shard):
+def select_snapshot_for_shard(network, snapshot_config_bin, shard):
     """
     Interactively select the snapshot to ensure security.
 
-    Assumes the `snapshot_bin` follow format: <rclone-config>:<bin>.
+    Assumes the `snapshot_config_bin` follow format: <rclone-config>:<bin>.
     Assumes that AWS CLI is setup on machine that is running this script.
     Assumes AWS s3 structure is:
         <bin>/<network>/<db-type>/<shard-id>/harmony_db_<shard-id>.<date>.<block_height>/
@@ -880,7 +890,7 @@ def select_snapshot_for_shard(network, snapshot_bin, shard):
     Return None if no db bin could be selected.
     """
     assert isinstance(network, str)
-    assert isinstance(snapshot_bin, str)
+    assert isinstance(snapshot_config_bin, str)
     assert isinstance(shard, int)
 
     def filter_db(entry):
@@ -891,7 +901,7 @@ def select_snapshot_for_shard(network, snapshot_bin, shard):
             return -1
 
     # Get to desired bucket of snapshot DBs
-    rclone_config, snapshot_bin = snapshot_bin.split(':')
+    rclone_config, snapshot_bin = snapshot_config_bin.split(':')
     log.debug(f"fetching snapshot DB path from bin '{snapshot_bin}'")
     snapshot_bin = f"{snapshot_bin}/{network}/"
     db_types = aws_s3_ls(snapshot_bin)
@@ -931,19 +941,19 @@ def select_snapshot_for_shard(network, snapshot_bin, shard):
             return rclone_snapshot_db_path
 
 
-def get_snapshot_per_shard(network, ips_per_shard, snapshot_bin):
+def get_snapshot_per_shard(network, ips_per_shard, snapshot_config_bin):
     """
     Setup function to get the snapshot DB path (used by rclone) for each shard.
 
-    Assumes the `snapshot_bin` follow format: <rclone-config>:<bin>.
+    Assumes the `snapshot_config_bin` follow format: <rclone-config>:<bin>.
     Assumes that AWS CLI is setup on machine that is running this script.
     """
     assert isinstance(network, str)
     assert isinstance(ips_per_shard, dict) and len(ips_per_shard.keys()) > 0
-    assert isinstance(snapshot_bin, str)
+    assert isinstance(snapshot_config_bin, str)
 
     snapshot_per_shard = {}
-    actual_snapshot_bin = f"{snapshot_bin.split(':')[1]}/{network}/"
+    snapshot_bin = f"{snapshot_config_bin.split(':')[1]}/{network}/"
     shards = list(ips_per_shard.keys())
     if beacon_chain_shard not in shards:
         shards.append(beacon_chain_shard)
@@ -960,7 +970,7 @@ def get_snapshot_per_shard(network, ips_per_shard, snapshot_bin):
             _interaction_lock.release()
 
         if response == choices[0]:  # Interactively select snapshot db, starting from latest
-            snapshot = select_snapshot_for_shard(network, snapshot_bin, shard)
+            snapshot = select_snapshot_for_shard(network, snapshot_config_bin, shard)
             if snapshot is None:
                 raise RuntimeError(f"Could not find snapshot for shard {shard}! "
                                    f"Check specified snapshot bin or ignore shard when loading IPs.")
@@ -968,7 +978,7 @@ def get_snapshot_per_shard(network, ips_per_shard, snapshot_bin):
             continue
         if response == choices[1]:  # Manually specify path (and optionally bin) for snapshot db
             snapshot = input_prefill(f"Enter snapshot path (for rclone) on shard {shard}\n> ",
-                                     prefill=f"{actual_snapshot_bin}")
+                                     prefill=f"{snapshot_bin}")
             log.debug(f"chose DB: {snapshot} for shard {shard}")
             try:
                 assert len(aws_s3_ls(snapshot)) > 0, f"given snapshot bin '{snapshot}' is empty"
@@ -998,7 +1008,10 @@ def _assumption_check(args):
     if not any(f for f in os.listdir(args.logs_dir) if re.match(r"shard[0-9]+.txt", f)):
         raise AssertionError(f"expected given logs directory, {args.logs_dir} to contain a shard?.txt file")
     assert os.path.isfile(args.rclone_config_path), "given rclone config file path is not a file"
-    assert re.match(r".*:.*", args.snapshot_bin), "given snapshot bin does not follow format: <rclone-config>:<bin>"
+    assert re.match(r".*:.*", args.snapshot_config_bin), "given snapshot config bin does not follow format: <rclone-config>:<bin>"
+    snapshot_config = args.snapshot_config_bin.split(":")[0]
+    with open(args.rclone_config_path, 'r') as f:
+        assert f"[{snapshot_config}]" in f.read(), "snapshot config is not found given rclone config file"
 
 
 def _parse_args():
@@ -1017,7 +1030,7 @@ def _parse_args():
     parser.add_argument("--rclone-config-path", type=str, default=default_rclone_config_path,
                         help="path to rclone config to download the snapshot db, "
                              f"default is '{default_rclone_config_path}'")
-    parser.add_argument("--snapshot-bin", type=str, default=f"snapshot:harmony-snapshot",
+    parser.add_argument("--snapshot-config-bin", type=str, default=f"snapshot:harmony-snapshot",
                         help="the rclone config name (based on `--rclone-config`) and bin to download the snapshot db, "
                              "default is 'snapshot:harmony-snapshot'")
     parser.add_argument("--verbose", action="store_true")
@@ -1036,8 +1049,6 @@ if __name__ == "__main__":
     ips_per_shard = get_ips_per_shard(args.logs_dir)
     verify_network(ips_per_shard, args.network)
     print("Successfully verified target IPs.")
-    snapshot_per_shard = get_snapshot_per_shard(args.network, ips_per_shard, args.snapshot_bin)
-    print(json.dumps(ips_per_shard, indent=2))
-    print(json.dumps(snapshot_per_shard, indent=2))
+    snapshot_per_shard = get_snapshot_per_shard(args.network, ips_per_shard, args.snapshot_config_bin)
     recover(ips_per_shard, snapshot_per_shard, args.rclone_config_path)
     print("HOORAY!! Recovery succeeded.")
