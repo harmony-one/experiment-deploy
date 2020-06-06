@@ -317,36 +317,38 @@ def setup_rclone(ips, rclone_config_path):
     bash_script_path = f"/tmp/snapshot_recovery_rclone_setup_script_{time.time()}.sh"
     with open(bash_script_path, 'w') as f:
         f.write(bash_script_content)
+    try:
+        thread_and_ip_list, pool = [], ThreadPool(processes=100)  # high process count is OK since threads just wait
+        while True:
+            thread_and_ip_list.clear()
+            log.debug(f"setting up rclone on the following ips: {ips}")
+            for ip in ips:
+                el = (pool.apply_async(_setup_rclone, (ip, bash_script_path, rclone_config_raw)), ip)
+                thread_and_ip_list.append(el)
 
-    thread_and_ip_list, pool = [], ThreadPool(processes=100)  # high process count is OK since threads just wait
-    while True:
-        thread_and_ip_list.clear()
-        log.debug(f"setting up rclone on the following ips: {ips}")
-        for ip in ips:
-            el = (pool.apply_async(_setup_rclone, (ip, bash_script_path, rclone_config_raw)), ip)
-            thread_and_ip_list.append(el)
-
-        results = []
-        for thread, ip in thread_and_ip_list:
-            results.append((thread.get(), ip))
-        failed_results = [el for el in results if el[0] is not None]
-        if not failed_results:
-            log.debug(f"successfully setup rclone!")
-            return
-
-        _interaction_lock.acquire()
-        try:
-            print(f"{Typgpy.FAIL}Some nodes failed to setup rclone!{Typgpy.ENDC}")
-            ips.clear()
-            for reason, ip in failed_results:
-                print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
-                ips.append(ip)
-            if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
-                print(f"{Typgpy.WARNING}Could not setup rclone on some machines, but proceeding anyways...{Typgpy.ENDC}")
-                log.warning(f"Could not setup rclone on some machines, but proceeding anyways.")
+            results = []
+            for thread, ip in thread_and_ip_list:
+                results.append((thread.get(), ip))
+            failed_results = [el for el in results if el[0] is not None]
+            if not failed_results:
+                log.debug(f"successfully setup rclone!")
                 return
-        finally:
-            _interaction_lock.release()
+
+            _interaction_lock.acquire()
+            try:
+                print(f"{Typgpy.FAIL}Some nodes failed to setup rclone!{Typgpy.ENDC}")
+                ips.clear()
+                for reason, ip in failed_results:
+                    print(f"{Typgpy.OKGREEN}{ip}{Typgpy.ENDC} failed because of: {reason}")
+                    ips.append(ip)
+                if interact("Retry on failed nodes?", ["yes", "no"]) == "no":
+                    print(f"{Typgpy.WARNING}Could not setup rclone on some machines, but proceeding anyways...{Typgpy.ENDC}")
+                    log.warning(f"Could not setup rclone on some machines, but proceeding anyways.")
+                    return
+            finally:
+                _interaction_lock.release()
+    finally:
+        os.remove(bash_script_path)
 
 
 def _cleanup_rclone(ip):
