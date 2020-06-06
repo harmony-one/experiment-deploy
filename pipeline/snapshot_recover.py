@@ -5,10 +5,10 @@ Recover a network using a given snapshot.
 
 Note that this script has assumptions regarding its path and relies
 on the rest of the repository being cloned. Here are the assumptions:
-* node_ssh.sh needs to be in the current working directory and never requires interaction.
-* $(pwd)/../tools/snapshot/rclone.conf contains the default rclone config for
+* node_ssh.sh needs to be in the same directory as the script and never requires interaction.
+* <script-directory>/../tools/snapshot/rclone.conf contains the default rclone config for
   a node to download the snapshot db.
-* $(pwd)/utils/scripting.py is a python3 library
+* <script-directory>/utils/scripting.py is a python3 library
 * Assumes that the harmony process is ran as a service called `harmony`.
 
 Note that this script assumes that the given bin is accessible from the machine it is running on.
