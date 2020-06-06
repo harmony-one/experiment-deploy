@@ -31,7 +31,6 @@ import time
 import argparse
 import subprocess
 import os
-import json
 import logging
 import traceback
 import re
@@ -500,13 +499,14 @@ def recover(ips_per_shard, snapshot_per_shard, rclone_config_path):
 
     _interaction_lock.acquire()
     try:
+        print()
         for shard in sorted(ips_per_shard.keys()):
-            print(f"{Typgpy.BOLD}Shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}{Typgpy.BOLD} IPs:")
+            print(f"{Typgpy.BOLD}Shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}{Typgpy.BOLD} IPs: {Typgpy.ENDC}")
             for i, ip in enumerate(ips_per_shard[shard]):
                 print(f"{i}.\t{Typgpy.OKGREEN}{ip}{Typgpy.ENDC}")
-            print(f"{Typgpy.BOLD}Shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}{Typgpy.BOLD} snapshot path: "
+            print(f"{Typgpy.BOLD}Shard {Typgpy.HEADER}{shard}{Typgpy.ENDC}{Typgpy.BOLD} snapshot path: {Typgpy.ENDC}"
                   f"{Typgpy.OKGREEN}{snapshot_per_shard[shard]}{Typgpy.ENDC}")
-        print()
+            print()
         print(f"{Typgpy.BOLD}Rclone config path (on this machine): "
               f"{Typgpy.OKGREEN}{rclone_config_path}{Typgpy.ENDC}")
         if interact("Start recovery?", ["yes", "no"]) == "no":
