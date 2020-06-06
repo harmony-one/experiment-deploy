@@ -977,22 +977,24 @@ def get_snapshot_per_shard(network, ips_per_shard, snapshot_config_bin):
             snapshot_per_shard[shard] = snapshot
             continue
         if response == choices[1]:  # Manually specify path (and optionally bin) for snapshot db
-            snapshot = input_prefill(f"Enter snapshot path (for rclone) on shard {shard}\n> ",
-                                     prefill=f"{snapshot_bin}")
-            log.debug(f"chose DB: {snapshot} for shard {shard}")
-            try:
-                assert len(aws_s3_ls(snapshot)) > 0, f"given snapshot bin '{snapshot}' is empty"
-            except subprocess.CalledProcessError as e:
-                error_msg = f"Machine is unable to list s3 files at '{snapshot}'. Error: {e}"
-                print(error_msg)
-                log.error(traceback.format_exc())
-                log.error(error_msg)
-                _interaction_lock.acquire()
+            while True:
+                snapshot = input_prefill(f"Enter snapshot path (for rclone) on shard {shard}\n> ",
+                                         prefill=f"{snapshot_bin}")
+                log.debug(f"chose DB: {snapshot} for shard {shard}")
                 try:
-                    if interact(f"Ignore error?", ["yes", "no"]) == "no":
-                        raise RuntimeError(error_msg) from e
-                finally:
-                    _interaction_lock.release()
+                    assert len(aws_s3_ls(snapshot)) > 0, f"given snapshot bin '{snapshot}' is empty"
+                    break
+                except (subprocess.CalledProcessError, AssertionError) as e:
+                    error_msg = f"Machine is unable to list s3 files at '{snapshot}'. Error: {e}"
+                    print(error_msg)
+                    log.error(traceback.format_exc())
+                    log.error(error_msg)
+                    _interaction_lock.acquire()
+                    try:
+                        if interact(f"Retry?", ["yes", "no"]) == "no":
+                            raise RuntimeError(error_msg) from e
+                    finally:
+                        _interaction_lock.release()
             snapshot_per_shard[shard] = snapshot
             continue
     return snapshot_per_shard
