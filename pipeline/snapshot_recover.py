@@ -982,9 +982,9 @@ def get_snapshot_per_shard(network, ips_per_shard, snapshot_config_bin):
                                          prefill=f"{snapshot_bin}")
                 log.debug(f"chose DB: {snapshot} for shard {shard}")
                 try:
-                    assert len(aws_s3_ls(snapshot)) > 0, f"given snapshot bin '{snapshot}' is empty"
+                    aws_s3_ls(snapshot)
                     break
-                except (subprocess.CalledProcessError, AssertionError) as e:
+                except subprocess.CalledProcessError as e:
                     error_msg = f"Machine is unable to list s3 files at '{snapshot}'. Error: {e}"
                     print(error_msg)
                     log.error(traceback.format_exc())
