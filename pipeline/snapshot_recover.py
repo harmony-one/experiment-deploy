@@ -225,8 +225,10 @@ def _backup_existing_dbs(ip, shard):
     """
     unix_time = int(time.time())
     log.debug(f"backing up node {ip} at unix time: {unix_time}")
-    cmd = f"[ ! $(pgrep harmony) ] && tar -czf harmony_db_0.{unix_time}.tar.gz {db_directory_on_machine}/harmony_db_0 "
-    cmd += f"& [ ! $(pgrep harmony) ] && tar -czf harmony_db_{shard}.{unix_time}.tar.gz {db_directory_on_machine}/harmony_db_{shard}"
+    cmd = f"[ ! $(pgrep harmony) ] && tar -czf harmony_db_0.{unix_time}.tar.gz {db_directory_on_machine}/harmony_db_0 " \
+          f"|| [ ! -d {db_directory_on_machine}/harmony_db_0 ] && echo db-0-does-not-exist"
+    cmd += f"& [ ! $(pgrep harmony) ] && tar -czf harmony_db_{shard}.{unix_time}.tar.gz {db_directory_on_machine}/harmony_db_{shard} " \
+           f"|| [ ! -d {db_directory_on_machine}/harmony_db_{shard} ] && echo db-{shard}-does-not-exist"
     try:
         _ssh_cmd(ip, cmd)
         return None  # indicate success
@@ -995,6 +997,8 @@ def get_snapshot_per_shard(network, ips_per_shard, snapshot_config_bin):
                             raise RuntimeError(error_msg) from e
                     finally:
                         _interaction_lock.release()
+            if snapshot.endswith("/"):
+                snapshot = snapshot[:-1]
             snapshot_per_shard[shard] = snapshot
             continue
     return snapshot_per_shard
