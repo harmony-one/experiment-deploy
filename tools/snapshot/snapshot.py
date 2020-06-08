@@ -321,6 +321,8 @@ def _bucket_sync(machine, height):
         log.error("failed to bucket sync db")
         log.error(f"sync cmd response: {cmd_msg}")
         raise RuntimeError("failed to bucket sync db") from e
+    log.debug(f"path of rsynced DB on {machine['ip']} (s{machine['shard']}): "
+              f"'{bucket}/{db_type}/{shard}/harmony_db_{shard}.{time}.{height}' ")
     log.debug(f'successful bucket sync on {machine["ip"]} (s{machine["shard"]})')
 
 
