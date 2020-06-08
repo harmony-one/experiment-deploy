@@ -62,11 +62,13 @@ config=${config_template/<MACHINES>/$machines_string}
 config=${config/<CONDITIONS>/$conditions_string}
 config=${config/<NETWORK>/$network}
 
+config_remote_path="$remote_dir/config.$(date +%Y%m%d%H%M%S).json"
 echo "Config for snapshot: $config"
 echo "Remote directory for snapshot: '$remote_dir'"
+echo "Config path on snapshot machine: '$config_remote_path'"
 
 tmp_bash_script_content="#!/bin/bash
-echo '$config' > $remote_dir/config.json
-cd $remote_dir && ./snapshot.py --config ./config.json --bucket-sync && rm ./config.json
+echo '$config' > $config_remote_path
+cd $remote_dir && ./snapshot.py --config $config_remote_path --bucket-sync && rm $config_remote_path
 "
 echo "$tmp_bash_script_content" | ssh snapshot "bash -s"
