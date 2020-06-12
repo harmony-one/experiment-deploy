@@ -54,6 +54,9 @@ function _download_logs_one_shard
          cat logs/$PROFILE/shard${shard}{tf,lg}.txt | xargs -P ${PARALLEL} -I% bash -c "mkdir -p $logdir/%; ${SCP} ec2-user@%:latest/* $logdir/%/"
          cat logs/$PROFILE/shard${shard}gcp.txt | xargs -P ${PARALLEL} -I% bash -c "mkdir -p $logdir/%; ${SCP} gce-user@%:latest/* $logdir/%/"
          ;;
+      stn)
+         cat logs/$PROFILE/shard${shard}.txt | xargs -P ${PARALLEL} -I% bash -c "mkdir -p $logdir/%; ${SCP} hmy@%:latest/* $logdir/%/"
+         ;;
       *)
          cat logs/$PROFILE/shard${shard}.txt | xargs -P ${PARALLEL} -I% bash -c "mkdir -p $logdir/%; ${SCP} ec2-user@%:latest/* $logdir/%/"
          ;;
@@ -136,6 +139,9 @@ function _cleanup_logs_one_shard
       s3)
          cat logs/$PROFILE/shard${shard}{tf,lg}.txt | xargs -P ${PARALLEL} -I% bash -c "${SSH} ec2-user@% 'rm -f latest/*.gz'"
          cat logs/$PROFILE/shard${shard}gcp.txt | xargs -P ${PARALLEL} -I% bash -c "${SSH} gce-user@% 'rm -f latest/*.gz'"
+         ;;
+      stn)
+         cat logs/$PROFILE/shard${shard}.txt | xargs -P ${PARALLEL} -I% bash -c "${SSH} hmy@% 'rm -f latest/*.gz'"
          ;;
       *)
          cat logs/$PROFILE/shard${shard}.txt | xargs -P ${PARALLEL} -I% bash -c "${SSH} ec2-user@% 'rm -f latest/*.gz'"
