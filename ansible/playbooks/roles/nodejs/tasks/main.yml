@@ -1,0 +1,24 @@
+---
+- name: install epel-release
+  become: true
+  yum:
+    name: 'epel-release'
+    state: present
+
+- name: install nodejs after epel
+  become: true
+  package:
+    name: 'nodejs'
+    state: present
+    enablerepo: 'epel'
+
+- name: install nodejs version control package
+  npm:
+    name: 'n'
+    global: yes
+    state: present
+
+- name: change the nodejs version
+  shell: 'n {{ nodejs_version }}'
+
+# vim: set expandtab:ts=2

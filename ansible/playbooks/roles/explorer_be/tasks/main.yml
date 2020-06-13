@@ -1,0 +1,47 @@
+---
+- name: gather Cloud/OS specific variables
+  include_vars: '{{ item }}'
+  with_first_found:
+    - '{{ ansible_bios_version }}-{{ ansible_distribution }}.yml'
+    - '{{ cloud_platform }}-{{ ansible_distribution }}.yml'
+
+- name: clone the repo of explorer BE
+  git:
+    repo: 'https://{{ GIHUB_ACCESS_TOKEN }}@github.com/harmony-one/harmony-dashboard-backend.git'
+    dest: '{{ USER.home }}/harmony-dashboard-backend'
+
+- name: install npm packages
+  npm:
+    path: '{{ USER.home }}/harmony-dashboard-backend'
+    state: present
+    executable: '/usr/local/bin/npm'
+
+- name: build dist files
+  shell: 'npm run build'
+  args:
+    chdir: '{{ USER.home }}/harmony-dashboard-backend/'
+
+- name: copy configuration files
+  copy:
+    src: '{{ item }}'
+    dest: '{{ USER.home }}/harmony-dashboard-backend'
+  with_items:
+    - 'leaders.json'
+    - 'firestore-service-account-key.json'
+
+- name: copy harmony explorer service files
+  become: true
+  template:
+    src: 'harmony-explorer-be.service.j2'
+    dest: '/etc/systemd/system/harmony-explorer-be.service'
+
+- name: enable harmony explorer backend service
+  become: true
+  systemd: 
+    name: 'harmony-explorer-be'
+    daemon_reload: yes
+    enabled: yes
+    state: started
+
+
+# vim: set expandtab:ts=2
