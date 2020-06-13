@@ -1,9 +1,16 @@
 ---
 - hosts: '{{ inventory }}'
   remote_user: '{{ user }}'
-  become: true
-  become_user: root
   gather_facts: yes
   roles:
-  - hmyserver
-  - hmyrepo
+    - nodejs
+    - certbot_auto
+    - explorer_fe
+    - explorer_be
+  vars:
+    nodejs_version: '10.18.0'
+    domain: 'explorer.testnet.harmony.one'
+    firebase_domain: 'harmony.testnet.firebaseio.com'
+
+
+# vim: set expandtab:ts=2

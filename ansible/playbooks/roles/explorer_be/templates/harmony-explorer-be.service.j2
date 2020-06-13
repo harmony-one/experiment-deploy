@@ -1,0 +1,24 @@
+[Unit]
+Description=harmony explorer backend service
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User={{ USER.user }}
+Environment=SSL_CERT_FILE=/etc/letsencrypt/live/{{ domain }}/fullchain.pem
+Environment=SSL_KEY_FILE=/etc/letsencrypt/live/{{ domain }}/privkey.pem
+Environment=GOOGLE_APPLICATION_CREDENTIALS={{ USER.home }}/harmony-dashboard-backend/firestore-service-account-key.json
+Environment=RPC_ENDPOINT=http://e{0}.t.hmny.io:9500
+Environment=HARMONY_BLOCK_EXPLORER_PROJECT=https://{{ firebase_domain }}
+WorkingDirectory={{ USER.home }}/harmony-dashboard-backend
+ExecStart=/bin/bash -l -c 'cd {{ USER.home }}/harmony-dashboard-backend && npm run start'
+StandardError=syslog
+SyslogIdentifier=harmony-explorer-be
+StartLimitInterval=0
+LimitNOFILE=65536
+LimitNPROC=65536
+
+[Install]
+WantedBy=multi-user.target
