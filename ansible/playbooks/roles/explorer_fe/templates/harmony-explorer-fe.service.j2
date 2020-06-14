@@ -7,10 +7,9 @@ Type=simple
 Restart=always
 RestartSec=1
 User={{ USER.user }}
-Environment=SSL_CERT_FILE=/etc/letsencrypt/live/{{ domain }}/fullchain.pem
-Environment=SSL_KEY_FILE=/etc/letsencrypt/live/{{ domain }}/privkey.pem
+EnvironmentFile={{ USER.home }}/harmony-dashboard/.explorer.env
 WorkingDirectory={{ USER.home }}/harmony-dashboard
-ExecStart=/bin/bash -l -c 'cd {{ USER.home }}/harmony-dashboard && npm run start'
+ExecStart=/bin/bash -l -c 'npm run start'
 StandardError=syslog
 SyslogIdentifier=harmony-explorer-fe
 StartLimitInterval=0

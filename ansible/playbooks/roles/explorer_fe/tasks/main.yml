@@ -41,6 +41,11 @@
     to_ports: '8080'
     jump: 'REDIRECT'
 
+- name: copy harmony explorer env files
+  template:
+    src: 'explorer-fe.env.j2'
+    dest: '{{ USER.home }}/harmony-dashboard/.explorer.env'
+
 - name: copy harmony explorer service files
   become: true
   template:
