@@ -29,6 +29,11 @@
     - 'leaders.json'
     - 'firestore-service-account-key.json'
 
+- name: copy harmony explorer env files
+  template:
+    src: 'explorer-be.env.j2'
+    dest: '{{ USER.home }}/harmony-dashboard-backend/.explorer.env'
+
 - name: copy harmony explorer service files
   become: true
   template:
