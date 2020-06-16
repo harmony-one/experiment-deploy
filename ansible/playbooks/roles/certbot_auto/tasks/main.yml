@@ -31,11 +31,12 @@
 - name: setup cron task renew ssl certificate
   cron:
     name: renew ssl certificate
-    job: '/usr/local/bin/certbot-auto renew --quiet'
+    job: '/usr/local/bin/certbot-auto renew --pre-hook "sudo iptables -t nat -D PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8080" --post-hook "sudo iptables -t nat -I PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8080" --quiet'
     minute: '0'
     hour: '3'
     day: '*'
     month: '*'
     weekday: '*'
+
 
 # vim: set expandtab:ts=2
