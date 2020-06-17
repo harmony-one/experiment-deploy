@@ -29,8 +29,8 @@ variable "vm_size" {
 }
 
 variable "vm_count" {
-   description = "The number of Azure vm"
-   default     = 2
+  description = "The number of Azure vm"
+  default     = 2
 }
 
 variable "ssh_private_key_path" {
