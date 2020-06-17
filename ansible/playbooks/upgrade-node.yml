@@ -1,7 +1,10 @@
 ---
 - hosts: '{{ inventory }}'
-  serial: '{{ stride | default(1) }}'
+  serial: "{{ stride | default(5) }}"
   gather_facts: yes
+  vars:
+    force_update_var: "{{ force_update | default('false') }}"
+    skip_consensus_check_var: "{{ skip_consensus_check | default('false') }}"
 
   tasks:
   - name: gather OS specific variables
@@ -39,15 +42,15 @@
   - debug:
       var: isLeader.stdout
 
-  - name: "get role"
-    shell: "curl -s --request POST 'http://127.0.0.1:9500/' --header 'Content-Type: application/json' --data-raw '{ \"jsonrpc\": \"2.0\", \"method\": \"hmyv2_getNodeMetadata\", \"params\": [], \"id\": 1}' | jq -r '.result.role'"
-    register: nodeRole
-
-  - debug:
-      var: nodeRole.stdout
-
   - name: "stop, upgrade, restart harmony service"
     block:
+      - name: "get role of the node"
+        shell: "curl -s --request POST 'http://127.0.0.1:9500/' --header 'Content-Type: application/json' --data-raw '{ \"jsonrpc\": \"2.0\", \"method\": \"hmyv2_getNodeMetadata\", \"params\": [], \"id\": 1}' | jq -r '.result.role'"
+        register: nodeRole
+
+      - debug:
+          var: nodeRole.stdout
+
       - name: "stop harmony service"
         become: true
         become_user: root
@@ -101,11 +104,11 @@
         until: firstConsensus.stdout.find("T") != -1
         retries: 20
         delay: 30
-        when: nodeRole.stdout == 'Validator'
+        when: nodeRole.stdout == 'Validator' and skip_consensus_check_var == 'false'
 
       - debug:
           var: firstConsensus.stdout
-        when: nodeRole.stdout == 'Validator'
+        when: nodeRole.stdout == 'Validator' and skip_consensus_check_var == 'false'
 
     rescue:
       - name: "restart harmony service" 
@@ -115,4 +118,12 @@
           name: harmony
           state: started
 
-    when: "oVer.stdout != nVer.stdout"
+    when: ( oVer.stdout != nVer.stdout and isLeader.stdout == 'false' ) or force_update_var == 'true'
+
+  - debug:
+      msg: "skipping same version upgrade unless force_update=true"
+    when: oVer.stdout == nVer.stdout
+
+  - debug:
+      msg: "skipping leader unless force_update=true"
+    when: isLeader.stdout == 'true'
