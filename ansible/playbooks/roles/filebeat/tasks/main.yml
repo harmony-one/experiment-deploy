@@ -1,0 +1,36 @@
+---
+- name: gather Cloud/OS specific variables
+  include_vars: '{{ item }}'
+  with_first_found:
+    - '{{ ansible_bios_version }}-{{ ansible_distribution }}.yml'
+    - '{{ cloud_platform }}-{{ ansible_distribution }}.yml'
+
+- name: tasks needs sudo
+  become: true
+  block:
+    - name: download and install the public signing key
+      rpm_key:
+        state: 'present'
+        key: 'https://packages.elastic.co/GPG-KEY-elasticsearch'
+
+    - name: copy yum repo config file
+      copy:
+        src: 'elastic.repo'
+        dest: "/etc/yum.repos.d/"
+
+    - name: install the latest version of filebeat
+      yum:
+        name: 'filebeat'
+        state: 'latest'
+
+    - name: copy filebeat config file
+      template:
+        src: 'filebeat.yml.j2'
+        dest: '/etc/filebeat/filebeat.yml'
+
+    - name: restart and enable filebeat service
+      systemd: 
+        name: 'filebeat'
+        daemon_reload: yes
+        enabled: yes
+        state: restarted
