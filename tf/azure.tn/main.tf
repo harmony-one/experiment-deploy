@@ -1,5 +1,5 @@
 provider "azurerm" {
-  version = "=2.8.0"
+  version                    = "=2.8.0"
   skip_provider_registration = true
 
   features {}
@@ -41,7 +41,7 @@ resource "azurerm_virtual_machine" "testnet" {
   network_interface_ids = [element(azurerm_network_interface.testnet.*.id, count.index)]
   vm_size               = var.vm_size
 
-  delete_os_disk_on_termination = true
+  delete_os_disk_on_termination    = true
   delete_data_disks_on_termination = true
 
   storage_image_reference {
