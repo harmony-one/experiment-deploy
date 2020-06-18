@@ -1,0 +1,32 @@
+---
+- name: install required packages
+  package:
+    name: '{{ item }}'
+    state: present
+  become: true
+  with_items: '{{ PACKAGES }}'
+
+- name: install the_silver_searcher
+  become: true
+  copy:
+    src: ag
+    dest: /usr/bin/ag
+    mode: '0755'
+
+- name: install firebase
+  get_url:
+    url: 'https://firebase.tools/bin/linux/latest'
+    dest: /usr/bin/firebase
+    mode: '0755'
+
+- name: install epel-release
+  become: true
+  shell: 'amazon-linux-extras install -y epel'
+
+- name: install nodejs after epel
+  become: true
+  package:
+    name: nodejs
+    state: present
+
+# vim: set expandtab:ts=2
