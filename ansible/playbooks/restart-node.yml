@@ -1,0 +1,32 @@
+---
+- hosts: '{{ inventory }}'
+  serial: "{{ stride | default(10) }}"
+  gather_facts: yes
+
+  tasks:
+  - name: gather OS specific variables
+    include_vars: "{{ item }}"
+    with_first_found:
+      - '{{ ansible_bios_version }}-{{ ansible_distribution }}.yml'
+      - '{{ cloud_platform }}-{{ ansible_distribution }}.yml'
+    tags:
+      - vars
+
+  - name: restart node
+    become: true
+    become_user: root
+    systemd:
+      name: harmony
+      state: restarted
+
+  - name: get pid
+    shell: "pgrep harmony"
+    register: pid_of_harmony
+
+  - name: "find the start time of the harmony process"
+    shell: "systemctl status harmony | grep -oE 'since.*;' | sed 's/^since //'"
+    register: startTime
+
+  - name: print out pid
+    debug:
+      msg: "PID of hamrony: {{pid_of_harmony.stdout}}, start time: {{startTime.stdout}}"
