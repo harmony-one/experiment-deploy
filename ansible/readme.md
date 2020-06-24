@@ -1,3 +1,12 @@
+# introduction
+Ansible is the new tool we used for network operations.
+All the host info used by ansible is in `/etc/ansible/hosts`
+Please make sure you have the ssh agent running with the right mainnet keys before any ansible operation.
+```bash
+ssh-add -l
+2048 SHA256:K9D3flNNlwei50Hz78PXubKNacmSQqxiTaQfHf92bP8 leochen@MBP15.local (RSA)
+```
+
 # install ansible
 https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html
 
@@ -31,5 +40,19 @@ cd ~/experiment-deploy/ansible
 ansible-inventory --list -i inventory/hmy.hosts
 ansible-playbook playbooks/users.yml --ask-vault-pass --extra-vars "inventory=devop" -i inventory/hmy.hosts
 ```
+# mainnet upgrade operation
 
+```bash
+cd ~/experiment-deploy/ansible
+./scripts/upgrade-mainnet.sh
+
+1) rolling_upgrade
+2) restart
+3) force_upgrade
+4) quit
+```
+All the actions can operation on either a shard, a group, or a single host.
+By default, the `rolling_upgrade` action won't upgrade the current leader node.
+You need to use `force_upgrade` action to upgrade leader.
+`restart` can restart a node, or a shard, ex, s0, s1, s2, s3.
 
