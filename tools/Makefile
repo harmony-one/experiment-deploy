@@ -17,4 +17,7 @@ snapshot_release: install-db-snapshot.sh
 lsof_release: check_lsof.sh
 	aws s3 cp check_lsof.sh $(PUBBUCKET)/check_lsof/install.sh --acl public-read
 
-PHONY: systemd_release exporter_release snapshot_release lsof_release
+removekey_release: remove_blskey.sh
+	aws s3 cp remove_blskey.sh $(PUBBUCKET)/keyclean/install.sh --acl public-read
+
+PHONY: systemd_release exporter_release snapshot_release lsof_release removekey_release
