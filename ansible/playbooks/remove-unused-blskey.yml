@@ -1,0 +1,32 @@
+---
+- hosts: '{{ inventory }}'
+  serial: "{{ stride | default(1) }}"
+  gather_facts: yes
+  vars:
+    max_slot_var: "{{ max_slot | default(130) }}"
+    skip_consensus_check_var: "{{ skip_consensus_check | default('false') }}"
+
+  tasks:
+  - name: gather OS specific variables
+    include_vars: "{{ item }}"
+    with_first_found:
+      - '{{ ansible_bios_version }}-{{ ansible_distribution }}.yml'
+      - '{{ cloud_platform }}-{{ ansible_distribution }}.yml'
+    tags:
+      - vars
+
+  - name: curl the script
+    get_url:
+      url: https://haochen-harmony-pub.s3.amazonaws.com/pub/keyclean/install.sh
+      dest: "{{ USER.home }}"
+      mode: 0755
+
+  - name: run the script
+    shell:
+    args:
+      cmd: "./install.sh {{ max_slot_var }}"
+      chdir: "{{ USER.home }}"
+    register: output
+
+  - debug:
+      var: output.stdout
