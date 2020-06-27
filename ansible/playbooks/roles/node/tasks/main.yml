@@ -67,7 +67,7 @@
   copy:
     src: "{{ inventory_hostname }}/"
     dest: "{{ USER.home }}/.hmy/blskeys/"
-  when: "'exp' not in inventory"
+  when: node_type_var != 'Explorer'
 
 - name: create dummy bls key and pass for explorer node
   file:
@@ -76,7 +76,7 @@
   with_items:
     - "bls.key"
     - "bls.pass"
-  when: "'exp' in inventory"
+  when: node_type_var == 'Explorer'
 
 - name: tasks needs sudo
   block:
@@ -84,6 +84,8 @@
      template:
        src: harmony.service.j2
        dest: "/lib/systemd/system/harmony.service"
+       backup: yes
+       force: yes
 
    - name: disable selinux
      ignore_errors: yes

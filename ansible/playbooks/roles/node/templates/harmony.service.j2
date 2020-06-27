@@ -8,10 +8,10 @@ Restart=always
 RestartSec=1
 User={{ USER.user }}
 WorkingDirectory={{ USER.home }}
-{% if 'exp' in inventory %}
-ExecStart={{ USER.home }}/node.sh -N {{ network }} -T explorer -i {{ shard }} -A -S -M -D -P -1
+{% if node_type_var == "Explorer" %}
+ExecStart={{ USER.home }}/node.sh -N {{ network }} -T explorer -i {{ shard }} -A1MSPD
 {% else %}
-ExecStart={{ USER.home }}/node.sh -N {{ network }} -S -M -D -P -1
+ExecStart={{ USER.home }}/node.sh -N {{ network }} -1MSPD
 {% endif %}
 StandardError=syslog
 SyslogIdentifier=harmony

@@ -1,6 +1,8 @@
 ---
 - hosts: '{{ inventory }}'
-  remote_user: '{{ user }}'
+  remote_user: '{{ ansible_user }}'
   gather_facts: yes
+  vars:
+    - node_type_var: "{{ node_type | default('Validator') }}"
   roles:
     - { role: node, network: mainnet }
