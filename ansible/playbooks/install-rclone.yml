@@ -1,5 +1,6 @@
 ---
 - hosts: '{{ inventory }}'
-  remote_user: '{{ user }}'
+  remote_user: '{{ ansible_user }}'
+  become: true
   roles:
     - { role: charliemaiors.rclone_ansible }
