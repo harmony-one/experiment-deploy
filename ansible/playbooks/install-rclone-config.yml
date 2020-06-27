@@ -1,0 +1,15 @@
+---
+- hosts: '{{ inventory }}'
+  gather_facts: no
+
+  tasks:
+  - name: create directory
+    file:
+      path: "/home/{{ ansible_user }}/.config/rclone"
+      state: directory
+      mode: '0755'
+
+  - name: copy rclone.conf
+    copy:
+      src: rclone.conf
+      dest: "/home/{{ ansible_user }}/.config/rclone/rclone.conf"
