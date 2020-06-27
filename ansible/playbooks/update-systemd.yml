@@ -1,8 +1,0 @@
----
-- hosts: '{{ inventory }}'
-  remote_user: '{{ user }}'
-  become: True
-  become_user: root
-  gather_facts: yes
-  roles:
-  - systemd

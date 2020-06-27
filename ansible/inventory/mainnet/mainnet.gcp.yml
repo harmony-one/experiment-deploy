@@ -1,9 +1,0 @@
-plugin: gcp_compute
-projects:
-   - benchmark-209420
-auth_kind: serviceaccount
-service_account_file: /home/lc/ansible/config/benchmark-209420-a7a77ae89c9c.json
-
-filters:
-   - labels.class = node 
-   - labels.network = mainnet

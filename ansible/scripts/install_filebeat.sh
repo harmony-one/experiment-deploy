@@ -1,1 +1,0 @@
-ansible-playbook -i inventory/azure.hosts playbooks/install-filebeat.yml -e 'inventory=test user=hmy harmony_root_path=/home/hmy/harmony logstash_ip=10.0.0.5'

@@ -1,9 +1,0 @@
----
-- hosts: "{{ inventory }}"
-  serial: "{{ stride | default(1) }}"
-  gather_facts: yes
-  vars:
-    skip_consensus_check_var: false
-
-- import_playbook: remove-unused-blskey.yml
-- import_playbook: restart-node.yml

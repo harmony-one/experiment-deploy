@@ -1,4 +1,0 @@
-SHELL=/usr/bin/bash
-HOME=/root
-
-40 5,17 * * * systemctl stop harmony; sleep 3; rclone sync $HOME/harmony_db_2 ostn:pub.harmony.one/ostn/harmony_db_2; systemctl start harmony
