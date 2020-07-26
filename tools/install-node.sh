@@ -37,6 +37,8 @@ User=$USER
 WorkingDirectory=$HOME
 EnvironmentFile=$env_file_path
 ExecStart=$launch_script_path -N \$NETWORK -n \$NODE_TYPE -s \$SHARD -a \$ARCHIVAL
+LimitNOFILE=65536
+LimitNPROC=65536
 
 [Install]
 WantedBy=multi-user.target
