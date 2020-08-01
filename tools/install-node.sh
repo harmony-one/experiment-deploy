@@ -36,6 +36,8 @@ StartLimitBurst=0
 User=$USER
 WorkingDirectory=$HOME
 EnvironmentFile=$env_file_path
+StandardError=syslog
+SyslogIdentifier=harmony
 ExecStart=$launch_script_path -N \$NETWORK -n \$NODE_TYPE -s \$SHARD -a \$ARCHIVAL
 LimitNOFILE=65536
 LimitNPROC=65536
@@ -58,7 +60,7 @@ ARCHIVAL=$4
 }
 
 function install_node_sh(){
-  local node_sh_source="https://raw.githubusercontent.com/harmony-one/harmony/t3/scripts/node.sh"
+  local node_sh_source="https://raw.githubusercontent.com/harmony-one/harmony/main/scripts/node.sh"
   local node_sh_path="$HOME/node.sh"
   if [ ! -f "$node_sh_path" ]; then
     echo "node.sh not found at $node_sh_path , downloading it from $node_sh_source ..."
