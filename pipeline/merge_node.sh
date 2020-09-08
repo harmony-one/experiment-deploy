@@ -6,6 +6,7 @@ KEYDIR=${BLSKEYDIR:-~/tmp/blskey}
 HARMONYDB=../tools/harmony.go
 INDEXES=()
 KEYS=()
+MAX_INDEX=359
 
 node_ssh() {
    local ip=$1
@@ -143,9 +144,13 @@ do_merge_key() {
          echo "#shard:$s of $idx doesn't match $shard"
          same_shard=false
       else
-         echo "#index: $idx in shard: $s"
-         echo "$idx" >> "logs/merge/$merged/multikey.txt"
-         get_key "$idx"
+         if [ "${idx}" -le "${MAX_INDEX}" ]; then
+            echo "#index: $idx in shard: $s"
+            echo "$idx" >> "logs/merge/$merged/multikey.txt"
+            get_key "$idx"
+         else
+            echo "#index: skip $idx"
+         fi
       fi
    done
 
