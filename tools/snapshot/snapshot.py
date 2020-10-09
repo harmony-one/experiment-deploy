@@ -154,6 +154,14 @@ def _is_dns_node(machine, sharding_structure):
                        f"endpoint not found for shard {machine['shard']})")
 
 
+def _is_rclone_running(machine):
+    """
+    Internal function to check if the given machine is running a rclone
+    """
+    not_running = "rclone not running"
+    return not_running != _ssh_cmd(machine['user'], machine['ip'], f'pgrep rclone || echo "{not_running}"').strip()
+
+
 def sanity_check():
     """
     Enforce all given `condition` from the config as well as ensure that
@@ -204,6 +212,8 @@ def sanity_check():
                        f" older than {condition['max_seconds_since_last_block']} seconds. (ip: {machine['ip']})"
             if _is_dns_node(machine, sharding_structure):
                 return f"machine is a DNS node, which cannot be offline. (ip: {machine['ip']})"
+            if _is_rclone_running(machine):
+                return f"machine is running rclone, possibly another snapshot is running. (ip: {machine['ip']})"
             return None  # indicate success
         threads.append(pool.apply_async(fn, (m,)))
     for t in threads:
