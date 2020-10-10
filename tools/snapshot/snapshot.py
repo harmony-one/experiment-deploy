@@ -31,7 +31,6 @@ from pyhmy.rpc import (
 )
 from pyhmy.util import (
     is_active_shard,
-    Typgpy
 )
 from pyhmy import (
     blockchain,
@@ -323,7 +322,8 @@ def _bucket_sync(machine, height):
     bucket, shard = rsync['snapshot_bin'], machine['shard']
     time, config = datetime.datetime.utcnow().strftime("%y-%m-%d-%H-%M-%S"), rsync['config_path_on_client']
     cmd = f"rclone sync {rsync_db_path} " \
-          f"{bucket}/{db_type}/{shard}/harmony_db_{shard}.{time}.{height} --config {config} -P"
+          f"{bucket}/{db_type}/{shard}/harmony_db_{shard}.{time}.{height} --config {config} -P 2>&1 " \
+          f"| tee snapshot_bucket_sync.log"
     cmd_msg = None
     try:
         cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
@@ -343,7 +343,8 @@ def _local_sync(machine):
     """
     log.debug(f'starting local sync on {machine["ip"]} (s{machine["shard"]})')
     db_path_on_machine, db_rsync_path_on_machine = _derive_db_paths(machine)
-    cmd = f"rclone sync {db_path_on_machine} {db_rsync_path_on_machine} --transfers 64 -P"
+    cmd = f"rclone sync {db_path_on_machine} {db_rsync_path_on_machine} --transfers 64 -P 2>&1 " \
+          f"| tee snapshot_local_sync.log"
     cmd_msg = None
     try:
         cmd_msg = _ssh_cmd(machine['user'], machine['ip'], cmd).strip()
