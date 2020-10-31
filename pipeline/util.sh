@@ -200,6 +200,25 @@ REGION_KEY['eu-west-1']='ireland-key-benchmark.pem'
 REGION_KEY['gcp']='harmony-node.pem'
 REGION_KEY['do']='do-node.pem'
 
+find_cloud_from_ip()
+{
+   local ipaddr="$1"
+   whois=$(whois $ipaddr | grep -m1 Email)
+   if echo $whois | grep microsoft &> /dev/null; then
+      echo azure
+      return
+   fi
+   if echo $whois | grep amazon &> /dev/null; then
+      echo aws
+      return
+   fi
+   if echo $whois | grep google &> /dev/null; then
+      echo gcp
+      return
+   fi
+}
+
+
 find_cloud_from_host()
 {
    local hostname1="$1"

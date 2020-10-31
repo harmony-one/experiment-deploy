@@ -75,17 +75,19 @@ case "${userip}" in
 	;;
 *)
 	ip="${userip}"
-   hostname=$(host "$ip" | awk ' { print $NF } ')
-   vendor=$(find_cloud_from_host $hostname)
+#   hostname=$(host "$ip" | awk ' { print $NF } ')
+   vendor=$(find_cloud_from_ip $ip)
    case "$vendor" in
    "aws")
       userip="ec2-user@${userip}" ;;
    "gcp")
       userip="gce-user@${userip}" ;;
+   "azure")
+      userip="hmy@${userip}" ;;
    "do")
 	  userip="root@${userip}" ;;
    esac
-   key_file=$KEYDIR/$(find_key_from_host $hostname)
+#   key_file=$KEYDIR/$(find_key_from_host $hostname)
 	;;
 esac
 cmd_quoted=$(shell_quote "$@")
@@ -117,12 +119,12 @@ fi
 
 # TODO: add harmony-node.pem for mainnet TF nodes
 # Need to support testnet TF nodes later
-if [ -f "${key_file}" ]
-then
-	set -- "$@" -i "${key_file}"
-else
-	node_ssh_info "key file does not exist; proceeding without one"
-fi
+#if [ -f "${key_file}" ]
+#then
+#	set -- "$@" -i "${key_file}"
+#else
+#	node_ssh_info "key file does not exist; proceeding without one"
+#fi
 
 if ${exit_mux_first}
 then
