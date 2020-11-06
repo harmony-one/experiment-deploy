@@ -7,8 +7,8 @@
 # ssh watchdog is correctly configured
 
 base=$(basename `realpath .`)
-watchdog="/home/jl/watchdog"
-nodedb="/home/jl/watchdog/nodedb"
+watchdog="/usr/local/watchdog"
+nodedb="/usr/local/watchdog/nodedb"
 
 help() {
   echo ""
@@ -59,17 +59,18 @@ echo "Service: ${service}"
 
 if [[ "${build}" == true ]]; then
   echo "-- Building new Watchdog binary --"
-  ssh watchdog "sudo sh -c \"cd ${watchdog}/master && git reset --hard origin/master && git clean -xdf && git pull && PATH=\$PATH:/usr/local/go/bin make\""
+  sudo sh -c "cd ${watchdog}/master && git reset --hard origin/master && git clean -xdf && git pull && PATH=\$PATH:/usr/local/go/bin make"
 fi
 
 # Pull nodedb
 if [[ "${update}" == true ]]; then
   echo "-- Pulling new nodedb --"
-  ssh watchdog "sudo sh -c \"cd ${nodedb} && git reset --hard origin/master && git clean -xdf && git pull\"" > /dev/null
+  sudo sh -c "cd ${nodedb} && git reset --hard origin/master && git clean -xdf && git pull" > /dev/null
 else
   echo "-- Using existing nodedb --"
 fi
-ssh watchdog "sudo sh -c \"cd ${nodedb} && git show --oneline -s\""
+
+sudo sh -c "cd ${nodedb} && git show --oneline -s"
 
 # Watchdog
-ssh watchdog "sudo systemctl ${action} harmony-watchdogd@${service}.service"
+sudo systemctl ${action} harmony-watchdogd@${service}.service
