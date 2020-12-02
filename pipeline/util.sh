@@ -204,7 +204,7 @@ find_cloud_from_ip()
 {
    local ipaddr="$1"
    whois=$(whois $ipaddr | grep -m1 Email)
-   if echo $whois | grep apnic &> /dev/null; then
+   if echo $whois | grep -E 'apnic|digitalocean' &> /dev/null; then
       echo do
       return
    fi
