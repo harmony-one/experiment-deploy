@@ -2,7 +2,8 @@
 
 # set -x
 
-KEYDIR=${BLSKEYDIR:-~/tmp/blskey}
+KEYDIR=${BLSKEYDIR:-~/unit/blskeys}
+OUTPUTDIR=${BLSKEYDIR:-~/harmony/ansible/playbooks/roles/node/files}
 HARMONYDB=../tools/harmony.go
 INDEXES=()
 KEYS=()
@@ -34,7 +35,7 @@ EOU
 get_key() {
    # set -x
    for idx in $@; do
-      key=$(grep -E "Index:.\" $idx \"" $HARMONYDB | grep -oE 'BLSPublicKey: "[a-z0-9]+"' | awk ' { print $2 } ' | tr -d \")
+      key=$(grep -E "Index:.\" $idx \"" $HARMONYDB | grep -oE 'BlsPublicKey: "[a-z0-9]+"' | awk ' { print $2 } ' | tr -d \")
       KEYS+=($key)
    done
 }
@@ -124,6 +125,14 @@ _copy_key() {
    done
 }
 
+_delete_key() {
+   set -x
+   for k in "${KEYS[@]}"; do
+      ./node_ssh.sh -p "${profile}" "$merged" "rm -f .hmy/blskeys/${k}.*"
+      echo "deleting ${k}.key in $merged"
+   done
+}
+
 do_merge_key() {
    indexes=$@
 
@@ -159,10 +168,38 @@ do_merge_key() {
    ./restart_node.sh -p ${profile} -y -t 0 $merged
 }
 
-while getopts ":p:hIK" opt; do
+do_remove_key() {
+   indexes=$@
+
+   for idx in $indexes; do
+      get_key $idx
+   done
+
+   _delete_key
+}
+
+do_copy_key() {
+   indexes=$@
+
+   for idx in $indexes; do
+      get_key $idx
+   done
+
+   mkdir "$OUTPUTDIR/$merged"
+
+   for k in "${KEYS[@]}"; do
+      cp "$KEYDIR/${k}.key" "$OUTPUTDIR/$merged/${k}.key"
+      cp "$KEYDIR/bls.pass" "$OUTPUTDIR/$merged/${k}.pass"
+      echo "copying ${k} done."
+   done
+}
+
+while getopts ":p:hIKRC" opt; do
    case "${opt}" in
       I) action=merge_ip ;;
       K) action=merge_key ;;
+      R) action=remove_key ;;
+      C) action=copy_key ;;
       p) profile=${OPTARG} ;;
       *) usage ;;
    esac
@@ -175,5 +212,7 @@ mkdir -p "logs/merge/$merged"
 case "$action" in
    "merge_ip") do_merge_ip "$@" ;;
    "merge_key") do_merge_key "$@" ;;
+   "remove_key") do_remove_key "$@" ;;
+   "copy_key") do_copy_key "$@" ;;
    *) usage ;;
 esac
