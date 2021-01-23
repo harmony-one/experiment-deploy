@@ -48,6 +48,7 @@ echo "Action: ${action}"
 # Check valid service
 case ${service} in
   mainnet ) ;;
+  testnet ) ;;
   lrtn ) ;;
   ostn ) ;;
   pstn ) ;;
