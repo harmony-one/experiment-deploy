@@ -4,7 +4,7 @@
 
 KEYDIR=${BLSKEYDIR:-~/unit/blskeys}
 OUTPUTDIR=${BLSKEYDIR:-~/harmony/ansible/playbooks/roles/node/files}
-HARMONYDB=../tools/harmony.go
+HARMONYDB=~/harmony/nodedb/mainnet/harmony.go
 INDEXES=()
 KEYS=()
 MAX_INDEX=359
