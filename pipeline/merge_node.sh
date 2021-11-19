@@ -185,7 +185,7 @@ do_copy_key() {
       get_key $idx
    done
 
-   mkdir "$OUTPUTDIR/$merged"
+   mkdir -p "$OUTPUTDIR/$merged"
 
    for k in "${KEYS[@]}"; do
       cp "$KEYDIR/${k}.key" "$OUTPUTDIR/$merged/${k}.key"
