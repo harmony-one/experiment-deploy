@@ -49,6 +49,7 @@ echo "Action: ${action}"
 case ${service} in
   mainnet ) ;;
   testnet ) ;;
+  devnet ) ;;
   lrtn ) ;;
   ostn ) ;;
   pstn ) ;;
