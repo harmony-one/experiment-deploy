@@ -41,7 +41,8 @@
     "role": "Validator",
     "network": "testnet",
     "is_leader": false,
-    "is_archival": false
+    "is_archival": false,
+    "is_snapdb": false
   },
   "pager_duty": {
     "ignore": true,

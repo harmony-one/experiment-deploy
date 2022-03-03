@@ -319,6 +319,7 @@ def _bucket_sync(machine, height):
     log.debug(f'starting bucket sync on {machine["ip"]} (s{machine["shard"]})')
     _, rsync_db_path = _derive_db_paths(machine)
     db_type = 'archival' if condition['is_archival'] else 'pruned'
+    db_type = 'snap' if condition['is_snapdb'] else db_type
     bucket, shard = rsync['snapshot_bin'], machine['shard']
     time, config = datetime.datetime.utcnow().strftime("%y-%m-%d-%H-%M-%S"), rsync['config_path_on_client']
     cmd = f"rclone sync {rsync_db_path} " \

@@ -77,6 +77,7 @@ Below is a detailed description of what each file is.
 | `network`                      | string     | [**Required**] Network for *ALL* configured nodes. |
 | `is_leader`                    | string     | [**Required**] Is leader status for *ALL* configured nodes |
 | `is_archival`                  | string     | [**Required**] Archival status for *ALL* configured nodes |
+| `is_snapdb`                    | string     | [**Required**] is a snapDB for *ALL* configured nodes |
 
 ### `pager_duty`
 > Specify all things related to PagerDuty
