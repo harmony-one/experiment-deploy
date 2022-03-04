@@ -322,7 +322,7 @@ def _bucket_sync(machine, height):
     db_type = 'snap' if condition['is_snapdb'] else db_type
     bucket, shard = rsync['snapshot_bin'], machine['shard']
     time, config = datetime.datetime.utcnow().strftime("%y-%m-%d-%H-%M-%S"), rsync['config_path_on_client']
-    cmd = f"rclone sync {rsync_db_path} " \
+    cmd = f"rclone --checksum sync {rsync_db_path} " \
           f"{bucket}/{db_type}/{shard}/harmony_db_{shard}.{time}.{height} --config {config} -P 2>&1 " \
           f"| tee snapshot_bucket_sync.log"
     cmd_msg = None
@@ -344,7 +344,7 @@ def _local_sync(machine):
     """
     log.debug(f'starting local sync on {machine["ip"]} (s{machine["shard"]})')
     db_path_on_machine, db_rsync_path_on_machine = _derive_db_paths(machine)
-    cmd = f"rclone sync {db_path_on_machine} {db_rsync_path_on_machine} --transfers 64 -P 2>&1 " \
+    cmd = f"rclone --checksum sync {db_path_on_machine} {db_rsync_path_on_machine} --transfers 64 -P 2>&1 " \
           f"| tee snapshot_local_sync.log"
     cmd_msg = None
     try:
