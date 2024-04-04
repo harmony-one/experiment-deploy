@@ -549,6 +549,8 @@ if __name__ == "__main__":
         snapshot(do_bucket_sync=args.bucket_sync)
         cleanup_rclone_config()
         log.debug("finished snapshot, checking for node progress...")
+        # this sleep is need to give harmony RPC endpoint time to start serving requests
+        time.sleep(60)
         if not is_progressed_nodes():
             raise RuntimeError(f"one or more node did not make progress after being started...")
     except Exception as e:
