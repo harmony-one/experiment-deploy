@@ -444,10 +444,16 @@ def snapshot(do_bucket_sync=False):
     snapshot a network.
     """
     log.debug('started snapshot')
-    beacon_machine = list(filter(lambda e: e['shard'] == beacon_chain_shard, machines))[0]
+    beacon_machines = list(filter(lambda e: e['shard'] == beacon_chain_shard, machines))
+    if not beacon_machines:
+        log.debug('there is no beacon machines, continue for the rest')
+        bucket_rsync_threads = []
+    else:
+        beacon_machine = beacon_machines[0]
+        # snapshot beacon chain first
+        bucket_rsync_threads = [_snapshot(beacon_machine, do_bucket_sync)]
     aux_machines = filter(lambda e: e['shard'] != beacon_chain_shard, machines)
     threads, pool = [], ThreadPool()
-    bucket_rsync_threads = [_snapshot(beacon_machine, do_bucket_sync)]  # snapshot beacon chain first...
     for machine in aux_machines:
         threads.append(pool.apply_async(_snapshot, (machine, do_bucket_sync)))
     for t in threads:
